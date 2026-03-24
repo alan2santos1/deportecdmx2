@@ -152,6 +152,17 @@ const mapMetricMeta: Record<TerritorialMetricKey, { label: string; source: strin
   }
 };
 
+const mapMetricTitle: Record<TerritorialMetricKey, string> = {
+  activity: "Actividad física estimada por alcaldía",
+  risk: "Riesgo físico territorial por alcaldía",
+  publicInfrastructure: "Infraestructura deportiva pública por alcaldía",
+  privateInfrastructure: "Infraestructura deportiva privada por alcaldía",
+  totalInfrastructure: "Infraestructura deportiva total por alcaldía",
+  obesity: "Obesidad estimada por alcaldía",
+  diabetes: "Diabetes estimada por alcaldía",
+  sedentary: "Sedentarismo estimado por alcaldía"
+};
+
 function LayerBadge({ layer }: { layer: DataLayer }) {
   return (
     <span className={`inline-flex rounded-full border px-2 py-1 text-[11px] font-semibold ${layerStyles[layer]}`}>
@@ -759,9 +770,13 @@ export default function Dashboard() {
             <Card className="space-y-5 p-6">
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div>
-                  <div className="text-base font-semibold text-ink-900">Mapa territorial</div>
+                  <div className="text-base font-semibold text-ink-900">{mapMetricTitle[selectedMapMetric]}</div>
                   <div className="text-sm leading-6 text-ink-600">
                     Geometría oficial de alcaldías conectada al modelo territorial. Año visualizado: {mapYear}.
+                  </div>
+                  <div className="mt-2 inline-flex items-center gap-2 rounded-full border border-mist-200 bg-white px-3 py-2 text-xs font-medium text-ink-700">
+                    <span className="font-semibold text-ink-900">Tipo de dato:</span>
+                    {selectedMapMetricMeta.dataType.replace("_", " ")}
                   </div>
                 </div>
                 <div className="flex flex-wrap gap-2">
@@ -812,82 +827,104 @@ export default function Dashboard() {
             </Card>
             <Card className="space-y-5 p-6">
               <div>
-                <div className="text-base font-semibold text-ink-900">Resumen rápido por alcaldía</div>
+                <div className="text-base font-semibold text-ink-900">
+                  Resumen territorial{selectedMapArea ? ` – ${selectedMapArea.alcaldia}` : ""}
+                </div>
                 <div className="text-sm leading-6 text-ink-600">
-                  Selecciona una alcaldía en el mapa para revisar actividad, riesgo, infraestructura y ranking territorial de la métrica activa.
+                  Selecciona una alcaldía en el mapa para revisar prioridad territorial y contexto sectorial de la métrica activa.
                 </div>
               </div>
               {selectedMapArea ? (
                 <>
-                  <div className="rounded-2xl border border-mist-200 bg-white px-4 py-4">
-                    <div className="text-lg font-semibold text-ink-900">{selectedMapArea.alcaldia}</div>
-                    <div className="mt-2 text-sm text-ink-600">`geoKey`: {selectedMapArea.geoKey} · ranking {selectedMapRank ?? "-"} de {mapRanking.length} en {selectedMapMetricMeta.label.toLowerCase()}</div>
-                  </div>
-                  <div className="grid gap-3 md:grid-cols-2">
-                    <div className="rounded-2xl border border-mist-200 bg-white px-4 py-4 md:col-span-2">
-                      <div className="text-[11px] font-semibold uppercase tracking-wide text-ink-600">Métrica activa</div>
-                      <div className="mt-2 text-2xl font-semibold text-ink-900">{selectedMapMetricMeta.formatter(getSelectedMapMetricValue(selectedMapArea))}</div>
-                      <div className="mt-2 text-xs text-ink-600">{selectedMapMetricMeta.label} · {selectedMapMetricMeta.dataType}</div>
+                  <div className="rounded-[26px] border border-mist-200 bg-white px-5 py-5">
+                    <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-ink-600">Métrica activa</div>
+                    <div className="mt-3 text-3xl font-semibold text-ink-900">{selectedMapMetricMeta.formatter(getSelectedMapMetricValue(selectedMapArea))}</div>
+                    <div className="mt-2 text-sm text-ink-600">{selectedMapMetricMeta.label}</div>
+                    <div className="mt-4 flex flex-wrap items-center gap-2">
+                      <span className={`rounded-full px-3 py-1 text-xs font-semibold ${selectedMapArea.riskLevel === "Rojo" ? "bg-red-100 text-red-700" : selectedMapArea.riskLevel === "Amarillo" ? "bg-amber-100 text-amber-700" : "bg-emerald-100 text-emerald-700"}`}>
+                        {selectedMapArea.riskLevel === "Rojo" ? "Prioridad alta" : selectedMapArea.riskLevel === "Amarillo" ? "Prioridad media" : "Prioridad baja"}
+                      </span>
+                      <span className="rounded-full border border-mist-200 bg-mist-100 px-3 py-1 text-xs font-medium text-ink-700">
+                        Ranking {selectedMapRank ?? "-"} de {mapRanking.length}
+                      </span>
+                      <span className="rounded-full border border-mist-200 bg-mist-100 px-3 py-1 text-xs font-medium text-ink-700">
+                        {selectedMapMetricMeta.dataType.replace("_", " ")}
+                      </span>
                     </div>
-                    <div className="rounded-2xl border border-mist-200 bg-white px-4 py-4">
+                  </div>
+                  <div className="space-y-4">
+                    <div className="grid gap-3 md:grid-cols-2">
+                      <div className="rounded-2xl border border-mist-200 bg-white px-4 py-4">
                       <div className="text-[11px] font-semibold uppercase tracking-wide text-ink-600">Actividad</div>
                       <div className="mt-2 text-2xl font-semibold text-ink-900">{(selectedMapArea.activityRate * 100).toFixed(1)}%</div>
                       <div className="mt-2 text-xs text-ink-600">Estimado territorial</div>
-                    </div>
-                    <div className="rounded-2xl border border-mist-200 bg-white px-4 py-4">
-                      <div className="text-[11px] font-semibold uppercase tracking-wide text-ink-600">Riesgo</div>
+                      </div>
+                      <div className="rounded-2xl border border-mist-200 bg-white px-4 py-4">
+                      <div className="text-[11px] font-semibold uppercase tracking-wide text-ink-600">Índice compuesto de riesgo</div>
                       <div className="mt-2 flex items-center gap-2">
                         <div className="text-2xl font-semibold text-ink-900">{selectedMapArea.riskScore.toFixed(1)}</div>
                         <span className={`rounded-full px-3 py-1 text-xs font-semibold ${selectedMapArea.riskLevel === "Rojo" ? "bg-red-100 text-red-700" : selectedMapArea.riskLevel === "Amarillo" ? "bg-amber-100 text-amber-700" : "bg-emerald-100 text-emerald-700"}`}>
-                          {selectedMapArea.riskLevel}
+                          {selectedMapArea.riskLevel === "Rojo" ? "Prioridad alta" : selectedMapArea.riskLevel === "Amarillo" ? "Prioridad media" : "Prioridad baja"}
                         </span>
                       </div>
-                      <div className="mt-2 text-xs text-ink-600">Insight compuesto</div>
+                      <div className="mt-2 text-xs text-ink-600">Indicador territorial compuesto</div>
+                      </div>
                     </div>
-                    <div className="rounded-2xl border border-mist-200 bg-white px-4 py-4">
-                      <div className="text-[11px] font-semibold uppercase tracking-wide text-ink-600">Sedes PILARES</div>
-                      <div className="mt-2 text-2xl font-semibold text-ink-900">{formatNumber(pilaresMapSites)}</div>
-                      <div className="mt-2 text-xs text-ink-600">Conteo real por sede</div>
-                    </div>
-                    <div className="rounded-2xl border border-mist-200 bg-white px-4 py-4">
-                      <div className="text-[11px] font-semibold uppercase tracking-wide text-ink-600">Espacios PILARES</div>
-                      <div className="mt-2 text-2xl font-semibold text-ink-900">{formatNumber(pilaresMapOperational)}</div>
-                      <div className="mt-2 text-xs text-ink-600">Estimación operativa para lectura territorial</div>
-                    </div>
-                    <div className="rounded-2xl border border-mist-200 bg-white px-4 py-4">
-                      <div className="text-[11px] font-semibold uppercase tracking-wide text-ink-600">Deportivos públicos</div>
-                      <div className="mt-2 text-2xl font-semibold text-ink-900">{formatNumber(publicSportsMapSites)}</div>
-                      <div className="mt-2 text-xs text-ink-600">Instalaciones reales integradas</div>
-                    </div>
-                    <div className="rounded-2xl border border-mist-200 bg-white px-4 py-4">
-                      <div className="text-[11px] font-semibold uppercase tracking-wide text-ink-600">Obesidad</div>
-                      <div className="mt-2 text-2xl font-semibold text-ink-900">{(selectedMapArea.obesityRate * 100).toFixed(1)}%</div>
-                      <div className="mt-2 text-xs text-ink-600">Estimado territorial</div>
-                    </div>
-                    <div className="rounded-2xl border border-mist-200 bg-white px-4 py-4">
-                      <div className="text-[11px] font-semibold uppercase tracking-wide text-ink-600">Diabetes</div>
-                      <div className="mt-2 text-2xl font-semibold text-ink-900">{(selectedMapArea.diabetesRate * 100).toFixed(1)}%</div>
-                      <div className="mt-2 text-xs text-ink-600">Estimado territorial</div>
-                    </div>
-                    <div className="rounded-2xl border border-mist-200 bg-white px-4 py-4">
-                      <div className="text-[11px] font-semibold uppercase tracking-wide text-ink-600">Sedentarismo</div>
-                      <div className="mt-2 text-2xl font-semibold text-ink-900">{(selectedMapArea.sedentaryRate * 100).toFixed(1)}%</div>
-                      <div className="mt-2 text-xs text-ink-600">Estimado territorial</div>
-                    </div>
-                    <div className="rounded-2xl border border-mist-200 bg-white px-4 py-4 md:col-span-2">
-                      <div className="flex items-center justify-between gap-3">
-                        <div>
+                    <div className="rounded-2xl border border-mist-200 bg-mist-100/60 px-4 py-4">
+                      <div className="text-[11px] font-semibold uppercase tracking-wide text-ink-600">Infraestructura</div>
+                      <div className="mt-3 grid gap-3 md:grid-cols-2">
+                        <div className="rounded-2xl border border-mist-200 bg-white px-4 py-4">
+                          <div className="text-[11px] font-semibold uppercase tracking-wide text-ink-600">Sedes PILARES</div>
+                          <div className="mt-2 text-2xl font-semibold text-ink-900">{formatNumber(pilaresMapSites)}</div>
+                          <div className="mt-2 text-xs text-ink-600">Conteo real por sede</div>
+                        </div>
+                        <div className="rounded-2xl border border-mist-200 bg-white px-4 py-4">
+                          <div className="text-[11px] font-semibold uppercase tracking-wide text-ink-600">Espacios PILARES</div>
+                          <div className="mt-2 text-2xl font-semibold text-ink-900">{formatNumber(pilaresMapOperational)}</div>
+                          <div className="mt-2 text-xs text-ink-600">Estimación operativa para lectura territorial</div>
+                        </div>
+                        <div className="rounded-2xl border border-mist-200 bg-white px-4 py-4">
+                          <div className="text-[11px] font-semibold uppercase tracking-wide text-ink-600">Deportivos públicos</div>
+                          <div className="mt-2 text-2xl font-semibold text-ink-900">{formatNumber(publicSportsMapSites)}</div>
+                          <div className="mt-2 text-xs text-ink-600">Instalaciones reales integradas</div>
+                        </div>
+                        <div className="rounded-2xl border border-mist-200 bg-white px-4 py-4">
                           <div className="text-[11px] font-semibold uppercase tracking-wide text-ink-600">Infraestructura privada</div>
                           <div className="mt-2 text-2xl font-semibold text-ink-900">{formatNumber(privateMapUnits)}</div>
-                        </div>
-                        <div className="text-right">
-                          <div className="text-[11px] font-semibold uppercase tracking-wide text-ink-600">Infraestructura pública visible</div>
-                          <div className="mt-2 text-xl font-semibold text-ink-900">{formatNumber(publicMapUnits)}</div>
+                          <div className="mt-2 text-xs text-ink-600">Corte DENUE disponible</div>
                         </div>
                       </div>
-                      <div className="mt-2 text-xs text-ink-600">La capa privada proviene de DENUE y permanece etiquetada como preparada hasta validar SCIAN objetivo. Las cifras operativas no equivalen a sedes administrativas.</div>
                     </div>
-                    <div className="rounded-2xl border border-mist-200 bg-mist-100/70 px-4 py-4 md:col-span-2">
+                    <div className="rounded-2xl border border-mist-200 bg-mist-100/60 px-4 py-4">
+                      <div className="text-[11px] font-semibold uppercase tracking-wide text-ink-600">Salud relacionada</div>
+                      <div className="mt-3 grid gap-3 md:grid-cols-3">
+                        <div className="rounded-2xl border border-mist-200 bg-white px-4 py-4">
+                          <div className="text-[11px] font-semibold uppercase tracking-wide text-ink-600">Obesidad</div>
+                          <div className="mt-2 text-2xl font-semibold text-ink-900">{(selectedMapArea.obesityRate * 100).toFixed(1)}%</div>
+                          <div className="mt-2 text-xs text-ink-600">Estimado territorial</div>
+                        </div>
+                        <div className="rounded-2xl border border-mist-200 bg-white px-4 py-4">
+                          <div className="text-[11px] font-semibold uppercase tracking-wide text-ink-600">Diabetes</div>
+                          <div className="mt-2 text-2xl font-semibold text-ink-900">{(selectedMapArea.diabetesRate * 100).toFixed(1)}%</div>
+                          <div className="mt-2 text-xs text-ink-600">Estimado territorial</div>
+                        </div>
+                        <div className="rounded-2xl border border-mist-200 bg-white px-4 py-4">
+                          <div className="text-[11px] font-semibold uppercase tracking-wide text-ink-600">Sedentarismo</div>
+                          <div className="mt-2 text-2xl font-semibold text-ink-900">{(selectedMapArea.sedentaryRate * 100).toFixed(1)}%</div>
+                          <div className="mt-2 text-xs text-ink-600">Estimado territorial</div>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="rounded-2xl border border-mist-200 bg-white px-4 py-4">
+                      <div className="flex items-center justify-between gap-3">
+                        <div>
+                          <div className="text-[11px] font-semibold uppercase tracking-wide text-ink-600">Fuente de la métrica activa</div>
+                          <div className="mt-2 text-sm font-semibold text-ink-900">{selectedMapMetricMeta.source}</div>
+                        </div>
+                      </div>
+                      <div className="mt-2 text-xs text-ink-600">La lectura territorial no implica causalidad. El color representa prioridad relativa entre alcaldías para la métrica seleccionada.</div>
+                    </div>
+                    <div className="rounded-2xl border border-mist-200 bg-mist-100/70 px-4 py-4">
                       <div className="text-[11px] font-semibold uppercase tracking-wide text-ink-600">Cómo leer esta vista</div>
                       <div className="mt-2 text-sm leading-6 text-ink-700">{selectedMapMetricMeta.note}</div>
                       <div className="mt-2 text-xs text-ink-600">El mapa muestra diferencias territoriales; no implica causalidad entre infraestructura, salud y actividad.</div>
