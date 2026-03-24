@@ -1,0 +1,14 @@
+Options -Indexes
+
+AuthType Basic
+AuthName "Restricted Area"
+AuthUserFile /home/chilidog/public_html/vitalbit/kio-review-ascvd/.htpasswd
+Require valid-user
+
+DirectoryIndex index.html
+
+# SPA fallback
+RewriteEngine On
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^ index.html [L]

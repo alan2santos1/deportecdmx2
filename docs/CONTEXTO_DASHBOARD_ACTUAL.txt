@@ -1,0 +1,817 @@
+PROJECT CONTEXT FOR CHATGPT
+Project path: /Users/alansantos/Proyectos web/dashboard
+Date: 2026-03-23
+
+1) WHAT THIS PROJECT IS
+
+This is no longer just a simple Excel viewer. It is a client-facing BI microsite built with Next.js 14 + TypeScript that:
+
+- Loads a workbook by default from a generated JSON file at build/dev time.
+- Still supports fallback Excel upload in the browser through an Admin modal.
+- Converts Excel sheets into an executive dashboard, audit/data-quality views, raw sheet exploration, methodology pages, duplicates review, funnel metrics, and ASCVD cardiovascular risk views.
+- Includes additional standalone routes for population reporting, satisfaction/NPS, and chart pages driven by Excel-derived JSON.
+- Is designed to run without a backend. Data stays client-side after the JSON is generated.
+
+The app has evolved into a hybrid between:
+
+- An executive review portal.
+- A static-exportable data microsite for cPanel.
+- A small analytics platform with multiple report routes.
+
+
+2) CURRENT TECH STACK
+
+- Next.js 14.2.4
+- React 18
+- TypeScript
+- TailwindCSS
+- Zustand
+- Recharts
+- TanStack Table
+- Framer Motion
+- SheetJS (xlsx)
+- html-to-image for chart PNG export
+- Static export enabled in next.config.js
+
+Important scripts from package.json:
+
+- npm run data:build
+  Runs tsx scripts/convert-xlsx-to-json.ts
+
+- npm run dev
+  Runs data:build first, then next dev
+
+- npm run build
+  Runs data:build first, then next build
+
+
+3) HIGH-LEVEL ARCHITECTURE
+
+Main app routes:
+
+- /
+  Redirects to /dashboard
+
+- /dashboard
+  Main executive portal route
+
+- /poblacion
+  Separate operational population report
+
+- /satisfaccion
+  Separate satisfaction/NPS report
+
+- /graficas-excel
+  Page that renders chart data extracted from an Excel workbook
+
+- /graficas-clinicas
+  Page that renders clinical charts with counts + percentages from Excel-derived JSON
+
+- /health
+  Simple health page
+
+Route navigation is handled by components/ui/RouteTabs.tsx.
+
+Inside /dashboard there are internal tabs:
+
+- Dashboard
+- Funnel
+- Riesgo CV (ASCVD)
+- Sin clasificar (KIO)
+- Data Quality
+- Sheets (raw view)
+- Methodology
+- Duplicates (shown only if duplicates are detected)
+
+
+4) HOW DATA FLOWS
+
+4.1 Default flow
+
+The app tries to auto-load:
+
+- /public/data/workbook.json
+
+The JSON is fetched on the client using:
+
+- lib/useWorkbookJsonLoader.ts
+
+This is used by the main dashboard route and the other standalone report pages.
+
+4.2 Fallback flow
+
+If workbook.json is missing or fails to load:
+
+- The UI falls back to upload mode.
+- User can drag/drop or browse an .xlsx file.
+- Parsing happens in the browser with SheetJS.
+
+4.3 Build-time conversion
+
+The build pipeline is in:
+
+- scripts/convert-xlsx-to-json.ts
+
+It reads:
+
+- data/source.xlsx
+- data/Graficas_Con_Formulas_y_Tablas.xlsx
+- data/addons/*.xlsx
+
+And generates:
+
+- public/data/workbook.json
+- public/data/addons/*.json
+
+
+5) HOW THE EXCEL CONVERTER WORKS
+
+File:
+- scripts/convert-xlsx-to-json.ts
+
+Main responsibilities:
+
+- Reads source workbook from data/source.xlsx
+- Handles merged cells
+- Detects the first non-empty header row
+- Trims and de-duplicates headers
+- Preserves all rows
+- Converts each sheet to an array of row objects
+- Adds source_sheet to every row
+- Adds poblacion_norm for KIO rows when possible
+- Generates inferred.semanticMap using lib/semantic.ts
+- Optionally extracts clinical chart tables from data/Graficas_Con_Formulas_y_Tablas.xlsx
+- Converts addon clinical workbooks in data/addons into JSON files
+
+Generated workbook.json structure:
+
+- meta
+  generatedAt, sourceFileName, chartsFileName, sheetNames, rowCounts
+
+- sheets
+  Object keyed by sheet name, each containing an array of row objects
+
+- excelCharts
+  Extracted chart-ready blocks for clinical conditions when detected
+
+- inferred
+  semanticMap detected from BASE_MODELADA
+
+Important note:
+The converter preserves raw business data and adds support fields rather than replacing the originals.
+
+
+6) STATE MANAGEMENT
+
+File:
+- store/useWorkbookStore.ts
+
+Store responsibilities:
+
+- Holds workbook in normalized in-memory structure
+- Holds workbook meta
+- Holds modeledBase for BASE_MODELADA
+- Holds modeledColumns
+- Holds detected semantic fields
+- Holds excelCharts extracted from JSON
+- Holds presentationMode
+- Tracks data source: json | upload | none
+- Handles loadWorkbook(buffer, fileName)
+- Handles loadWorkbookJson(payload)
+
+When a workbook is loaded:
+
+- BASE_MODELADA is detected
+- semantic fields are inferred
+- normalizeBaseModelada() is applied
+- poblacion_norm may be appended to available columns
+
+
+7) SEMANTIC DETECTION
+
+File:
+- lib/semantic.ts
+
+Current detected semantic fields:
+
+- cliente
+- jornada
+- poblacion
+- sexo
+- rangoEdad
+- personId
+- riskCategory
+
+Detection is fuzzy and based on normalized header matching.
+
+Examples:
+
+- cliente matches cliente / company / idcliente / id_client
+- jornada matches jornada / fecha / date / periodo
+- poblacion matches poblacion / population / cohorte
+- sexo matches sexo / genero / gender / sex
+
+This is lightweight and practical, but still narrow. If the next project uses very different header naming, this layer will need to be expanded.
+
+
+8) DATA NORMALIZATION
+
+File:
+- lib/model.ts
+
+Current transformations:
+
+- Trims all string values
+- Normalizes sexo values
+  Examples:
+  M, HOMBRE, MASCULINO -> MASCULINO
+  F, MUJER, FEMENINO -> FEMENINO
+
+- Derives poblacion_norm for KIO:
+  If value contains IT -> IT
+  If value contains DATA -> DATA
+  Else -> SIN_CLASIFICAR
+
+Special behavior:
+
+- There is a hardcoded override list of some names that are forced from SIN_CLASIFICAR to IT.
+  This is a very project-specific business rule tied to the current KIO dataset and should be reviewed before reusing the project for another client.
+
+
+9) CORE BI / SELECTOR LOGIC
+
+File:
+- lib/selectors.ts
+
+This file contains most of the business logic.
+
+Key implemented behavior:
+
+9.1 Filters
+
+- Builds filter configuration from BASE_MODELADA using detected semantic columns
+- Supports:
+  Cliente
+  Jornada
+  Poblacion
+  Sexo
+  Rango_Edad
+
+- For KIO population filters, if poblacion_norm exists it uses:
+  IT -> IT Services
+  DATA -> Data Centers
+  SIN_CLASIFICAR -> Sin clasificar
+
+9.2 Generic distributions
+
+- buildDistribution()
+- buildDistributionWithDenominator()
+- buildStackedByGroup()
+
+Charts and KPI percentages are based on non-empty applicable rows for the respective field.
+
+9.3 Condition registry
+
+The project implements canonical clinical condition mapping:
+
+- Diabetes
+- Prediabetes
+- HTA
+- Pre-HTA
+- Sobrepeso
+- Obesidad
+- Tabaquismo
+- Dislipidemia
+
+It prefers *_Flag columns and falls back to *_Cat columns, while excluding helper columns such as Aplicable, Fuente, raw, DemoValido, TieneLabs, etc.
+
+Per-row condition derivation:
+
+- true if any matching source column is positive
+- false if there is usable data and it is negative
+- null if all matching source columns are empty
+
+This is used by:
+
+- condition filters
+- condition KPI cards
+- applicable denominators
+- OR vs AND comorbidity filtering
+
+9.4 Applicable sample logic
+
+The current portal already distinguishes:
+
+- Base universe = rows after normal filters
+- Applicable universe = rows where the selected condition(s) are not null
+- Cases = rows where selected condition(s) are true
+
+This behavior is implemented mainly through:
+
+- lib/kpi.ts
+
+Important nuance:
+Condition-specific applicability is generic and derived from the registry columns. It is not yet a fully formal clinical contract per condition beyond available columns.
+
+9.5 KIO population reconciliation
+
+Implemented logic:
+
+- Todos = total filtered rows
+- IT = rows with poblacion_norm === IT
+- Data = rows with poblacion_norm === DATA
+- Sin clasificar = rows with poblacion_norm === SIN_CLASIFICAR
+- Delta = Todos - (IT + Data + Sin)
+
+This appears in the dashboard as a visible reconciliation block.
+
+9.6 Funnel detection
+
+The funnel logic is heuristic:
+
+- Searches for columns that look like inscritos / inscripcion
+- Searches for clinico / muestra / completo / valid
+- Searches for finalizado / terminado / completado
+
+Then computes:
+
+- Total RAW / Total registrados
+- Inscritos
+- Muestra clinica valida
+- Finalizaron
+
+This is useful, but fragile if the next dataset uses different field names or workflow states.
+
+9.7 ASCVD detection
+
+The app looks for:
+
+- ASCVD percentage column
+- ASCVD category column
+
+If found, it computes:
+
+- applicable sample
+- high risk percentage for >= 20 when pct exists
+- category distribution when category exists
+
+No imputation is done.
+
+9.8 Data quality
+
+- summarizeQuality() scans numeric columns in DATA_QUALITY
+- tries to detect checked / missing / duplicates totals based on header keywords
+
+9.9 Duplicates
+
+- If personId exists, duplicates are grouped by that field
+- Otherwise, duplicates are grouped by full-row hash
+
+Records are flagged, not removed.
+
+
+10) MAIN DASHBOARD PAGE BEHAVIOR
+
+File:
+- components/Dashboard.tsx
+
+This is the core of the portal.
+
+Implemented sections:
+
+- Global filters
+- Condition filter with:
+  Any (OR)
+  Comorbidity (AND)
+
+- Quick client chips:
+  Only ORIFLAME
+  Only KIO
+
+- Executive Summary hero
+  3 metric highlights
+  coverage note
+  key findings list
+
+- KIO population reconciliation block
+
+- KPI cards
+  Total registros
+  Distinct persons if available
+  Sexo completeness
+  Age completeness
+  High risk if riskCategory exists
+  Up to 4 *_Aplicable derived KPI cards
+
+- Condition KPI grid
+
+- Charts with PNG export:
+  Age distribution
+  Sexo distribution
+  Cliente donut
+  Risk by client stacked bar
+  City distribution if city exists
+  Dislipidemia donut
+  IMC donut if IMC flag exists
+
+- Data table preview
+  first 50 filtered rows
+  search/sort/pagination/visible columns/export
+
+- Share section
+  deployment instructions
+  client narrative
+
+UX details:
+
+- Presentation mode exists
+- Filters are collapsible
+- Filters are no longer sticky
+- When collapsed, selected filters show as chips
+
+
+11) DATA QUALITY VIEW
+
+File:
+- components/DataQuality.tsx
+
+What it does:
+
+- Reads DATA_QUALITY sheet
+- Shows summary cards
+- Shows an audit narrative
+- Renders a searchable/sortable/exportable issues table
+
+Graceful degradation:
+
+- If DATA_QUALITY is missing, it shows a fallback card instead of breaking.
+
+
+12) RAW SHEETS EXPLORER
+
+File:
+- components/RawSheets.tsx
+
+What it does:
+
+- Left sidebar with sheet list and counts
+- Main area with table for selected sheet
+- Quick stats:
+  row count
+  non-empty columns
+
+- DataTable supports:
+  search
+  sorting
+  pagination
+  column visibility selector
+  CSV export for visible columns
+
+
+13) METHODOLOGY VIEW
+
+File:
+- components/Methodology.tsx
+
+What it does:
+
+- Renders README, METODOLOGIA CLINICA, and OPERATIVO sheets
+- Uses buildSheetTextBlocks() to decide table vs text rendering
+- Adds "Notas metodologicas"
+- Adds "How to read the dashboard"
+
+Current methodology notes include:
+
+- Todos = IT + Data + Sin clasificar
+- applicable denominators
+- funnel is operational, not clinical
+- ASCVD only where available
+
+
+14) DUPLICATES VIEW
+
+File:
+- components/Duplicates.tsx
+
+What it does:
+
+- Detects duplicate groups
+- Explains the rule used
+- Shows duplicate rows in a table
+- Does not remove them from the original dataset
+
+
+15) FUNNEL VIEW
+
+File:
+- components/Funnel.tsx
+
+What it does:
+
+- Shows four operational funnel KPI cards
+- Displays a bar chart with count and percentage labels
+- Explains that the funnel is operational, not clinical
+
+Limit:
+
+- Detection is header-heuristic and may need rework for another dataset.
+
+
+16) ASCVD VIEW
+
+File:
+- components/Ascvd.tsx
+
+What it does:
+
+- Detects ASCVD pct or category columns
+- Shows applicable sample
+- Shows high-risk percentage if pct exists
+- Shows distribution by category if category exists
+- Exports charts as PNG using ChartWrapper
+
+
+17) KIO "SIN CLASIFICAR" VIEW
+
+File:
+- components/Unclassified.tsx
+
+What it does:
+
+- Filters KIO rows where poblacion_norm = SIN_CLASIFICAR
+- Shows summary by source/origin-like columns if available
+- Shows exportable table of those rows
+
+Current source grouping candidates:
+
+- fuente
+- origen
+- source
+- sheet
+- jornada
+
+
+18) REUSABLE UI LAYER
+
+Key files:
+
+- components/ui/DataTable.tsx
+- components/ui/ChartWrapper.tsx
+- components/ui/Tabs.tsx
+- components/ui/RouteTabs.tsx
+- components/ui/MultiSelect.tsx
+- components/ui/Toggle.tsx
+- components/ui/StatusPill.tsx
+- components/ui/Badge.tsx
+- components/ui/Card.tsx
+- components/ui/Skeleton.tsx
+
+Important behavior:
+
+- DataTable supports search, sorting, pagination, and visible-column export
+- ChartWrapper supports PNG download
+- Status pill shows loaded file and timestamp
+- Presentation mode hides some advanced controls
+
+
+19) ADDITIONAL REPORT ROUTES BEYOND THE MAIN PORTAL
+
+19.1 /poblacion
+
+File:
+- app/poblacion/page.tsx
+
+Purpose:
+
+- Separate operational population report
+- Uses Inscripción IT and Inscripción KIO sheets
+- Detects email and company columns heuristically
+- Computes unique emails for IT Services and Data Centers
+- Shows KPI cards, a table, and a chart
+
+19.2 /satisfaccion
+
+File:
+- app/satisfaccion/page.tsx
+
+Purpose:
+
+- Separate satisfaction and NPS report
+- Uses ENCUESTA_SATISFACCION_RAW
+- Detects satisfaction, recommendation, and comments columns heuristically
+- Computes:
+  responses
+  average satisfaction
+  top-box
+  % score 5
+  NPS
+
+- Displays distributions and comments
+
+19.3 /graficas-excel
+
+File:
+- app/graficas-excel/page.tsx
+
+Purpose:
+
+- Reads excelCharts blocks loaded into store
+- Renders KIO DATA vs KIO IT percentage charts from Excel-derived tables
+- Supports PNG export
+
+19.4 /graficas-clinicas
+
+File:
+- app/graficas-clinicas/page.tsx
+
+Purpose:
+
+- Similar to /graficas-excel but also includes totals per category when detected
+- Uses extracted chart tables from Graficas_Con_Formulas_y_Tablas.xlsx
+- Supports high-resolution PNG export
+
+
+20) CURRENT FILES / DATASETS IN REPO
+
+Primary source workbooks present in /data:
+
+- data/source.xlsx
+- data/source1.xlsx
+- data/source_ultimo.xlsx
+- data/Graficas_Con_Formulas_y_Tablas.xlsx
+
+Addon workbooks in /data/addons:
+
+- Graficas_Diabetes_Global_Excel_Final.xlsx
+- Graficas_Tabaquismo_Excel_Final.xlsx
+- Graficas_Dislipidemia_Excel_Final.xlsx
+- Graficas_HTA_Global_Excel_bueno.xlsx
+- Graficas_Obesidad_Sobrepeso_Por_Edad.xlsx
+- Graficas_Prediabetes_Global_Excel_Final.xlsx
+
+Generated JSON present in /public/data:
+
+- workbook.json
+- graficas-clinicas.json
+- addons/*.json
+
+
+21) DEPLOYMENT / HOSTING STATE
+
+Current next.config.js:
+
+- output: "export"
+- trailingSlash: true
+- basePath: "/vitalbit/kio-review"
+- assetPrefix: same as basePath
+- NEXT_PUBLIC_BASE_PATH injected from next.config.js
+
+This means the project is currently configured for static export and subdirectory hosting.
+
+Important reality:
+
+- middleware.ts exists and implements Basic Auth for Next server deployments
+- BUT when using static export on cPanel, middleware does not protect the site
+- In cPanel/static hosting, access protection must be handled via Apache .htaccess / .htpasswd
+
+So there are two different auth models in the codebase:
+
+- Next middleware auth for server deployments
+- Apache Basic Auth for static export deployments
+
+That is a real architectural tension to keep in mind for the next iteration.
+
+
+22) CURRENT STRENGTHS OF THE PROJECT
+
+- Solid no-backend approach
+- Build-time JSON generation avoids reparsing large Excel files every page load
+- Good graceful degradation when sheets/columns are missing
+- Strong reusable UI layer for tables/charts/cards
+- Condition filtering and deduplication logic already exists
+- KIO-specific population reconciliation is visible and understandable
+- Raw data is never silently deleted
+- Duplicates are surfaced, not removed
+- Chart PNG export already works
+- Multiple report surfaces already coexist in the same app
+
+
+23) CURRENT LIMITATIONS / RISKS / DEBT
+
+23.1 Hardcoded client logic
+
+The app is still partially specialized for KIO/ORIFLAME.
+
+Examples:
+
+- KIO population normalization
+- hardcoded override names in lib/model.ts
+- route-specific labels referencing KIO DATA and KIO IT
+- chart pages built around the current clinical workbook structure
+
+23.2 Semantic detection is still narrow
+
+If the next dataset uses different headers, field detection may fail silently or degrade too much.
+
+23.3 Funnel logic is heuristic
+
+The operational funnel depends on column-name guessing, not a formal contract.
+
+23.4 README is partially outdated
+
+README still talks about Vercel and DASHBOARD_PASSWORD, while next.config.js is currently tuned for static export under a specific basePath.
+
+23.5 Two competing deployment modes
+
+The repo currently mixes:
+
+- server-style middleware auth
+- static-export cPanel deployment
+
+This should probably be rationalized in the larger project.
+
+23.6 basePath is client-specific
+
+The current basePath is:
+
+- /vitalbit/kio-review
+
+That is deployment-specific and would need to become configurable if the next project has multiple environments or clients.
+
+23.7 Addon/chart extraction is custom
+
+Clinical chart extraction from Graficas_Con_Formulas_y_Tablas.xlsx depends on specific row/column patterns and may not generalize well.
+
+
+24) WHAT TO PRESERVE IF THIS BECOMES A BIGGER PRODUCT
+
+Recommended reusable foundations:
+
+- Build-time Excel to JSON conversion pipeline
+- Zustand workbook store
+- semantic detection layer
+- normalization layer
+- generic filter + selector architecture
+- DataTable reusable component
+- ChartWrapper and PNG export
+- route-based report separation
+- graceful degradation philosophy
+- applicable denominator concept
+- duplicates-not-deleted policy
+
+
+25) WHAT SHOULD BE REFACTORED FIRST FOR A BIGGER PRODUCT
+
+If this project is going to scale to other clients and other data models, the first refactors should be:
+
+- Separate domain logic from presentation components
+- Convert semantic/header detection into configurable contracts per dataset
+- Move KIO-specific rules into a client adapter or dataset profile
+- Formalize a data contract for:
+  people identifiers
+  client/segment/population
+  clinical flags/categories
+  operational funnel states
+  geography fields
+  survey metrics
+
+- Normalize deployment mode:
+  either real Next server hosting
+  or static export only
+
+- Make basePath configurable by env instead of hardcoding a client path
+- Add validation reporting during data:build so missing critical fields are reported clearly
+- Potentially split the project into:
+  core analytics shell
+  client configuration package
+  dataset mapping/config
+
+
+26) HOW I WOULD DESCRIBE THE CURRENT PRODUCT TO ANOTHER ENGINEER
+
+This project is a static-exportable Next.js BI portal that transforms one or more Excel workbooks into a browser-based executive review experience. It already contains a reusable analytics shell, client-side state management, auto-loading of generated workbook JSON, clinical condition filtering with applicable denominators, raw sheet exploration, data quality auditing, duplicate surfacing, operational funnel reporting, ASCVD risk analysis, and extra report routes for population, satisfaction, and extracted Excel chart views. It is usable today, but its business logic is still partly tied to the current KIO/ORIFLAME clinical dashboards and would need modularization before being generalized to larger multi-client datasets.
+
+
+27) RECOMMENDED PROMPT INPUT TO GIVE CHATGPT
+
+When asking ChatGPT to help evolve this project, include these constraints:
+
+- This is an existing Next.js 14 + TypeScript analytics portal, not a greenfield app.
+- It already has build-time Excel-to-JSON conversion and client-side auto-loading.
+- It already has a Zustand store, Recharts, TanStack Table, and reusable cards/tables/chart wrappers.
+- It already supports fallback Excel upload, condition filtering, duplicates, data quality, raw sheets, methodology, funnel, ASCVD, and extra routes.
+- The new task should preserve the current working architecture where possible and refactor incrementally.
+- Any proposal should identify which parts are generic and which parts are KIO-specific.
+- Any new data model should be introduced through a configurable semantic mapping / dataset contract layer, not by hardcoding more column names directly into React components.
+
+
+28) SUGGESTED PROMPT TO START THE NEXT PHASE
+
+You can paste something like this into ChatGPT:
+
+"I have an existing Next.js 14 + TypeScript client-side BI portal that already loads workbook.json generated from Excel at build time, with a fallback upload flow. It uses Zustand, Recharts, TanStack Table, Tailwind, and a semantic detection layer for column mapping. The current app includes an executive dashboard, data quality, raw sheet explorer, methodology, duplicates, operational funnel, ASCVD risk view, KIO population reconciliation, and additional routes for population, satisfaction/NPS, and Excel-derived clinical charts. I need to evolve this existing project into a larger multi-client analytics platform with different datasets and more robust contracts. Analyze the current architecture, identify what should become generic infrastructure vs client-specific adapters, propose a scalable folder/module structure, and outline a migration plan that minimizes breakage while preserving current functionality."
+
+
+29) BOTTOM LINE
+
+The project already has meaningful product and engineering value. It is not a prototype anymore. It is a specialized analytics portal with reusable foundations, but it still contains embedded client-specific assumptions. The right next step is not rebuilding from scratch. The right next step is extracting a generic analytics core and moving KIO/ORIFLAME business rules into configurable mappings or client adapters.
