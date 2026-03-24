@@ -23,7 +23,9 @@ export type InfrastructureDatum = {
   name: string;
   deportivos: number;
   pilares: number;
-  gimnasios: number;
+  gimnasiosPrivados: number;
+  clubesPrivados: number;
+  academiasPrivadas: number;
   parques: number;
   total: number;
   density: number;
@@ -84,7 +86,9 @@ const recordHasSelectedInfrastructure = (record: TerritorialRecord, infrastructu
   return infrastructureTypes.some((type) => {
     if (type === "PILARES") return record.pilares > 0;
     if (type === "Deportivos públicos") return record.publicSportsCenters > 0;
-    if (type === "Gimnasios") return record.privateGyms > 0;
+    if (type === "Gimnasio privado") return record.privateGyms > 0;
+    if (type === "Club deportivo privado") return record.privateGyms > 0;
+    if (type === "Academia deportiva privada") return record.privateGyms > 0;
     if (type === "Parques / áreas verdes") return record.parks > 0;
     return false;
   });
@@ -227,20 +231,68 @@ export const buildInfrastructureByAlcaldia = (records: TerritorialRecord[], filt
     const includeAll = filters.infrastructureTypes.length === 0;
     const deportivos = includeAll || filters.infrastructureTypes.includes("Deportivos públicos") ? sample.publicSportsCenters : 0;
     const pilares = includeAll || filters.infrastructureTypes.includes("PILARES") ? sample.pilares : 0;
-    const gimnasios = includeAll || filters.infrastructureTypes.includes("Gimnasios") ? sample.privateGyms : 0;
+    const gimnasiosPrivados = includeAll || filters.infrastructureTypes.includes("Gimnasio privado") ? sample.privateGyms : 0;
+    const clubesPrivados = includeAll || filters.infrastructureTypes.includes("Club deportivo privado") ? 0 : 0;
+    const academiasPrivadas = includeAll || filters.infrastructureTypes.includes("Academia deportiva privada") ? 0 : 0;
     const parques = includeAll || filters.infrastructureTypes.includes("Parques / áreas verdes") ? sample.parks : 0;
-    const total = deportivos + pilares + gimnasios + parques;
+    const total = deportivos + pilares + gimnasiosPrivados + clubesPrivados + academiasPrivadas + parques;
     return {
       name,
       deportivos,
       pilares,
-      gimnasios,
+      gimnasiosPrivados,
+      clubesPrivados,
+      academiasPrivadas,
       parques,
       total,
       density: (total / population) * 100000,
       activityRate: weightedAverage(items, (item) => item.activeRate)
     };
   }).sort((a, b) => b.total - a.total);
+};
+
+const getInfrastructureCategoryLabel = (record: InfrastructureDetailRecord) => {
+  if (record.infrastructureType === "Gimnasio privado") return "Gimnasios privados";
+  if (record.infrastructureType === "Club deportivo privado") return "Clubes deportivos";
+  if (record.infrastructureType === "Academia deportiva privada") return "Academias deportivas";
+  if (record.infrastructureType === "Deportivos públicos") return "Deportivos públicos";
+  if (record.infrastructureType === "Parques / áreas verdes") return "Parques";
+  return "PILARES";
+};
+
+export const buildInfrastructureStackedByAlcaldia = (records: InfrastructureDetailRecord[]) => {
+  return Array.from(groupBy(records, (record) => record.alcaldia)).map(([alcaldia, items]) => {
+    const summary: Record<string, string | number> = {
+      name: alcaldia,
+      "PILARES": 0,
+      "Deportivos públicos": 0,
+      "Gimnasios privados": 0,
+      "Clubes deportivos": 0,
+      "Academias deportivas": 0,
+      "Parques": 0
+    };
+    items.forEach((item) => {
+      const label = getInfrastructureCategoryLabel(item);
+      summary[label] = Number(summary[label] ?? 0) + item.administrativeCount;
+    });
+    return summary;
+  }).sort((a, b) => {
+    const totalA =
+      Number(a["PILARES"]) +
+      Number(a["Deportivos públicos"]) +
+      Number(a["Gimnasios privados"]) +
+      Number(a["Clubes deportivos"]) +
+      Number(a["Academias deportivas"]) +
+      Number(a["Parques"]);
+    const totalB =
+      Number(b["PILARES"]) +
+      Number(b["Deportivos públicos"]) +
+      Number(b["Gimnasios privados"]) +
+      Number(b["Clubes deportivos"]) +
+      Number(b["Academias deportivas"]) +
+      Number(b["Parques"]);
+    return totalB - totalA;
+  });
 };
 
 export const buildSportsTop = (sportsRecords: SportsRecord[], limit: 5 | 10) => {
@@ -294,6 +346,7 @@ export const buildInfrastructureDetailRows = (records: InfrastructureDetailRecor
     "Alcaldía": record.alcaldia,
     "Geo key": record.geoKey ?? "",
     "Tipo de infraestructura": record.infrastructureType,
+    "Sector": record.infrastructureType.includes("privado") ? "Privado" : "Público / comunitario",
     "Tipo de espacio": record.tipo_espacio,
     "Espacio": record.spaceName,
     "Conteo administrativo": formatNumber(record.administrativeCount),
@@ -331,7 +384,7 @@ export const buildInfrastructureSportsSummary = (records: InfrastructureDetailRe
 export const buildInfrastructureExecutiveSummary = (records: InfrastructureDetailRecord[]) => {
   const totalAdministrative = sum(records.map((record) => record.administrativeCount)) || 1;
   const totalOperational = sum(records.map((record) => record.operationalUnits)) || 1;
-  const grouped = Array.from(groupBy(records, (record) => record.tipo_espacio)).map(([tipo, items]) => {
+  const grouped = Array.from(groupBy(records, (record) => getInfrastructureCategoryLabel(record))).map(([tipo, items]) => {
     const administrativeTotal = sum(items.map((item) => item.administrativeCount));
     const operationalTotal = sum(items.map((item) => item.operationalUnits));
     const privateUnits = sum(
@@ -428,7 +481,7 @@ export const buildFlattenedTableRows = (records: TerritorialRecord[]) => {
     "Diabetes": `${(record.diabetesRate * 100).toFixed(1)}%`,
     "PILARES": String(record.pilares),
     "Deportivos públicos": String(record.publicSportsCenters),
-    "Gimnasios": String(record.privateGyms),
+    "Infraestructura privada": String(record.privateGyms),
     "Parques / áreas verdes": String(record.parks),
     "Densidad infra x100k": record.infraPer100k.toFixed(1),
     "Tipo dato actividad": record.activityDataType,

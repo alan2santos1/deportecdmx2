@@ -112,9 +112,9 @@ const readJson = <T,>(filePath: string): T | null => {
 const defaultSportsByType: Record<string, string[]> = {
   PILARES: ["Activación física", "Zumba", "Yoga"],
   "Deportivos públicos": ["Fútbol", "Básquetbol", "Acondicionamiento"],
-  Gimnasios: ["Acondicionamiento", "Pesas"],
-  "Clubes deportivos": ["Fútbol", "Tenis", "Natación"],
-  "Escuelas de deporte": ["Iniciación deportiva", "Entrenamiento"]
+  "Gimnasio privado": ["Acondicionamiento", "Pesas"],
+  "Club deportivo privado": ["Fútbol", "Tenis", "Natación"],
+  "Academia deportiva privada": ["Iniciación deportiva", "Entrenamiento"]
 };
 
 const operationalUnitFactors = {
@@ -127,31 +127,33 @@ const operationalUnitFactors = {
 
 const denueSubtypeConfig = [
   {
-    subtype: "Clubes deportivos",
+    subtype: "Club deportivo privado",
     match: (text: string) =>
       text.includes("club deportivo") ||
-      /club\s+(de\s+)?(tenis|natacion|futbol|golf|padel|deportivo)/.test(text),
-    sports: defaultSportsByType["Clubes deportivos"]
+      /(club|centro)\s+(de\s+)?(tenis|natacion|futbol|golf|padel|deportivo|acuatico)/.test(text) ||
+      /(deportivo chapultepec|sport city club|club campestre|club de golf)/.test(text),
+    sports: defaultSportsByType["Club deportivo privado"]
   },
   {
-    subtype: "Escuelas de deporte",
+    subtype: "Academia deportiva privada",
     match: (text: string) =>
-      (text.includes("academia") || text.includes("escuela")) &&
-      /(futbol|natacion|box|taekwondo|karate|tenis|basquet|voleibol|deporte|fitness|gimnas)/.test(text),
-    sports: defaultSportsByType["Escuelas de deporte"]
+      ((text.includes("academia") || text.includes("escuela") || text.includes("studio")) &&
+      /(futbol|natacion|box|boxing|taekwondo|karate|tenis|basquet|voleibol|deporte|fitness|gimnas|pilates|yoga|dance|ballet|artes marciales)/.test(text)) ||
+      /(boxing studio|martial arts|taekwondo|karate|jiu jitsu)/.test(text),
+    sports: defaultSportsByType["Academia deportiva privada"]
   },
   {
-    subtype: "Gimnasios",
+    subtype: "Gimnasio privado",
     match: (text: string) =>
       /(gimnasio| gym |gym$|gymnasium|fitness|crossfit|pilates|spinning|box|boxing|yoga|calistenia|acondicionamiento)/.test(
         ` ${text} `
       ),
-    sports: defaultSportsByType.Gimnasios
+    sports: defaultSportsByType["Gimnasio privado"]
   }
 ] as const;
 
 const denueExcludePattern =
-  /(articulos y aparatos deportivos|ropa deportiva|suplement|nutricion|farmacia|vinos|joyeria|papeleria|musica|instrumentos|moto|automovil|llantas|bazar|figuras coleccionables)/;
+  /(articulos y aparatos deportivos|ropa deportiva|suplement|nutricion|farmacia|vinos|joyeria|papeleria|musica|instrumentos|moto|automovil|llantas|bazar|figuras coleccionables|abarrotes|carniceria|dulces|bebidas|panader|juguetes|revistas|decoracion|refacciones|calzado|ropa, excepto|productos naturistas|farmacias sin minisuper)/;
 
 const buildDenueDetails = (): InfrastructureDetailRecord[] => {
   const denue = readJson<DenueGeojson>(officialSourceConfig.denue.localPath);
@@ -183,12 +185,12 @@ const buildDenueDetails = (): InfrastructureDetailRecord[] => {
         id: `denue-${index + 1}`,
         spaceName: name,
         tipo_espacio:
-          subtypeMatch.subtype === "Gimnasios"
+          subtypeMatch.subtype === "Gimnasio privado"
             ? "gimnasio / acondicionamiento"
-            : subtypeMatch.subtype === "Clubes deportivos"
+            : subtypeMatch.subtype === "Club deportivo privado"
               ? "club deportivo"
-              : "academia / escuela de deporte",
-        infrastructureType: "Gimnasios" as const,
+            : "academia / escuela de deporte",
+        infrastructureType: subtypeMatch.subtype,
         alcaldia: normalized.alcaldia,
         originalAlcaldia: normalized.original,
         needsAlcaldiaNormalization: !normalized.matched,
@@ -196,20 +198,25 @@ const buildDenueDetails = (): InfrastructureDetailRecord[] => {
         year: 2025,
         sportsAvailable: subtypeMatch.sports,
         administrativeCount: 1,
-        administrativeLabel: subtypeMatch.subtype === "Gimnasios" ? "Establecimientos privados" : subtypeMatch.subtype,
+        administrativeLabel:
+          subtypeMatch.subtype === "Gimnasio privado"
+            ? "Gimnasios privados"
+            : subtypeMatch.subtype === "Club deportivo privado"
+              ? "Clubes deportivos privados"
+              : "Academias deportivas privadas",
         operationalUnits:
-          subtypeMatch.subtype === "Gimnasios"
+          subtypeMatch.subtype === "Gimnasio privado"
             ? operationalUnitFactors.privateGym
-            : subtypeMatch.subtype === "Clubes deportivos"
+            : subtypeMatch.subtype === "Club deportivo privado"
               ? operationalUnitFactors.privateClub
               : operationalUnitFactors.privateSchool,
         operationalLabel:
-          subtypeMatch.subtype === "Gimnasios"
+          subtypeMatch.subtype === "Gimnasio privado"
             ? "Espacios operativos privados estimados"
-            : subtypeMatch.subtype === "Clubes deportivos"
+            : subtypeMatch.subtype === "Club deportivo privado"
               ? "Unidades operativas de club estimadas"
               : "Unidades operativas de academia estimadas",
-        capacity: subtypeMatch.subtype === "Gimnasios" ? 55 : subtypeMatch.subtype === "Clubes deportivos" ? 80 : 35,
+        capacity: subtypeMatch.subtype === "Gimnasio privado" ? 55 : subtypeMatch.subtype === "Club deportivo privado" ? 80 : 35,
         capacityType: "estimada" as const,
         units: 1,
         latitude: Array.isArray(coordinates) ? coordinates[1] : null,
@@ -220,7 +227,7 @@ const buildDenueDetails = (): InfrastructureDetailRecord[] => {
         dataType: "preparado" as const,
         source: officialSourceConfig.denue.url,
         methodologicalNote:
-          "Registro descargado de DENUE CDMX y clasificado por heurística textual porque este export no expone el código SCIAN objetivo de forma usable. Debe sustituirse por un corte con SCIAN verificable para tratarse como real."
+          "Registro descargado de DENUE CDMX y clasificado por nombre/actividad observable porque este export no expone el código SCIAN objetivo de forma usable. Se integra como capa privada preparada, no como conteo oficial definitivo por SCIAN."
       }
     ];
   });
@@ -310,9 +317,9 @@ export const buildOfficialInfrastructureLayer = (): OfficialInfrastructureLayer 
     if (item.infrastructureType === "Deportivos públicos") acc[key].publicSportsCenters += 1;
     if (item.sourceDataset === officialSourceConfig.denue.dataset) {
       acc[key].privateFacilities += 1;
-      if (item.subtype === "Gimnasios") acc[key].privateGyms += 1;
-      if (item.subtype === "Clubes deportivos") acc[key].privateClubs += 1;
-      if (item.subtype === "Escuelas de deporte") acc[key].privateSchools += 1;
+      if (item.subtype === "Gimnasio privado") acc[key].privateGyms += 1;
+      if (item.subtype === "Club deportivo privado") acc[key].privateClubs += 1;
+      if (item.subtype === "Academia deportiva privada") acc[key].privateSchools += 1;
     }
     return acc;
   }, {});

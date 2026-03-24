@@ -12,6 +12,7 @@ import {
   buildInfrastructureByAlcaldia,
   buildInfrastructureDetailRows,
   buildInfrastructureExecutiveSummary,
+  buildInfrastructureStackedByAlcaldia,
   buildInfrastructureSportsSummary,
   buildMapAreaLookup,
   buildMetricByAlcaldia,
@@ -72,8 +73,8 @@ const chartMeta = {
   },
   infrastructure: {
     source: "PILARES + Deportivos Públicos CDMX + DENUE + espacios abiertos",
-    dataType: "real",
-    note: "La gráfica principal usa conteos administrativos de sedes/instalaciones. Los espacios operativos y la capacidad se muestran aparte como estimaciones analíticas."
+    dataType: "insight",
+    note: "La lectura mezcla capas reales y preparadas: público/comunitario nominal por sede o instalación, privada desde DENUE como unidades económicas registradas."
   },
   health: {
     source: "ENSANUT Continua 2022 + segmentación sexo/edad",
@@ -91,6 +92,65 @@ const chartMeta = {
     note: "La geometría es real; actividad e infraestructura territorializada combinan capas reales, preparadas y estimadas según el indicador."
   }
 } satisfies Record<string, MetricMetadata>;
+
+const mapMetricMeta: Record<TerritorialMetricKey, { label: string; source: string; dataType: string; note: string; formatter: (value: number) => string }> = {
+  activity: {
+    label: "Actividad física",
+    source: "MOPRADEF 2024-2025 + modelo territorial Deporte CDMX",
+    dataType: "estimado",
+    note: "Lectura territorial modelada; el mapa no implica causalidad, solo comparación espacial.",
+    formatter: (value) => `${value.toFixed(1)}%`
+  },
+  risk: {
+    label: "Índice de riesgo físico",
+    source: "Modelo compuesto Deporte CDMX",
+    dataType: "insight",
+    note: "Score relativo para priorización institucional; no representa causalidad ni diagnóstico.",
+    formatter: (value) => value.toFixed(1)
+  },
+  publicInfrastructure: {
+    label: "Infraestructura pública",
+    source: "PILARES + deportivos públicos + parques",
+    dataType: "real",
+    note: "Conteo administrativo visible de sedes, instalaciones y espacios públicos abiertos.",
+    formatter: (value) => formatNumber(value)
+  },
+  privateInfrastructure: {
+    label: "Infraestructura privada",
+    source: "DENUE CDMX",
+    dataType: "preparado",
+    note: "DENUE representa unidades económicas registradas, no capacidad ni uso real del espacio.",
+    formatter: (value) => formatNumber(value)
+  },
+  totalInfrastructure: {
+    label: "Infraestructura total",
+    source: "Capas públicas + privadas del dashboard",
+    dataType: "insight",
+    note: "Suma administrativa útil para lectura territorial; no debe confundirse con capacidad operativa.",
+    formatter: (value) => formatNumber(value)
+  },
+  obesity: {
+    label: "Obesidad",
+    source: "ENSANUT Continua 2022 + modelación territorial",
+    dataType: "estimado",
+    note: "Prevalencia estimada por alcaldía para focalización, no observación oficial directa.",
+    formatter: (value) => `${value.toFixed(1)}%`
+  },
+  diabetes: {
+    label: "Diabetes",
+    source: "ENSANUT Continua 2022 + modelación territorial",
+    dataType: "estimado",
+    note: "Prevalencia estimada por alcaldía para focalización, no observación oficial directa.",
+    formatter: (value) => `${value.toFixed(1)}%`
+  },
+  sedentary: {
+    label: "Sedentarismo",
+    source: "Complemento del modelo de actividad física",
+    dataType: "estimado",
+    note: "Se deriva del porcentaje activo territorializado y debe leerse como aproximación analítica.",
+    formatter: (value) => `${value.toFixed(1)}%`
+  }
+};
 
 function LayerBadge({ layer }: { layer: DataLayer }) {
   return (
@@ -183,10 +243,6 @@ export default function Dashboard() {
   const sportsTop = useMemo(() => buildSportsTop(sportsRecords, sportsLimit), [sportsRecords, sportsLimit]);
   const barriers = useMemo(() => buildBarrierDistribution(), []);
   const infrastructure = useMemo(() => buildInfrastructureByAlcaldia(territorialRecords, filters), [territorialRecords, filters]);
-  const infraStacked = useMemo(
-    () => infrastructure.map((item) => ({ name: item.name, Deportivos: item.deportivos, PILARES: item.pilares, Gimnasios: item.gimnasios, Parques: item.parques })),
-    [infrastructure]
-  );
   const infrastructureYear = useMemo(() => {
     if (filters.years.length === 0) return 2025;
     return Math.max(...filters.years.map((item) => Number(item)));
@@ -208,8 +264,23 @@ export default function Dashboard() {
   const layerSummary = useMemo(() => buildDataLayerSummary(territorialRecords), [territorialRecords]);
   const territorialTable = useMemo(() => buildFlattenedTableRows(territorialRecords), [territorialRecords]);
   const infrastructureExecutive = useMemo(() => buildInfrastructureExecutiveSummary(infrastructureDisplayDetails), [infrastructureDisplayDetails]);
+  const infraStacked = useMemo(() => buildInfrastructureStackedByAlcaldia(infrastructureDisplayDetails), [infrastructureDisplayDetails]);
   const scopedInfrastructureDetails = useMemo(
-    () => (selectedSpaceType ? infrastructureDisplayDetails.filter((item) => item.tipo_espacio === selectedSpaceType) : infrastructureDisplayDetails),
+    () => (selectedSpaceType ? infrastructureDisplayDetails.filter((item) => {
+      const category =
+        item.infrastructureType === "Gimnasio privado"
+          ? "Gimnasios privados"
+          : item.infrastructureType === "Club deportivo privado"
+            ? "Clubes deportivos"
+            : item.infrastructureType === "Academia deportiva privada"
+              ? "Academias deportivas"
+              : item.infrastructureType === "Deportivos públicos"
+                ? "Deportivos públicos"
+                : item.infrastructureType === "Parques / áreas verdes"
+                  ? "Parques"
+                  : "PILARES";
+      return category === selectedSpaceType;
+    }) : infrastructureDisplayDetails),
     [infrastructureDisplayDetails, selectedSpaceType]
   );
   const infrastructureExtremes = useMemo(() => buildInfrastructureAlcaldiaExtremes(scopedInfrastructureDetails), [scopedInfrastructureDetails]);
@@ -228,6 +299,25 @@ export default function Dashboard() {
   const mapAreaLookup = useMemo(() => buildMapAreaLookup(mapAreas), [mapAreas]);
   const activeMapGeoKey = selectedMapGeoKey && mapAreaLookup[selectedMapGeoKey] ? selectedMapGeoKey : (mapAreas[0]?.geoKey ?? null);
   const selectedMapArea = activeMapGeoKey ? mapAreaLookup[activeMapGeoKey] : undefined;
+  const selectedMapMetricMeta = mapMetricMeta[selectedMapMetric];
+  const getSelectedMapMetricValue = (record: typeof mapAreas[number]) => {
+    if (selectedMapMetric === "activity") return record.activityRate * 100;
+    if (selectedMapMetric === "risk") return record.riskScore;
+    if (selectedMapMetric === "publicInfrastructure") return record.publicInfrastructureCount;
+    if (selectedMapMetric === "privateInfrastructure") return record.privateInfrastructureCount;
+    if (selectedMapMetric === "totalInfrastructure") return record.totalInfrastructureCount;
+    if (selectedMapMetric === "obesity") return record.obesityRate * 100;
+    if (selectedMapMetric === "diabetes") return record.diabetesRate * 100;
+    return record.sedentaryRate * 100;
+  };
+  const mapRanking = useMemo(
+    () => [...mapAreas].sort((a, b) => getSelectedMapMetricValue(b) - getSelectedMapMetricValue(a)),
+    [mapAreas, selectedMapMetric]
+  );
+  const selectedMapRank = useMemo(
+    () => (selectedMapArea ? mapRanking.findIndex((item) => item.geoKey === selectedMapArea.geoKey) + 1 : null),
+    [mapRanking, selectedMapArea]
+  );
   const selectedMapInfrastructure = useMemo(
     () => (selectedMapArea ? infrastructureDetails.filter((item) => item.alcaldia === selectedMapArea.alcaldia && item.year === mapYear) : []),
     [infrastructureDetails, mapYear, selectedMapArea]
@@ -337,6 +427,8 @@ export default function Dashboard() {
   const visiblePrivateUnits = scopedInfrastructureDetails
     .filter((item) => item.sourceDataset === "Directorio Estadístico de Unidades Económicas CDMX")
     .reduce((sum, item) => sum + item.administrativeCount, 0);
+  const visiblePrivateShare = visibleInfrastructureAdministrative > 0 ? (visiblePrivateUnits / visibleInfrastructureAdministrative) * 100 : 0;
+  const visiblePublicShare = visibleInfrastructureAdministrative > 0 ? (visiblePublicUnits / visibleInfrastructureAdministrative) * 100 : 0;
   const pilaresRealSites = scopedInfrastructureDetails
     .filter((item) => item.infrastructureType === "PILARES")
     .reduce((sum, item) => sum + item.administrativeCount, 0);
@@ -502,8 +594,8 @@ export default function Dashboard() {
             ]}
           />
           <div className="grid gap-4 lg:grid-cols-2">
-            <ChartCard title="Desglose por tipo" helper="Conteo administrativo de sedes, instalaciones y establecimientos visibles" tooltip={chartMeta.infrastructure}>
-              <StackedBar data={infraStacked} categories={["Deportivos", "PILARES", "Gimnasios", "Parques"]} />
+            <ChartCard title="Desglose por tipo" helper="Conteo administrativo separado entre infraestructura pública/comunitaria y privada" tooltip={chartMeta.infrastructure}>
+              <StackedBar data={infraStacked} categories={["PILARES", "Deportivos públicos", "Gimnasios privados", "Clubes deportivos", "Academias deportivas", "Parques"]} />
             </ChartCard>
             <ChartCard title="Deportes disponibles en infraestructura" helper="Lectura consolidada del detalle de espacios" tooltip={chartMeta.infrastructure}>
               <DistributionBar data={infrastructureSports.slice(0, 8)} />
@@ -514,9 +606,13 @@ export default function Dashboard() {
               <div className="text-base font-semibold text-ink-900">Cómo leer PILARES y métricas similares</div>
               <LayerBadge layer="real" />
               <LayerBadge layer="estimado" />
+              <LayerBadge layer="preparado" />
             </div>
             <div className="text-sm leading-6 text-ink-700">
               Las sedes PILARES se contabilizan como registro real. Los espacios operativos son una aproximación analítica para estimar capacidad territorial y no equivalen al número oficial de sedes. El mismo criterio se aplica cuando una instalación real requiere una capa operativa o de capacidad para análisis.
+            </div>
+            <div className="text-sm leading-6 text-ink-700">
+              DENUE representa unidades económicas registradas, no capacidad ni uso real del espacio. Mientras el extracto oficial disponible no exponga SCIAN verificable, gimnasios, clubes y academias privadas se mantienen como capa preparada.
             </div>
           </Card>
           <div className="grid gap-4 xl:grid-cols-[1.1fr_0.9fr]">
@@ -622,7 +718,10 @@ export default function Dashboard() {
                       <div className="text-sm font-semibold text-ink-900">Infraestructura pública y comunitaria</div>
                       <div className="mt-1 text-xs text-ink-600">PILARES y deportivos públicos se reportan como sedes/instalaciones reales; las capas operativas se presentan aparte.</div>
                     </div>
-                    <div className="text-2xl font-semibold text-ink-900">{formatNumber(visiblePublicUnits)}</div>
+                    <div className="text-right">
+                      <div className="text-2xl font-semibold text-ink-900">{formatNumber(visiblePublicUnits)}</div>
+                      <div className="text-xs text-ink-600">{visiblePublicShare.toFixed(1)}% del total visible</div>
+                    </div>
                   </div>
                 </div>
                 <div className="rounded-2xl border border-mist-200 bg-white px-4 py-4">
@@ -631,7 +730,10 @@ export default function Dashboard() {
                       <div className="text-sm font-semibold text-ink-900">Infraestructura privada</div>
                       <div className="mt-1 text-xs text-ink-600">DENUE CDMX descargado y normalizado por alcaldía; mientras no entre un corte con SCIAN verificable se reporta como preparado.</div>
                     </div>
-                    <div className="text-2xl font-semibold text-ink-900">{formatNumber(visiblePrivateUnits)}</div>
+                    <div className="text-right">
+                      <div className="text-2xl font-semibold text-ink-900">{formatNumber(visiblePrivateUnits)}</div>
+                      <div className="text-xs text-ink-600">{visiblePrivateShare.toFixed(1)}% del total visible</div>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -647,7 +749,7 @@ export default function Dashboard() {
                   </div>
                   <div>
                     <div className="meta-label">Nota metodológica</div>
-                    <div className="meta-value">La comparación pública vs privada es útil para lectura ejecutiva, pero no debe interpretarse como aforo equivalente entre sectores.</div>
+                    <div className="meta-value">DENUE representa unidades económicas registradas, no capacidad ni uso real del espacio. La comparación público vs privado es útil para lectura ejecutiva, pero no debe interpretarse como aforo equivalente entre sectores.</div>
                   </div>
                 </div>
               </div>
@@ -666,7 +768,12 @@ export default function Dashboard() {
                   {[
                     { key: "activity" as const, label: "Actividad" },
                     { key: "risk" as const, label: "Riesgo" },
-                    { key: "infrastructure" as const, label: "Infraestructura" }
+                    { key: "publicInfrastructure" as const, label: "Infra pública" },
+                    { key: "privateInfrastructure" as const, label: "Infra privada" },
+                    { key: "totalInfrastructure" as const, label: "Infra total" },
+                    { key: "obesity" as const, label: "Obesidad" },
+                    { key: "diabetes" as const, label: "Diabetes" },
+                    { key: "sedentary" as const, label: "Sedentarismo" }
                   ].map((item) => (
                     <button
                       key={item.key}
@@ -690,15 +797,15 @@ export default function Dashboard() {
                 <div className="meta-grid">
                   <div>
                     <div className="meta-label">Fuente</div>
-                    <div className="meta-value">{chartMeta.map.source}</div>
+                    <div className="meta-value">{selectedMapMetricMeta.source}</div>
                   </div>
                   <div>
                     <div className="meta-label">Tipo de dato</div>
-                    <div className="meta-value">Geometría real; actividad estimada; riesgo insight; privada DENUE preparada</div>
+                    <div className="meta-value">{selectedMapMetricMeta.dataType}</div>
                   </div>
                   <div>
                     <div className="meta-label">Nota metodológica</div>
-                    <div className="meta-value">{chartMeta.map.note}</div>
+                    <div className="meta-value">{selectedMapMetricMeta.note}</div>
                   </div>
                 </div>
               </div>
@@ -707,16 +814,21 @@ export default function Dashboard() {
               <div>
                 <div className="text-base font-semibold text-ink-900">Resumen rápido por alcaldía</div>
                 <div className="text-sm leading-6 text-ink-600">
-                  Selecciona una alcaldía en el mapa para revisar actividad, riesgo y contraste público/privado.
+                  Selecciona una alcaldía en el mapa para revisar actividad, riesgo, infraestructura y ranking territorial de la métrica activa.
                 </div>
               </div>
               {selectedMapArea ? (
                 <>
                   <div className="rounded-2xl border border-mist-200 bg-white px-4 py-4">
                     <div className="text-lg font-semibold text-ink-900">{selectedMapArea.alcaldia}</div>
-                    <div className="mt-2 text-sm text-ink-600">`geoKey`: {selectedMapArea.geoKey}</div>
+                    <div className="mt-2 text-sm text-ink-600">`geoKey`: {selectedMapArea.geoKey} · ranking {selectedMapRank ?? "-"} de {mapRanking.length} en {selectedMapMetricMeta.label.toLowerCase()}</div>
                   </div>
                   <div className="grid gap-3 md:grid-cols-2">
+                    <div className="rounded-2xl border border-mist-200 bg-white px-4 py-4 md:col-span-2">
+                      <div className="text-[11px] font-semibold uppercase tracking-wide text-ink-600">Métrica activa</div>
+                      <div className="mt-2 text-2xl font-semibold text-ink-900">{selectedMapMetricMeta.formatter(getSelectedMapMetricValue(selectedMapArea))}</div>
+                      <div className="mt-2 text-xs text-ink-600">{selectedMapMetricMeta.label} · {selectedMapMetricMeta.dataType}</div>
+                    </div>
                     <div className="rounded-2xl border border-mist-200 bg-white px-4 py-4">
                       <div className="text-[11px] font-semibold uppercase tracking-wide text-ink-600">Actividad</div>
                       <div className="mt-2 text-2xl font-semibold text-ink-900">{(selectedMapArea.activityRate * 100).toFixed(1)}%</div>
@@ -747,6 +859,21 @@ export default function Dashboard() {
                       <div className="mt-2 text-2xl font-semibold text-ink-900">{formatNumber(publicSportsMapSites)}</div>
                       <div className="mt-2 text-xs text-ink-600">Instalaciones reales integradas</div>
                     </div>
+                    <div className="rounded-2xl border border-mist-200 bg-white px-4 py-4">
+                      <div className="text-[11px] font-semibold uppercase tracking-wide text-ink-600">Obesidad</div>
+                      <div className="mt-2 text-2xl font-semibold text-ink-900">{(selectedMapArea.obesityRate * 100).toFixed(1)}%</div>
+                      <div className="mt-2 text-xs text-ink-600">Estimado territorial</div>
+                    </div>
+                    <div className="rounded-2xl border border-mist-200 bg-white px-4 py-4">
+                      <div className="text-[11px] font-semibold uppercase tracking-wide text-ink-600">Diabetes</div>
+                      <div className="mt-2 text-2xl font-semibold text-ink-900">{(selectedMapArea.diabetesRate * 100).toFixed(1)}%</div>
+                      <div className="mt-2 text-xs text-ink-600">Estimado territorial</div>
+                    </div>
+                    <div className="rounded-2xl border border-mist-200 bg-white px-4 py-4">
+                      <div className="text-[11px] font-semibold uppercase tracking-wide text-ink-600">Sedentarismo</div>
+                      <div className="mt-2 text-2xl font-semibold text-ink-900">{(selectedMapArea.sedentaryRate * 100).toFixed(1)}%</div>
+                      <div className="mt-2 text-xs text-ink-600">Estimado territorial</div>
+                    </div>
                     <div className="rounded-2xl border border-mist-200 bg-white px-4 py-4 md:col-span-2">
                       <div className="flex items-center justify-between gap-3">
                         <div>
@@ -759,6 +886,11 @@ export default function Dashboard() {
                         </div>
                       </div>
                       <div className="mt-2 text-xs text-ink-600">La capa privada proviene de DENUE y permanece etiquetada como preparada hasta validar SCIAN objetivo. Las cifras operativas no equivalen a sedes administrativas.</div>
+                    </div>
+                    <div className="rounded-2xl border border-mist-200 bg-mist-100/70 px-4 py-4 md:col-span-2">
+                      <div className="text-[11px] font-semibold uppercase tracking-wide text-ink-600">Cómo leer esta vista</div>
+                      <div className="mt-2 text-sm leading-6 text-ink-700">{selectedMapMetricMeta.note}</div>
+                      <div className="mt-2 text-xs text-ink-600">El mapa muestra diferencias territoriales; no implica causalidad entre infraestructura, salud y actividad.</div>
                     </div>
                   </div>
                 </>

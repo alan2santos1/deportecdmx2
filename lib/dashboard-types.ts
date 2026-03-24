@@ -3,7 +3,9 @@ export type DataLayer = "real" | "base_oficial" | "estimado" | "preparado" | "pr
 export type InfrastructureType =
   | "PILARES"
   | "Deportivos públicos"
-  | "Gimnasios"
+  | "Gimnasio privado"
+  | "Club deportivo privado"
+  | "Academia deportiva privada"
   | "Parques / áreas verdes";
 
 export type MetricMetadata = {
@@ -146,8 +148,14 @@ export type MapAreaRecord = {
   geoKey: string;
   centroid: { lat: number; lon: number };
   activityRate: number;
+  obesityRate: number;
+  diabetesRate: number;
+  sedentaryRate: number;
   riskScore: number;
   riskLevel: "Verde" | "Amarillo" | "Rojo";
+  publicInfrastructureCount: number;
+  privateInfrastructureCount: number;
+  totalInfrastructureCount: number;
   infraPer100k: number;
   dataType: DataLayer;
   source: string;

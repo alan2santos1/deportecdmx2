@@ -2,7 +2,15 @@
 
 import type { MapAreaRecord, MapGeometryFeature } from "../lib/dashboard-types";
 
-export type TerritorialMetricKey = "activity" | "risk" | "infrastructure";
+export type TerritorialMetricKey =
+  | "activity"
+  | "risk"
+  | "publicInfrastructure"
+  | "privateInfrastructure"
+  | "totalInfrastructure"
+  | "obesity"
+  | "diabetes"
+  | "sedentary";
 
 type TerritorialMapProps = {
   geometry: MapGeometryFeature[];
@@ -15,25 +23,45 @@ type TerritorialMapProps = {
 const getMetricValue = (area: MapAreaRecord, metric: TerritorialMetricKey) => {
   if (metric === "activity") return area.activityRate * 100;
   if (metric === "risk") return area.riskScore;
-  return area.infraPer100k;
+  if (metric === "publicInfrastructure") return area.publicInfrastructureCount;
+  if (metric === "privateInfrastructure") return area.privateInfrastructureCount;
+  if (metric === "totalInfrastructure") return area.totalInfrastructureCount;
+  if (metric === "obesity") return area.obesityRate * 100;
+  if (metric === "diabetes") return area.diabetesRate * 100;
+  return area.sedentaryRate * 100;
 };
 
 const formatMetricValue = (area: MapAreaRecord | undefined, metric: TerritorialMetricKey) => {
   if (!area) return "Sin dato";
   if (metric === "activity") return `${(area.activityRate * 100).toFixed(1)}%`;
   if (metric === "risk") return area.riskScore.toFixed(1);
-  return area.infraPer100k.toFixed(1);
+  if (metric === "publicInfrastructure") return `${area.publicInfrastructureCount}`;
+  if (metric === "privateInfrastructure") return `${area.privateInfrastructureCount}`;
+  if (metric === "totalInfrastructure") return `${area.totalInfrastructureCount}`;
+  if (metric === "obesity") return `${(area.obesityRate * 100).toFixed(1)}%`;
+  if (metric === "diabetes") return `${(area.diabetesRate * 100).toFixed(1)}%`;
+  return `${(area.sedentaryRate * 100).toFixed(1)}%`;
 };
 
 const metricLabels: Record<TerritorialMetricKey, string> = {
   activity: "Actividad",
   risk: "Riesgo",
-  infrastructure: "Infraestructura"
+  publicInfrastructure: "Infraestructura pública",
+  privateInfrastructure: "Infraestructura privada",
+  totalInfrastructure: "Infraestructura total",
+  obesity: "Obesidad",
+  diabetes: "Diabetes",
+  sedentary: "Sedentarismo"
 };
 
 const gradientPalettes: Record<Exclude<TerritorialMetricKey, "risk">, string[]> = {
   activity: ["#dff6f4", "#95ddd7", "#39b9b0", "#0f766e"],
-  infrastructure: ["#e0f2fe", "#7dd3fc", "#0ea5e9", "#075985"]
+  publicInfrastructure: ["#e0f2fe", "#7dd3fc", "#0ea5e9", "#075985"],
+  privateInfrastructure: ["#fef3c7", "#fcd34d", "#f59e0b", "#92400e"],
+  totalInfrastructure: ["#e9d5ff", "#c084fc", "#9333ea", "#581c87"],
+  obesity: ["#fee2e2", "#fca5a5", "#ef4444", "#991b1b"],
+  diabetes: ["#ffedd5", "#fdba74", "#f97316", "#9a3412"],
+  sedentary: ["#fce7f3", "#f9a8d4", "#ec4899", "#831843"]
 };
 
 const riskPalette = {
@@ -110,6 +138,7 @@ export default function TerritorialMap({ geometry, areas, metric, selectedGeoKey
                 strokeWidth={isSelected ? 3.2 : 1.2}
                 className="cursor-pointer transition-opacity duration-150 hover:opacity-85"
                 onClick={() => onSelect(feature.geoKey)}
+                onMouseEnter={() => onSelect(feature.geoKey)}
               >
                 <title>{`${feature.alcaldia} · ${metricLabels[metric]}: ${formatMetricValue(area, metric)}`}</title>
               </path>

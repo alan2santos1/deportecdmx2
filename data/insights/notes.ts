@@ -23,6 +23,13 @@ export const sourceRegistry: SourceRegistryEntry[] = [
     note: "Mientras el export no exponga SCIAN verificable, la capa privada debe leerse como preparada y no como conteo oficial definitivo."
   },
   {
+    metric: "Clubes y academias privadas",
+    layer: "preparado",
+    source: "DENUE CDMX descargado + clasificación textual por nombre/actividad",
+    coverage: "Subtipos privados compatibles con el dashboard ejecutivo",
+    note: "Se distinguen gimnasios, clubes y academias sin mezclarlos con infraestructura pública, pero no equivalen a una clasificación oficial por SCIAN verificada."
+  },
+  {
     metric: "Parques y áreas verdes",
     layer: "real",
     source: "Inventario de áreas verdes / espacio público CDMX",

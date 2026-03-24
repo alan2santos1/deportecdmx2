@@ -38,7 +38,7 @@ const meanCoverage =
 const inferDominantInfraType = (item: typeof alcaldiasSeed[number]): TerritorialRecord["dominantInfraType"] => {
   const maxValue = Math.max(item.publicSportsCenters, item.pilares, item.privateGyms, item.parks);
   if (item.publicSportsCenters === maxValue) return "Deportivos públicos";
-  if (item.privateGyms === maxValue) return "Gimnasios";
+  if (item.privateGyms === maxValue) return "Gimnasio privado";
   if (item.parks === maxValue) return "Parques / áreas verdes";
   return "PILARES";
 };
@@ -208,15 +208,37 @@ const infrastructureTemplates = [
     operationalLabel: "Espacios operativos deportivos"
   },
   {
-    infrastructureType: "Gimnasios" as const,
+    infrastructureType: "Gimnasio privado" as const,
     tipo_espacio: "gimnasio",
     source: "DENUE / SCIAN",
     note: "Oferta privada con acceso condicionado por costo.",
     sportsAvailable: ["Acondicionamiento", "Spinning", "Pesas", "Clases grupales"],
     capacityFactor: 55,
     operationalFactor: 2,
-    administrativeLabel: "Establecimientos privados",
+    administrativeLabel: "Gimnasios privados",
     operationalLabel: "Espacios operativos privados"
+  },
+  {
+    infrastructureType: "Club deportivo privado" as const,
+    tipo_espacio: "club deportivo",
+    source: "DENUE / SCIAN",
+    note: "Oferta privada deportiva asociativa o de membresía.",
+    sportsAvailable: ["Fútbol", "Tenis", "Natación", "Pádel"],
+    capacityFactor: 80,
+    operationalFactor: 3,
+    administrativeLabel: "Clubes deportivos privados",
+    operationalLabel: "Espacios operativos de club"
+  },
+  {
+    infrastructureType: "Academia deportiva privada" as const,
+    tipo_espacio: "academia deportiva",
+    source: "DENUE / SCIAN",
+    note: "Oferta privada orientada a enseñanza, entrenamiento o iniciación deportiva.",
+    sportsAvailable: ["Box", "Taekwondo", "Natación", "Fútbol formativo"],
+    capacityFactor: 35,
+    operationalFactor: 2,
+    administrativeLabel: "Academias deportivas privadas",
+    operationalLabel: "Espacios operativos de academia"
   },
   {
     infrastructureType: "Parques / áreas verdes" as const,
@@ -239,7 +261,9 @@ const buildInfrastructureDetails = (): InfrastructureDetailRecord[] => {
       const counts = {
         "PILARES": alcaldia.pilares,
         "Deportivos públicos": alcaldia.publicSportsCenters,
-        "Gimnasios": alcaldia.privateGyms,
+        "Gimnasio privado": Math.round(alcaldia.privateGyms * 0.72),
+        "Club deportivo privado": Math.round(alcaldia.privateGyms * 0.18),
+        "Academia deportiva privada": Math.max(1, alcaldia.privateGyms - Math.round(alcaldia.privateGyms * 0.72) - Math.round(alcaldia.privateGyms * 0.18)),
         "Parques / áreas verdes": alcaldia.parks
       } as const;
 
@@ -254,11 +278,13 @@ const buildInfrastructureDetails = (): InfrastructureDetailRecord[] => {
               ? (officialInfrastructure.summaryByAlcaldia[alcaldia.name]?.publicSportsCenters ?? counts[template.infrastructureType])
               : counts[template.infrastructureType];
         const safeUnits =
-          template.infrastructureType === "Gimnasios" && yearSeed.year === 2025
-            ? officialInfrastructure.summaryByAlcaldia[alcaldia.name]?.privateFacilities ?? counts[template.infrastructureType]
-            : template.infrastructureType === "Gimnasios"
-              ? counts[template.infrastructureType]
-              : units;
+          template.infrastructureType === "Gimnasio privado" && yearSeed.year === 2025
+            ? officialInfrastructure.summaryByAlcaldia[alcaldia.name]?.privateGyms ?? counts[template.infrastructureType]
+            : template.infrastructureType === "Club deportivo privado" && yearSeed.year === 2025
+              ? officialInfrastructure.summaryByAlcaldia[alcaldia.name]?.privateClubs ?? counts[template.infrastructureType]
+              : template.infrastructureType === "Academia deportiva privada" && yearSeed.year === 2025
+                ? officialInfrastructure.summaryByAlcaldia[alcaldia.name]?.privateSchools ?? counts[template.infrastructureType]
+                : counts[template.infrastructureType] ?? units;
         const capacity = round(safeUnits * template.capacityFactor);
         return {
           id: `${yearSeed.year}-${alcaldia.name}-${template.infrastructureType}`,
@@ -276,7 +302,7 @@ const buildInfrastructureDetails = (): InfrastructureDetailRecord[] => {
           capacityType: "estimada",
           units: safeUnits,
           geoKey: alcaldia.name.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]+/g, "-"),
-          dataType: template.infrastructureType === "Gimnasios" ? "preparado" : "real",
+          dataType: template.infrastructureType.includes("privado") ? "preparado" : "real",
           source: template.source,
           methodologicalNote:
             yearSeed.year === 2026
@@ -325,7 +351,12 @@ const buildMapAreas = (territorialRecords: TerritorialRecord[]): MapAreaRecord[]
     const population = items.reduce((sum, item) => sum + item.population, 0) || 1;
     const activityRate = items.reduce((sum, item) => sum + item.activeRate * item.population, 0) / population;
     const obesityRate = items.reduce((sum, item) => sum + item.obesityRate * item.population, 0) / population;
+    const diabetesRate = items.reduce((sum, item) => sum + item.diabetesRate * item.population, 0) / population;
     const sedentaryRate = items.reduce((sum, item) => sum + item.sedentaryRate * item.population, 0) / population;
+    const sample = items[0];
+    const publicInfrastructureCount = (sample?.pilares ?? 0) + (sample?.publicSportsCenters ?? 0) + (sample?.parks ?? 0);
+    const privateInfrastructureCount = sample?.privateGyms ?? 0;
+    const totalInfrastructureCount = publicInfrastructureCount + privateInfrastructureCount;
     const infraPer100k = items[0]?.infraPer100k ?? 0;
     const score = ((1 - activityRate) * 35) + (obesityRate * 30) + (sedentaryRate * 20) + ((1 / Math.max(infraPer100k, 1)) * 150);
     const riskLevel: MapAreaRecord["riskLevel"] = score >= 33 ? "Rojo" : score >= 26 ? "Amarillo" : "Verde";
@@ -335,12 +366,18 @@ const buildMapAreas = (territorialRecords: TerritorialRecord[]): MapAreaRecord[]
       geoKey: alcaldia.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]+/g, "-"),
       centroid: seed.centroid,
       activityRate,
+      obesityRate,
+      diabetesRate,
+      sedentaryRate,
       riskScore: Number(score.toFixed(1)),
       riskLevel,
+      publicInfrastructureCount,
+      privateInfrastructureCount,
+      totalInfrastructureCount,
       infraPer100k,
       dataType: Number(yearString) === 2026 ? "proyectado" : "insight",
       source: "Modelo territorial Deporte CDMX listo para choropleth o heatmap",
-      methodologicalNote: "Registro preparado para capa de mapa por alcaldía sin depender aún de geometría externa."
+      methodologicalNote: "Registro territorial listo para mapa por alcaldía. La geometría es oficial; actividad y salud son modeladas; la infraestructura privada depende del corte DENUE disponible."
     };
   });
 };
