@@ -1,462 +1,654 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { ColumnDef } from "@tanstack/react-table";
-import { useWorkbookStore } from "../store/useWorkbookStore";
+import type { ColumnDef } from "@tanstack/react-table";
 import {
-  applyFilters,
-  buildDatasetInsights,
-  buildHealthComparison,
-  buildInfrastructureBreakdown,
-  buildMethodologyHighlights,
-  buildPanoramaKpis,
+  buildBarrierDistribution,
+  buildDataLayerSummary,
+  buildFilterConfig,
+  buildFlattenedTableRows,
+  buildHealthDistribution,
+  buildInfrastructureByAlcaldia,
+  buildInfrastructureDetailRows,
+  buildInfrastructureSportsSummary,
+  buildMetricByAlcaldia,
+  buildOverviewKpis,
   buildRateDistribution,
   buildRiskIndex,
-  buildSportFilterConfig,
-  buildSportsParticipation,
-  buildStatusDistribution,
-  filterSportsSheet
-} from "../lib/deporte";
-import { formatPercent } from "../lib/utils";
-import Card from "./ui/Card";
-import MultiSelect from "./ui/MultiSelect";
-import DataTable from "./ui/DataTable";
-import { ChartCard, DistributionBar, DistributionPie } from "./Charts";
+  buildSportsTop,
+  buildYearTrend,
+  emptyFilters,
+  filterHealthProfiles,
+  filterInfrastructureDetails,
+  filterSportsRecords,
+  filterTerritorialRecords
+} from "../lib/dashboard-selectors";
+import type { DashboardFilterState, DataLayer, MetricMetadata } from "../lib/dashboard-types";
+import { useDashboardStore } from "../store/useDashboardStore";
+import { formatNumber } from "../lib/utils";
+import { ChartCard, DistributionBar, DistributionPie, StackedBar } from "./Charts";
 import KpiGrid from "./KpiGrid";
+import Card from "./ui/Card";
+import DataTable from "./ui/DataTable";
+import MultiSelect from "./ui/MultiSelect";
+import Tabs from "./ui/Tabs";
 
-const HEALTH_TOOLTIP =
-  "Fuente principal: ENSANUT 2022. Indicadores estimados a partir de ENSANUT y distribuciones poblacionales. No son mediciones directas por alcaldía.";
-const ACTIVITY_TOOLTIP =
-  "Fuente principal: MOPRADEF 2024-2025. La actividad por alcaldía es una estimación controlada anclada a sexo, edad e infraestructura per cápita.";
-const INFRA_TOOLTIP =
-  "Infraestructura consolidada desde deportivos públicos, PILARES, gimnasios DENUE y parques con equipamiento preparados para el MVP.";
+const sections = ["Panorama", "Actividad", "Infraestructura", "Salud", "Riesgo", "Metodología", "Datos"] as const;
+type SectionKey = (typeof sections)[number];
 
-export default function Dashboard() {
-  const { workbook, modeledBase, modeledColumns, semantic, presentationMode } = useWorkbookStore();
-  const [filters, setFilters] = useState<Record<string, string[]>>({});
-  const [filtersCollapsed, setFiltersCollapsed] = useState(false);
-  const [sportsLimit, setSportsLimit] = useState<5 | 10>(5);
+const layerStyles: Record<DataLayer, string> = {
+  real: "bg-emerald-50 text-emerald-700 border-emerald-200",
+  base_oficial: "bg-sky-50 text-sky-700 border-sky-200",
+  estimado: "bg-amber-50 text-amber-700 border-amber-200",
+  preparado: "bg-slate-100 text-slate-700 border-slate-200",
+  proyectado: "bg-fuchsia-50 text-fuchsia-700 border-fuchsia-200",
+  insight: "bg-rose-50 text-rose-700 border-rose-200"
+};
 
-  const sportsSheet = workbook?.sheets["DEPORTES_POPULARES"] ?? null;
-  const infrastructureSheet = workbook?.sheets["INFRAESTRUCTURA_ALCALDIA"] ?? null;
+const chartMeta = {
+  activity: {
+    source: "MOPRADEF 2024-2025 + modelo territorial Deporte CDMX",
+    dataType: "estimado",
+    note: "2025 presenta quiebre metodológico y 2020-2023 se muestran como preparación retrospectiva."
+  },
+  activityTimeline: {
+    source: "Serie 2020-2026 con benchmarks MOPRADEF y proyección 2026",
+    dataType: "proyectado",
+    note: "2026 es planeación; 2020-2023 no son observaciones territoriales directas."
+  },
+  sports: {
+    source: "Mezcla disciplinaria preparada para el MVP institucional",
+    dataType: "preparado",
+    note: "No sustituye una fuente oficial única por deporte y alcaldía."
+  },
+  barriers: {
+    source: "MOPRADEF 2024",
+    dataType: "base_oficial",
+    note: "Dato agregado nacional/urbano usado como referencia operativa."
+  },
+  infrastructure: {
+    source: "PILARES + Deportivos Públicos CDMX + DENUE + espacios abiertos",
+    dataType: "real",
+    note: "La capacidad es estimada cuando no existe aforo consolidado."
+  },
+  health: {
+    source: "ENSANUT Continua 2022 + segmentación sexo/edad",
+    dataType: "estimado",
+    note: "La territorialización por alcaldía es analítica y no una publicación oficial directa."
+  },
+  risk: {
+    source: "Modelo compuesto Deporte CDMX",
+    dataType: "insight",
+    note: "Score = actividad inversa + obesidad + sedentarismo + infraestructura per cápita inversa."
+  },
+  map: {
+    source: "Dataset map-ready por alcaldía",
+    dataType: "insight",
+    note: "Incluye `geoKey`, centroide, actividad, riesgo e infraestructura para futura capa cartográfica."
+  }
+} satisfies Record<string, MetricMetadata>;
 
-  const filterConfig = useMemo(
-    () => buildSportFilterConfig(modeledBase, semantic, sportsSheet, infrastructureSheet),
-    [modeledBase, semantic, sportsSheet, infrastructureSheet]
+function LayerBadge({ layer }: { layer: DataLayer }) {
+  return (
+    <span className={`inline-flex rounded-full border px-2 py-1 text-[11px] font-semibold ${layerStyles[layer]}`}>
+      {layer.replace("_", " ")}
+    </span>
   );
-  const filteredRows = useMemo(() => applyFilters(modeledBase, filters), [modeledBase, filters]);
-  const filteredSportsRows = useMemo(
-    () => (sportsSheet ? filterSportsSheet(sportsSheet.rows, filters) : []),
-    [sportsSheet, filters]
-  );
-  const selectedInfraTypes = semantic.tipoInfraestructura ? (filters[semantic.tipoInfraestructura] ?? []) : [];
+}
 
-  const kpis = useMemo(() => buildPanoramaKpis(filteredRows, semantic), [filteredRows, semantic]);
-  const bySexo = useMemo(() => buildRateDistribution(filteredRows, semantic.sexo, semantic), [filteredRows, semantic]);
-  const byEdad = useMemo(() => buildRateDistribution(filteredRows, semantic.grupoEdad, semantic), [filteredRows, semantic]);
-  const byAlcaldia = useMemo(() => buildRateDistribution(filteredRows, semantic.alcaldia, semantic), [filteredRows, semantic]);
-  const infrastructureBreakdown = useMemo(
-    () => buildInfrastructureBreakdown(filteredRows, semantic),
-    [filteredRows, semantic]
+function NoteBlock({ title, body }: { title: string; body: string }) {
+  return (
+    <div className="rounded-2xl border border-mist-200 bg-mist-100/70 p-4">
+      <div className="text-sm font-semibold text-ink-900">{title}</div>
+      <div className="mt-2 text-sm leading-6 text-ink-700">{body}</div>
+    </div>
   );
-  const obesityByAlcaldia = useMemo(() => buildHealthComparison(filteredRows, semantic, "obesidad"), [filteredRows, semantic]);
-  const overweightByAlcaldia = useMemo(() => buildHealthComparison(filteredRows, semantic, "sobrepeso"), [filteredRows, semantic]);
-  const diabetesByAlcaldia = useMemo(() => buildHealthComparison(filteredRows, semantic, "diabetes"), [filteredRows, semantic]);
-  const sedentaryByAlcaldia = useMemo(() => buildHealthComparison(filteredRows, semantic, "sedentarismo"), [filteredRows, semantic]);
-  const sportsParticipation = useMemo(
-    () => buildSportsParticipation(sportsSheet, filters, sportsLimit),
-    [sportsSheet, filters, sportsLimit]
-  );
-  const insights = useMemo(() => buildDatasetInsights(filteredRows, semantic), [filteredRows, semantic]);
-  const methodologyHighlights = useMemo(() => buildMethodologyHighlights(filteredRows), [filteredRows]);
-  const activityStatus = useMemo(() => buildStatusDistribution(filteredRows, "ClasificacionPersonasActivas"), [filteredRows]);
-  const riskIndex = useMemo(() => buildRiskIndex(filteredRows, semantic), [filteredRows, semantic]);
-  const healthSummary = useMemo(
-    () => [
-      {
-        label: "Obesidad promedio",
-        value: obesityByAlcaldia.length > 0 ? `${(obesityByAlcaldia.reduce((sum, item) => sum + item.value, 0) / obesityByAlcaldia.length).toFixed(1)}%` : "Sin dato",
-        helper: "Referencia territorial preparada"
-      },
-      {
-        label: "Sobrepeso promedio",
-        value: overweightByAlcaldia.length > 0 ? `${(overweightByAlcaldia.reduce((sum, item) => sum + item.value, 0) / overweightByAlcaldia.length).toFixed(1)}%` : "Sin dato",
-        helper: "Referencia territorial preparada"
-      },
-      {
-        label: "Diabetes promedio",
-        value: diabetesByAlcaldia.length > 0 ? `${(diabetesByAlcaldia.reduce((sum, item) => sum + item.value, 0) / diabetesByAlcaldia.length).toFixed(1)}%` : "Sin dato",
-        helper: "Referencia territorial preparada"
-      },
-      {
-        label: "Sedentarismo estimado",
-        value: sedentaryByAlcaldia.length > 0 ? `${(sedentaryByAlcaldia.reduce((sum, item) => sum + item.value, 0) / sedentaryByAlcaldia.length).toFixed(1)}%` : "Sin dato",
-        helper: "Calculado como complemento de actividad"
-      }
-    ],
-    [obesityByAlcaldia, overweightByAlcaldia, diabetesByAlcaldia, sedentaryByAlcaldia]
-  );
+}
 
-  const infrastructureCards = useMemo(() => {
-    return infrastructureBreakdown.map((item) => {
-      const rows = [
-        { label: "deportivos", value: item.deportivos },
-        { label: "PILARES", value: item.pilares },
-        { label: "gimnasios", value: item.gimnasios },
-        { label: "parques", value: item.parques }
-      ].filter((row) => {
-        if (selectedInfraTypes.length === 0) return true;
-        return selectedInfraTypes.some((selected) => {
-          const map: Record<string, string> = {
-            "Deportivos públicos": "deportivos",
-            PILARES: "PILARES",
-            Gimnasios: "gimnasios",
-            "Parques con equipamiento": "parques"
-          };
-          return map[selected] === row.label;
-        });
-      });
-      const total = rows.reduce((sum, row) => sum + row.value, 0);
-      return { ...item, rows, visibleTotal: total };
-    });
-  }, [infrastructureBreakdown, selectedInfraTypes]);
-
-  const previewColumns = useMemo<ColumnDef<Record<string, string>, string>[]>(() => {
-    return modeledColumns.map((column) => ({
-      header: column,
-      accessorKey: column
-    }));
-  }, [modeledColumns]);
-
-  const exportFilteredCsv = (visibleColumns: string[]) => {
-    const columns = visibleColumns.length > 0 ? visibleColumns : modeledColumns;
-    const header = columns.join(",");
-    const rows = filteredRows.map((row) =>
-      columns
-        .map((column) => {
-          const value = row[column] ?? "";
-          const escaped = String(value).replace(/"/g, '""');
-          return `"${escaped}"`;
-        })
-        .join(",")
-    );
-    const csv = [header, ...rows].join("\n");
+function ExportableTable({
+  title,
+  columns,
+  data,
+  fileName,
+  presentationMode,
+  pageSize = 8
+}: {
+  title: string;
+  columns: ColumnDef<Record<string, string>, string>[];
+  data: Record<string, string>[];
+  fileName: string;
+  presentationMode: boolean;
+  pageSize?: number;
+}) {
+  const exportCsv = (visibleColumns: string[]) => {
+    const columnsToUse = visibleColumns.length > 0 ? visibleColumns : Object.keys(data[0] ?? {});
+    const csv = [
+      columnsToUse.join(","),
+      ...data.map((row) =>
+        columnsToUse.map((column) => `"${String(row[column] ?? "").replace(/"/g, '""')}"`).join(",")
+      )
+    ].join("\n");
     const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.href = url;
-    link.download = "deporte_cdmx_filtrado.csv";
+    link.download = fileName;
     link.click();
     URL.revokeObjectURL(url);
   };
 
-  if (!workbook || modeledBase.length === 0) {
-    return (
-      <Card className="p-6 text-sm text-ink-600">
-        No se encontró una hoja base compatible. Sube un workbook con `DEPORTE_CDMX_BASE` o reconstruye `public/data/workbook.json`.
-      </Card>
-    );
+  return (
+    <Card className="p-6">
+      <DataTable
+        title={title}
+        columns={columns}
+        data={data}
+        pageSize={pageSize}
+        onExport={data.length > 0 ? exportCsv : undefined}
+        allowColumnSelector
+        hideControls={presentationMode}
+      />
+    </Card>
+  );
+}
+
+export default function Dashboard() {
+  const { dataset, presentationMode } = useDashboardStore();
+  const [activeSection, setActiveSection] = useState<SectionKey>("Panorama");
+  const [filters, setFilters] = useState<DashboardFilterState>(emptyFilters);
+  const [sportsLimit, setSportsLimit] = useState<5 | 10>(5);
+  const [showFullInfrastructure, setShowFullInfrastructure] = useState(false);
+
+  const filterConfig = useMemo(() => (dataset ? buildFilterConfig(dataset) : []), [dataset]);
+  const territorialRecords = useMemo(() => (dataset ? filterTerritorialRecords(dataset.territorialRecords, filters) : []), [dataset, filters]);
+  const sportsRecords = useMemo(() => (dataset ? filterSportsRecords(dataset.sportsRecords, filters) : []), [dataset, filters]);
+  const healthProfiles = useMemo(() => (dataset ? filterHealthProfiles(dataset.healthProfiles, filters) : []), [dataset, filters]);
+  const infrastructureDetails = useMemo(
+    () => (dataset ? filterInfrastructureDetails(dataset.infrastructureDetails, filters) : []),
+    [dataset, filters]
+  );
+
+  const overviewKpis = useMemo(() => buildOverviewKpis(territorialRecords), [territorialRecords]);
+  const activityBySex = useMemo(() => buildRateDistribution(territorialRecords, (record) => record.sex), [territorialRecords]);
+  const activityByAge = useMemo(() => buildRateDistribution(territorialRecords, (record) => record.ageGroup), [territorialRecords]);
+  const activityByAlcaldia = useMemo(() => buildRateDistribution(territorialRecords, (record) => record.alcaldia), [territorialRecords]);
+  const activityTimeline = useMemo(() => buildYearTrend(territorialRecords), [territorialRecords]);
+  const sportsTop = useMemo(() => buildSportsTop(sportsRecords, sportsLimit), [sportsRecords, sportsLimit]);
+  const barriers = useMemo(() => buildBarrierDistribution(), []);
+  const infrastructure = useMemo(() => buildInfrastructureByAlcaldia(territorialRecords, filters), [territorialRecords, filters]);
+  const infraStacked = useMemo(
+    () => infrastructure.map((item) => ({ name: item.name, Deportivos: item.deportivos, PILARES: item.pilares, Gimnasios: item.gimnasios, Parques: item.parques })),
+    [infrastructure]
+  );
+  const infrastructureSports = useMemo(() => buildInfrastructureSportsSummary(infrastructureDetails), [infrastructureDetails]);
+  const obesityByAlcaldia = useMemo(() => buildMetricByAlcaldia(territorialRecords, "obesityRate"), [territorialRecords]);
+  const overweightByAlcaldia = useMemo(() => buildMetricByAlcaldia(territorialRecords, "overweightRate"), [territorialRecords]);
+  const combinedWeightByAlcaldia = useMemo(() => buildMetricByAlcaldia(territorialRecords, "combinedWeightRiskRate"), [territorialRecords]);
+  const diabetesByAlcaldia = useMemo(() => buildMetricByAlcaldia(territorialRecords, "diabetesRate"), [territorialRecords]);
+  const sedentaryByAlcaldia = useMemo(() => buildMetricByAlcaldia(territorialRecords, "sedentaryRate"), [territorialRecords]);
+  const obesityBySex = useMemo(() => buildHealthDistribution(healthProfiles, "sex", "obesityRate"), [healthProfiles]);
+  const obesityByAge = useMemo(() => buildHealthDistribution(healthProfiles, "ageGroup", "obesityRate"), [healthProfiles]);
+  const diabetesByAge = useMemo(() => buildHealthDistribution(healthProfiles, "ageGroup", "diabetesRate"), [healthProfiles]);
+  const riskIndex = useMemo(() => buildRiskIndex(territorialRecords, filters), [territorialRecords, filters]);
+  const layerSummary = useMemo(() => buildDataLayerSummary(territorialRecords), [territorialRecords]);
+  const territorialTable = useMemo(() => buildFlattenedTableRows(territorialRecords), [territorialRecords]);
+  const infrastructureTable = useMemo(() => buildInfrastructureDetailRows(infrastructureDetails), [infrastructureDetails]);
+  const mapRows = useMemo(
+    () =>
+      dataset?.mapAreas
+        .filter((record) => (filters.alcaldias.length > 0 ? filters.alcaldias.includes(record.alcaldia) : true))
+        .filter((record) => (filters.years.length > 0 ? filters.years.includes(String(record.year)) : true))
+        .map((record) => ({
+          "Año": String(record.year),
+          "Alcaldía": record.alcaldia,
+          "Geo key": record.geoKey,
+          "Lat": record.centroid.lat.toFixed(4),
+          "Lon": record.centroid.lon.toFixed(4),
+          "Actividad": `${(record.activityRate * 100).toFixed(1)}%`,
+          "Riesgo": record.riskScore.toFixed(1),
+          "Semáforo": record.riskLevel,
+          "Infra x100k": record.infraPer100k.toFixed(1),
+          "Tipo de dato": record.dataType,
+          "Fuente": record.source,
+          "Nota metodológica": record.methodologicalNote
+        })) ?? [],
+    [dataset, filters.alcaldias, filters.years]
+  );
+
+  const methodologyRows = useMemo(
+    () => dataset?.methodology.map((item) => ({ "Módulo": item.module, "Métrica": item.metric, "Capa": item.layer.replace("_", " "), "Fuente": item.source, "Lógica": item.logic, "Limitación": item.limitation })) ?? [],
+    [dataset]
+  );
+  const sourcesRows = useMemo(
+    () => dataset?.sourceRegistry.map((item) => ({ "Métrica": item.metric, "Capa": item.layer.replace("_", " "), "Fuente": item.source, "Cobertura": item.coverage, "Nota": item.note })) ?? [],
+    [dataset]
+  );
+  const qualityRows = useMemo(
+    () => dataset?.qualityChecks.map((item) => ({ "Chequeo": item.check, "Alcance": item.scope, "Estado": item.status, "Nota": item.note })) ?? [],
+    [dataset]
+  );
+
+  const methodologyColumns = useMemo<ColumnDef<Record<string, string>, string>[]>(() => [
+    { header: "Módulo", accessorKey: "Módulo" },
+    { header: "Métrica", accessorKey: "Métrica" },
+    { header: "Capa", accessorKey: "Capa" },
+    { header: "Fuente", accessorKey: "Fuente" },
+    { header: "Lógica", accessorKey: "Lógica" },
+    { header: "Limitación", accessorKey: "Limitación" }
+  ], []);
+  const sourcesColumns = useMemo<ColumnDef<Record<string, string>, string>[]>(() => [
+    { header: "Métrica", accessorKey: "Métrica" },
+    { header: "Capa", accessorKey: "Capa" },
+    { header: "Fuente", accessorKey: "Fuente" },
+    { header: "Cobertura", accessorKey: "Cobertura" },
+    { header: "Nota", accessorKey: "Nota" }
+  ], []);
+  const qualityColumns = useMemo<ColumnDef<Record<string, string>, string>[]>(() => [
+    { header: "Chequeo", accessorKey: "Chequeo" },
+    { header: "Alcance", accessorKey: "Alcance" },
+    { header: "Estado", accessorKey: "Estado" },
+    { header: "Nota", accessorKey: "Nota" }
+  ], []);
+  const territorialColumns = useMemo<ColumnDef<Record<string, string>, string>[]>(
+    () => (territorialTable[0] ? Object.keys(territorialTable[0]).map((key) => ({ header: key, accessorKey: key })) : []),
+    [territorialTable]
+  );
+  const infrastructureColumns = useMemo<ColumnDef<Record<string, string>, string>[]>(
+    () => (infrastructureTable[0] ? Object.keys(infrastructureTable[0]).map((key) => ({ header: key, accessorKey: key })) : []),
+    [infrastructureTable]
+  );
+  const mapColumns = useMemo<ColumnDef<Record<string, string>, string>[]>(
+    () => (mapRows[0] ? Object.keys(mapRows[0]).map((key) => ({ header: key, accessorKey: key })) : []),
+    [mapRows]
+  );
+
+  if (!dataset) {
+    return <Card className="p-6 text-sm text-ink-600">No se encontró `dashboard.json`.</Card>;
   }
 
+  const selectedYears = filters.years.length > 0 ? filters.years.join(", ") : "todos";
+  const selectedRecordsText = `${formatNumber(territorialRecords.length)} celdas territoriales`;
+  const average = (items: Array<{ value: number }>) => (items.length > 0 ? items.reduce((sum, item) => sum + item.value, 0) / items.length : 0);
+  const visibleInfrastructureTable = showFullInfrastructure ? infrastructureTable : infrastructureTable.slice(0, 12);
+  const healthKpis = [
+    { label: "Obesidad", value: `${average(obesityByAlcaldia).toFixed(1)}%`, helper: "ENSANUT 2022 segmentada y territorializada" },
+    { label: "Sobrepeso", value: `${average(overweightByAlcaldia).toFixed(1)}%`, helper: "Base oficial 2022 con lectura por sexo y edad" },
+    { label: "Sobrepeso + obesidad", value: `${average(combinedWeightByAlcaldia).toFixed(1)}%`, helper: "Carga metabólica combinada" },
+    { label: "Diabetes", value: `${average(diabetesByAlcaldia).toFixed(1)}%`, helper: "ENSANUT 2022 segmentada" },
+    { label: "Sedentarismo", value: `${average(sedentaryByAlcaldia).toFixed(1)}%`, helper: "Complemento de actividad territorial" }
+  ];
+
   return (
-    <div className="space-y-10">
+    <div className="space-y-8">
       <Card className={`space-y-4 p-5 ${presentationMode ? "hidden" : ""}`}>
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
             <div className="text-base font-semibold text-ink-900">Filtros globales</div>
-            <div className="text-xs text-ink-600">Todos los módulos reaccionan en tiempo real a territorio, perfil y deporte.</div>
+            <div className="text-xs text-ink-600">Sexo, edad, deporte, tipo de infraestructura y año actualizan la lectura institucional cuando la lógica del indicador lo permite.</div>
           </div>
-          <div className="flex flex-wrap gap-2">
-            <button className="btn-ghost" type="button" onClick={() => setFiltersCollapsed((prev) => !prev)}>
-              {filtersCollapsed ? "Expandir filtros" : "Colapsar filtros"}
-            </button>
-            <button className="btn-ghost" type="button" onClick={() => setFilters({})}>
-              Limpiar filtros
-            </button>
-          </div>
+          <button className="btn-ghost" type="button" onClick={() => setFilters(emptyFilters)}>
+            Limpiar filtros
+          </button>
         </div>
-        {!filtersCollapsed ? (
-          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-            {filterConfig.map((filter) => (
-              <MultiSelect
-                key={filter.key}
-                title={filter.key}
-                options={filter.options}
-                selected={filters[filter.column] ?? []}
-                onChange={(values) => setFilters((prev) => ({ ...prev, [filter.column]: values }))}
-              />
-            ))}
-          </div>
-        ) : (
-          <div className="flex flex-wrap gap-2 text-xs text-ink-600">
-            {filterConfig.flatMap((filter) =>
-              (filters[filter.column] ?? []).map((value) => (
-                <span key={`${filter.key}-${value}`} className="rounded-full border border-mist-200 bg-white px-3 py-1">
-                  {filter.key}: {value}
-                </span>
-              ))
-            )}
-            {Object.values(filters).every((value) => value.length === 0) ? <span>Sin filtros activos</span> : null}
-          </div>
-        )}
+        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+          {filterConfig.map((filter) => (
+            <MultiSelect
+              key={filter.key}
+              title={filter.title}
+              options={filter.options}
+              selected={filters[filter.key]}
+              onChange={(values) => setFilters((prev) => ({ ...prev, [filter.key]: values }))}
+            />
+          ))}
+        </div>
       </Card>
 
-      <section className="section-block">
-        <div>
-          <div className="section-heading">Panorama general</div>
-          <div className="section-copy">Lectura ejecutiva del estado de actividad física y cobertura territorial.</div>
-        </div>
-        <KpiGrid items={kpis} />
-        <Card className="space-y-4 p-5">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <Tabs tabs={sections} active={activeSection} onChange={setActiveSection} />
+        <div className="text-xs text-ink-600">Corte activo: años {selectedYears} · {selectedRecordsText}</div>
+      </div>
+
+      {activeSection === "Panorama" ? (
+        <section className="section-block">
           <div>
-            <div className="text-base font-semibold text-ink-900">Trazabilidad del dataset</div>
-            <div className="text-xs text-ink-600">Qué parte del MVP es agregada, preparada o estimada.</div>
+            <div className="section-kicker">1. Panorama</div>
+            <div className="section-heading">Lectura ejecutiva del sistema</div>
+            <div className="section-copy">Resumen institucional de actividad física, población analizada, brechas y composición de capas de dato.</div>
           </div>
-          <KpiGrid items={methodologyHighlights} />
-        </Card>
-      </section>
+          <KpiGrid items={overviewKpis} />
+          <div className="grid gap-4 lg:grid-cols-2">
+            <Card className="space-y-4 p-5">
+              <div className="text-base font-semibold text-ink-900">Capas del sistema</div>
+              <KpiGrid items={layerSummary} />
+            </Card>
+            <Card className="space-y-4 p-5">
+              <div className="text-base font-semibold text-ink-900">Insights ejecutivos</div>
+              <div className="space-y-3">
+                {dataset.insights.map((item) => (
+                  <NoteBlock key={item.title} title={item.title} body={`${item.summary} ${item.implication}`} />
+                ))}
+              </div>
+            </Card>
+          </div>
+        </section>
+      ) : null}
 
-      <section className="section-block">
-        <div>
-          <div className="section-heading">Actividad</div>
-          <div className="section-copy">Comportamiento de actividad por sexo, edad, alcaldía y práctica deportiva.</div>
-        </div>
-        <div className="grid gap-4 lg:grid-cols-2">
-          <ChartCard
-            title="Actividad por sexo"
-            helper="Estimación territorial anclada a MOPRADEF por sexo"
-            tooltip={ACTIVITY_TOOLTIP}
-          >
-            <DistributionPie data={bySexo} />
-          </ChartCard>
-          <ChartCard
-            title="Actividad por grupo de edad"
-            helper="Estimación territorial anclada a MOPRADEF por edad"
-            tooltip={ACTIVITY_TOOLTIP}
-          >
-            <DistributionBar data={byEdad} />
-          </ChartCard>
-          <ChartCard
-            title="Alcaldías comparadas"
-            helper="Ranking territorial del porcentaje activo modelado"
-            tooltip={ACTIVITY_TOOLTIP}
-          >
-            <DistributionBar data={byAlcaldia} />
-          </ChartCard>
-          <Card className="space-y-4 p-5">
-            <div className="flex flex-wrap items-start justify-between gap-3">
-              <div>
-                <div className="flex items-center gap-2">
+      {activeSection === "Actividad" ? (
+        <section className="section-block">
+          <div>
+            <div className="section-kicker">2. Actividad</div>
+            <div className="section-heading">Actividad física y práctica deportiva</div>
+            <div className="section-copy">Comparativos por sexo, edad, alcaldía y serie temporal con visibilidad explícita de la base metodológica.</div>
+          </div>
+          <div className="grid gap-4 lg:grid-cols-2">
+            <ChartCard title="Actividad por sexo" helper="Estimación territorial anclada a MOPRADEF" tooltip={chartMeta.activity}>
+              <DistributionPie data={activityBySex} />
+            </ChartCard>
+            <ChartCard title="Actividad por grupo de edad" helper="La actividad cae conforme aumenta la edad" tooltip={chartMeta.activity}>
+              <DistributionBar data={activityByAge} />
+            </ChartCard>
+            <ChartCard title="Actividad por alcaldía" helper="Ranking territorial del porcentaje activo" tooltip={chartMeta.activity}>
+              <DistributionBar data={activityByAlcaldia} />
+            </ChartCard>
+            <ChartCard title="Timeline 2020-2026" helper="Serie institucional con proyección de planeación" tooltip={chartMeta.activityTimeline}>
+              <DistributionBar data={activityTimeline} />
+            </ChartCard>
+            <Card className="space-y-4 p-5">
+              <div className="flex flex-wrap items-start justify-between gap-3">
+                <div>
                   <div className="text-base font-semibold text-ink-900">Deportes más practicados</div>
-                  <span
-                    className="inline-flex h-5 w-5 items-center justify-center rounded-full border border-mist-200 text-[11px] font-semibold text-ink-500"
-                    title="Distribución demostrativa por deporte. Muestra top N y agrupa el resto en Otros."
-                  >
-                    i
-                  </span>
+                  <div className="text-xs text-ink-600">Top {sportsLimit} visible; el resto se agrupa como Otros.</div>
                 </div>
-                <div className="text-xs text-ink-600">Top visible configurable y resto agrupado como Otros.</div>
+                <div className="flex gap-2">
+                  <button className={`btn-ghost ${sportsLimit === 5 ? "border-ink-900" : ""}`} onClick={() => setSportsLimit(5)} type="button">Top 5</button>
+                  <button className={`btn-ghost ${sportsLimit === 10 ? "border-ink-900" : ""}`} onClick={() => setSportsLimit(10)} type="button">Top 10</button>
+                </div>
               </div>
-              <div className="flex gap-2">
-                <button className={`btn-ghost ${sportsLimit === 5 ? "border-ink-900 text-ink-900" : ""}`} type="button" onClick={() => setSportsLimit(5)}>
-                  Top 5
-                </button>
-                <button className={`btn-ghost ${sportsLimit === 10 ? "border-ink-900 text-ink-900" : ""}`} type="button" onClick={() => setSportsLimit(10)}>
-                  Top 10
-                </button>
+              <div className="h-64">
+                <DistributionBar data={sportsTop} />
               </div>
-            </div>
-            <div className="h-64">
-              <DistributionPie data={sportsParticipation} />
-            </div>
-            <div className="text-xs text-ink-500">
-              {filteredSportsRows.length} registros de deportes considerados con los filtros actuales.
-            </div>
-          </Card>
-        </div>
-      </section>
-
-      <section className="section-block">
-        <div>
-          <div className="section-heading">Infraestructura</div>
-          <div className="section-copy">Desglose por tipo de espacio y cobertura territorial para priorización pública.</div>
-        </div>
-        <div className="grid gap-4 lg:grid-cols-2">
-          <ChartCard
-            title="Infraestructura por alcaldía"
-            helper="Conteos agregados preparados desde fuentes públicas"
-            tooltip={INFRA_TOOLTIP}
-          >
-            <DistributionBar
-              data={infrastructureCards.map((item) => ({
-                name: item.name,
-                value: item.visibleTotal,
-                percent: item.actividadPct,
-                denominator: 100
-              }))}
-            />
-          </ChartCard>
-          <Card className="space-y-4 p-5">
-            <div>
-              <div className="flex items-center gap-2">
-                <div className="text-base font-semibold text-ink-900">Desglose por tipo</div>
-                <span
-                  className="inline-flex h-5 w-5 items-center justify-center rounded-full border border-mist-200 text-[11px] font-semibold text-ink-500"
-                  title={INFRA_TOOLTIP}
-                >
-                  i
-                </span>
-              </div>
-              <div className="text-xs text-ink-600">Vista resumida de cobertura para toma de decisiones por alcaldía.</div>
-            </div>
-            <div className="grid gap-3 md:grid-cols-2">
-              {infrastructureCards.slice(0, 8).map((item) => (
-                <div key={item.name} className="rounded-xl border border-mist-200 bg-mist-100 px-4 py-4">
-                  <div className="flex items-start justify-between gap-4">
-                    <div>
-                      <div className="font-semibold text-ink-900">{item.name}</div>
-                      <div className="mt-1 text-2xl font-semibold text-ink-900">{item.visibleTotal} espacios</div>
-                    </div>
-                    <div className="rounded-full bg-white px-3 py-1 text-xs text-ink-600">
-                      {formatPercent(item.actividadPct)}
-                    </div>
+              <div className="text-xs text-ink-600">La capa de deportes sigue marcada como preparada mientras se conecta una fuente oficial por disciplina.</div>
+              <div className="meta-panel">
+                <div className="meta-grid">
+                  <div>
+                    <div className="meta-label">Fuente</div>
+                    <div className="meta-value">{chartMeta.sports.source}</div>
                   </div>
-                  <div className="mt-3 space-y-1 text-sm text-ink-700">
-                    {item.rows.map((row) => (
-                      <div key={`${item.name}-${row.label}`} className="flex justify-between gap-3">
-                        <span>{row.label}</span>
-                        <span className="font-medium">{row.value}</span>
-                      </div>
-                    ))}
+                  <div>
+                    <div className="meta-label">Tipo de dato</div>
+                    <div className="meta-value">{chartMeta.sports.dataType}</div>
+                  </div>
+                  <div>
+                    <div className="meta-label">Nota metodológica</div>
+                    <div className="meta-value">{chartMeta.sports.note}</div>
                   </div>
                 </div>
-              ))}
+              </div>
+            </Card>
+            <ChartCard title="Barreras principales" helper="Base oficial agregada útil para diseño de política pública" tooltip={chartMeta.barriers}>
+              <DistributionBar data={barriers} />
+            </ChartCard>
+          </div>
+        </section>
+      ) : null}
+
+      {activeSection === "Infraestructura" ? (
+        <section className="section-block">
+          <div>
+            <div className="section-kicker">3. Infraestructura</div>
+            <div className="section-heading">Infraestructura deportiva y comunitaria</div>
+            <div className="section-copy">Separa claramente espacios observables, tipos de espacio, deportes disponibles y capacidad estimada donde todavía no existe aforo operativo.</div>
+          </div>
+          <KpiGrid
+            items={[
+              { label: "Total de espacios", value: formatNumber(infrastructure.reduce((sum, item) => sum + item.total, 0)), helper: "Suma del desglose visible" },
+              { label: "Densidad media", value: `${(infrastructure.reduce((sum, item) => sum + item.density, 0) / (infrastructure.length || 1)).toFixed(1)}`, helper: "Espacios por 100 mil habitantes" },
+              { label: "Capacidad estimada", value: formatNumber(infrastructureDetails.reduce((sum, item) => sum + item.capacity, 0)), helper: "Solo cuando no existe aforo oficial consolidado" },
+              { label: "Tipos de espacio", value: formatNumber(new Set(infrastructureDetails.map((item) => item.tipo_espacio)).size), helper: "Pilares, canchas, gimnasios, parques y derivados" }
+            ]}
+          />
+          <div className="grid gap-4 lg:grid-cols-2">
+            <ChartCard title="Desglose por tipo" helper="PILARES, deportivos públicos, gimnasios y espacios abiertos" tooltip={chartMeta.infrastructure}>
+              <StackedBar data={infraStacked} categories={["Deportivos", "PILARES", "Gimnasios", "Parques"]} />
+            </ChartCard>
+            <ChartCard title="Deportes disponibles en infraestructura" helper="Lectura consolidada del detalle de espacios" tooltip={chartMeta.infrastructure}>
+              <DistributionBar data={infrastructureSports.slice(0, 8)} />
+            </ChartCard>
+          </div>
+          <Card className="space-y-4 p-6">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div>
+                <div className="text-base font-semibold text-ink-900">Infraestructura detallada</div>
+                <div className="text-sm leading-6 text-ink-600">
+                  Tipos de espacio, deportes disponibles y capacidad. Se resume la tabla para evitar saturación inicial.
+                </div>
+              </div>
+              <button className="btn-ghost" type="button" onClick={() => setShowFullInfrastructure((prev) => !prev)}>
+                {showFullInfrastructure ? "Resumir vista" : "Expandir detalle"}
+              </button>
+            </div>
+            <div className="meta-panel">
+              <div className="meta-grid">
+                <div>
+                  <div className="meta-label">Fuente</div>
+                  <div className="meta-value">{chartMeta.infrastructure.source}</div>
+                </div>
+                <div>
+                  <div className="meta-label">Tipo de dato</div>
+                  <div className="meta-value">{chartMeta.infrastructure.dataType}</div>
+                </div>
+                <div>
+                  <div className="meta-label">Nota metodológica</div>
+                  <div className="meta-value">{chartMeta.infrastructure.note}</div>
+                </div>
+              </div>
+            </div>
+            <DataTable
+              title={showFullInfrastructure ? "Tabla completa" : "Resumen de infraestructura"}
+              columns={infrastructureColumns}
+              data={visibleInfrastructureTable}
+              pageSize={showFullInfrastructure ? 10 : 6}
+              onExport={(visibleColumns) => {
+                const columnsToUse = visibleColumns.length > 0 ? visibleColumns : Object.keys(infrastructureTable[0] ?? {});
+                const csv = [
+                  columnsToUse.join(","),
+                  ...infrastructureTable.map((row) =>
+                    columnsToUse.map((column) => `"${String((row as Record<string, string>)[column] ?? "").replace(/"/g, '""')}"`).join(",")
+                  )
+                ].join("\n");
+                const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+                const url = URL.createObjectURL(blob);
+                const link = document.createElement("a");
+                link.href = url;
+                link.download = "infraestructura_detallada_deporte_cdmx.csv";
+                link.click();
+                URL.revokeObjectURL(url);
+              }}
+              allowColumnSelector
+              hideControls={presentationMode}
+            />
+          </Card>
+        </section>
+      ) : null}
+
+      {activeSection === "Salud" ? (
+        <section className="section-block">
+          <div>
+            <div className="section-kicker">4. Salud</div>
+            <div className="section-heading">Salud relacionada y carga metabólica</div>
+            <div className="section-copy">Los filtros de sexo, edad y año ajustan los indicadores cuando el modelo lo permite. La capa sigue etiquetada como estimada/modelada para evitar lecturas engañosas.</div>
+          </div>
+          <KpiGrid items={healthKpis} />
+          <div className="grid gap-4 lg:grid-cols-2">
+            <ChartCard title="Obesidad por alcaldía" helper="Lectura territorial para focalización" tooltip={chartMeta.health}>
+              <DistributionBar data={obesityByAlcaldia} />
+            </ChartCard>
+            <ChartCard title="Sobrepeso + obesidad por alcaldía" helper="Indicador combinado de carga metabólica" tooltip={{ ...chartMeta.health, dataType: "insight" }}>
+              <DistributionBar data={combinedWeightByAlcaldia} />
+            </ChartCard>
+            <ChartCard title="Obesidad por sexo" helper="ENSANUT 2022 preparada para filtros dinámicos" tooltip={chartMeta.health}>
+              <DistributionPie data={obesityBySex} />
+            </ChartCard>
+            <ChartCard title="Obesidad por grupo de edad" helper="Gradiente de carga metabólica por edad" tooltip={chartMeta.health}>
+              <DistributionBar data={obesityByAge} />
+            </ChartCard>
+            <ChartCard title="Diabetes por edad" helper="Útil para programas focalizados en 45+ y 60+" tooltip={chartMeta.health}>
+              <DistributionBar data={diabetesByAge} />
+            </ChartCard>
+            <ChartCard title="Sedentarismo por alcaldía" helper="Complemento de la actividad modelada" tooltip={chartMeta.health}>
+              <DistributionBar data={sedentaryByAlcaldia} />
+            </ChartCard>
+          </div>
+          <Card className="space-y-4 p-5">
+            <div className="flex items-center gap-2">
+              <div className="text-base font-semibold text-ink-900">Cómo leer esta capa</div>
+              <LayerBadge layer="estimado" />
+            </div>
+            <div className="text-sm leading-6 text-ink-700">
+              Obesidad, sobrepeso, diabetes y sedentarismo están modelados a partir de ENSANUT 2022 y reglas de segmentación. No representan una observación oficial directa publicada por alcaldía.
             </div>
           </Card>
-        </div>
-      </section>
+        </section>
+      ) : null}
 
-      <section className="section-block">
-        <div>
-          <div className="section-heading">Salud</div>
-          <div className="section-copy">Indicadores de contexto para relacionar actividad física con presión sanitaria territorial.</div>
-        </div>
-        <Card className="space-y-3 p-5">
-          <div className="text-sm font-medium text-ink-800">Indicadores estimados a partir de ENSANUT y distribuciones poblacionales. No son mediciones directas por alcaldía.</div>
-        </Card>
-        <KpiGrid items={healthSummary} />
-        <div className="grid gap-4 lg:grid-cols-2">
-          <ChartCard title="Obesidad por alcaldía" helper="Capa territorial preparada con referencia ENSANUT" tooltip={HEALTH_TOOLTIP}>
-            <DistributionBar data={obesityByAlcaldia} />
-          </ChartCard>
-          <ChartCard title="Sobrepeso por alcaldía" helper="Capa territorial preparada con referencia ENSANUT" tooltip={HEALTH_TOOLTIP}>
-            <DistributionBar data={overweightByAlcaldia} />
-          </ChartCard>
-          <ChartCard title="Diabetes por alcaldía" helper="Capa territorial preparada con referencia ENSANUT" tooltip={HEALTH_TOOLTIP}>
-            <DistributionBar data={diabetesByAlcaldia} />
-          </ChartCard>
-          <ChartCard title="Sedentarismo estimado" helper="Aproximación complementaria a partir de actividad modelada" tooltip={HEALTH_TOOLTIP}>
-            <DistributionBar data={sedentaryByAlcaldia} />
-          </ChartCard>
-        </div>
-      </section>
-
-      <section className="section-block">
-        <div>
-          <div className="section-heading">Índice de riesgo físico</div>
-          <div className="section-copy">Semáforo ejecutivo por alcaldía para focalizar intervención pública.</div>
-        </div>
-        <div className="grid gap-4 lg:grid-cols-2">
-          <ChartCard
-            title="Ranking de riesgo"
-            helper="Riesgo alto: baja actividad y alta obesidad. Riesgo bajo: alta actividad."
-            tooltip="Score compuesto de actividad, obesidad e infraestructura per cápita para priorización ejecutiva."
-          >
-            <DistributionBar
-              data={riskIndex.map((item) => ({
-                name: item.name,
-                value: item.score,
-                percent: item.score / 100,
-                denominator: 100
-              }))}
-            />
-          </ChartCard>
-          <Card className="space-y-4 p-5">
-            <div>
-              <div className="text-base font-semibold text-ink-900">Semáforo territorial</div>
-              <div className="text-xs text-ink-600">Prioridad sugerida para cobertura deportiva y activación física.</div>
-            </div>
-            <div className="space-y-3">
-              {riskIndex.slice(0, 8).map((item) => {
-                const tone =
-                  item.nivel === "Alto"
-                    ? "bg-red-100 text-red-700"
-                    : item.nivel === "Medio"
-                      ? "bg-amber-100 text-amber-700"
-                      : "bg-emerald-100 text-emerald-700";
-                return (
-                  <div key={item.name} className="flex items-center justify-between rounded-xl border border-mist-200 bg-mist-100 px-4 py-3">
+      {activeSection === "Riesgo" ? (
+        <section className="section-block">
+          <div>
+            <div className="section-kicker">5. Riesgo</div>
+            <div className="section-heading">Índice de riesgo físico territorial</div>
+            <div className="section-copy">Semáforo territorial para priorización institucional a partir de actividad, obesidad, sedentarismo e infraestructura per cápita.</div>
+          </div>
+          <div className="grid gap-4 lg:grid-cols-[1.15fr_0.85fr]">
+            <Card className="space-y-4 p-5">
+              <div className="text-base font-semibold text-ink-900">Ranking de riesgo físico</div>
+              <div className="space-y-3">
+                {riskIndex.map((item, index) => (
+                  <div key={item.alcaldia} className="flex items-center justify-between rounded-2xl border border-mist-200 bg-white px-4 py-4">
                     <div>
-                      <div className="font-semibold text-ink-900">{item.name}</div>
-                      <div className="text-sm text-ink-600">
-                        Actividad {item.actividadPct.toFixed(1)}% · Obesidad {item.obesidad.toFixed(1)}%
+                      <div className="text-sm font-semibold text-ink-900">{index + 1}. {item.alcaldia}</div>
+                      <div className="mt-1 text-xs text-ink-600">
+                        Actividad {(item.activityRate * 100).toFixed(1)}% · Obesidad {(item.obesityRate * 100).toFixed(1)}% · Sedentarismo {(item.sedentaryRate * 100).toFixed(1)}%
                       </div>
                     </div>
                     <div className="flex items-center gap-3">
-                      <span className={`rounded-full px-3 py-1 text-xs font-semibold ${tone}`}>{item.nivel}</span>
-                      <span className="text-lg font-semibold text-ink-900">{item.score}</span>
+                      <span className={`rounded-full px-3 py-1 text-xs font-semibold ${item.level === "Rojo" ? "bg-red-100 text-red-700" : item.level === "Amarillo" ? "bg-amber-100 text-amber-700" : "bg-emerald-100 text-emerald-700"}`}>
+                        {item.level}
+                      </span>
+                      <div className="text-lg font-semibold text-ink-900">{item.score}</div>
                     </div>
                   </div>
-                );
-              })}
-            </div>
-          </Card>
-        </div>
-      </section>
+                ))}
+              </div>
+            </Card>
+            <Card className="space-y-4 p-5">
+              <div className="flex items-center gap-2">
+                <div className="text-base font-semibold text-ink-900">Definición del modelo</div>
+                <LayerBadge layer="insight" />
+              </div>
+              <div className="space-y-3 text-sm leading-6 text-ink-700">
+                <p>Riesgo = actividad física inversa + obesidad + sedentarismo + infraestructura per cápita inversa.</p>
+                <p>Semáforo verde indica mejor condición relativa; amarillo representa vigilancia; rojo marca prioridad de intervención.</p>
+                <p>El score es defendible para priorización institucional, no para diagnóstico clínico.</p>
+              </div>
+              <div className="meta-panel">
+                <div className="meta-grid">
+                  <div>
+                    <div className="meta-label">Fuente</div>
+                    <div className="meta-value">{chartMeta.risk.source}</div>
+                  </div>
+                  <div>
+                    <div className="meta-label">Tipo de dato</div>
+                    <div className="meta-value">{chartMeta.risk.dataType}</div>
+                  </div>
+                  <div>
+                    <div className="meta-label">Nota metodológica</div>
+                    <div className="meta-value">{chartMeta.risk.note}</div>
+                  </div>
+                </div>
+              </div>
+            </Card>
+          </div>
+        </section>
+      ) : null}
 
-      <section className="section-block">
-        <div>
-          <div className="section-heading">Insights</div>
-          <div className="section-copy">Hallazgos accionables construidos con actividad, infraestructura y salud.</div>
-        </div>
-        <div className="grid gap-4 lg:grid-cols-2">
-          <ChartCard
-            title="Clasificación metodológica de actividad"
-            helper="La actividad del MVP no es un dato censal directo por alcaldía"
-            tooltip={ACTIVITY_TOOLTIP}
-          >
-            <DistributionPie data={activityStatus} />
-          </ChartCard>
-          <Card className="space-y-4 p-5">
-            <div>
-              <div className="text-base font-semibold text-ink-900">Insights priorizados</div>
-              <div className="text-xs text-ink-600">Redacción orientada a decisiones públicas y cobertura territorial.</div>
-            </div>
-            <ul className="list-disc space-y-3 pl-5 text-sm text-ink-700">
-              {insights.map((insight) => (
-                <li key={insight}>{insight}</li>
-              ))}
-            </ul>
-          </Card>
-        </div>
-      </section>
+      {activeSection === "Metodología" ? (
+        <section className="section-block">
+          <div>
+            <div className="section-kicker">6. Metodología</div>
+            <div className="section-heading">Trazabilidad y preparación institucional</div>
+            <div className="section-copy">Explica qué es real, estimado o proyectado, y deja explícita la ruta para integrar datos públicos oficiales sin cambiar la arquitectura.</div>
+          </div>
+          <div className="grid gap-4 lg:grid-cols-2">
+            <Card className="space-y-4 p-5">
+              <div className="text-base font-semibold text-ink-900">Qué es real, estimado y proyectado</div>
+              <div className="space-y-3 text-sm leading-6 text-ink-700">
+                <p><span className="font-semibold">Real:</span> infraestructura observable por tipo y alcaldía.</p>
+                <p><span className="font-semibold">Base oficial:</span> ENSANUT 2022, benchmarks MOPRADEF y población base.</p>
+                <p><span className="font-semibold">Estimado:</span> actividad y salud territorializadas con reglas explícitas.</p>
+                <p><span className="font-semibold">Proyectado:</span> 2026 y cualquier valor futuro sin observación oficial.</p>
+              </div>
+            </Card>
+            <Card className="space-y-4 p-5">
+              <div className="text-base font-semibold text-ink-900">Timeline y quiebres</div>
+              <div className="space-y-3 text-sm leading-6 text-ink-700">
+                {dataset.meta.timelineNotes.map((item) => <p key={item}>{item}</p>)}
+                {dataset.meta.methodologyBreaks.map((item) => <p key={item}>{item}</p>)}
+              </div>
+            </Card>
+          </div>
+          <div className="grid gap-4 lg:grid-cols-2">
+            <Card className="space-y-4 p-5">
+              <div className="text-base font-semibold text-ink-900">Preparación para integración real</div>
+              <div className="space-y-3 text-sm leading-6 text-ink-700">
+                <p><span className="font-semibold">PILARES:</span> conectar catálogo nominal por sede con `tipo_espacio`, deportes disponibles y estatus.</p>
+                <p><span className="font-semibold">Deportivos públicos:</span> conectar inventario oficial por instalación y alcaldía con aforo cuando exista.</p>
+                <p><span className="font-semibold">Directorio económico / gimnasios:</span> conectar recortes DENUE/SCIAN y versionado por año.</p>
+                <p><span className="font-semibold">Mapa:</span> conectar geometría oficial de alcaldías usando `geoKey` ya existente en el modelo.</p>
+              </div>
+            </Card>
+            <Card className="space-y-4 p-5">
+              <div className="text-base font-semibold text-ink-900">Capas listas para ETL futuro</div>
+              <div className="space-y-3 text-sm leading-6 text-ink-700">
+                <p><span className="font-semibold">Infraestructura detallada:</span> ya existe contrato para registro real por tipo, deporte y capacidad.</p>
+                <p><span className="font-semibold">Salud segmentada:</span> ya existe contrato por sexo, edad y año para sustituir la capa modelada.</p>
+                <p><span className="font-semibold">Mapa institucional:</span> ya existe tabla derivada con centroides, `geoKey`, riesgo y actividad.</p>
+              </div>
+            </Card>
+          </div>
 
-      <section className="section-block">
-        <div>
-          <div className="section-heading">Datos</div>
-          <div className="section-copy">Base mínima viable con clasificación metodológica lista para exploración y exportación.</div>
-        </div>
-        <Card className="space-y-4 p-6">
-          <DataTable
-            title="DEPORTE_CDMX_BASE"
-            columns={previewColumns}
-            data={filteredRows}
-            onExport={exportFilteredCsv}
-            allowColumnSelector
-            hideControls={presentationMode}
-          />
-        </Card>
-      </section>
+          <ExportableTable title="Trazabilidad por módulo" columns={methodologyColumns} data={methodologyRows} fileName="metodologia_deporte_cdmx.csv" presentationMode={presentationMode} />
+          <div className="grid gap-4 lg:grid-cols-2">
+            <ExportableTable title="Registro de fuentes" columns={sourcesColumns} data={sourcesRows} fileName="fuentes_deporte_cdmx.csv" presentationMode={presentationMode} />
+            <ExportableTable title="Chequeos de calidad" columns={qualityColumns} data={qualityRows} fileName="calidad_deporte_cdmx.csv" presentationMode={presentationMode} pageSize={6} />
+          </div>
+        </section>
+      ) : null}
+
+      {activeSection === "Datos" ? (
+        <section className="section-block">
+          <div>
+            <div className="section-kicker">7. Datos</div>
+            <div className="section-heading">Tablas para revisión institucional</div>
+            <div className="section-copy">Vista territorial, modelo base para mapa y metadata exportable para revisión con equipos de gobierno, PILARES e INDEPORTE.</div>
+          </div>
+          <div className="grid gap-4 lg:grid-cols-3">
+            <Card className="space-y-3 p-5">
+              <div className="text-base font-semibold text-ink-900">Vista territorial</div>
+              <div className="text-sm leading-6 text-ink-700">La tabla consolida actividad, salud, infraestructura y metadata por fila territorial filtrada.</div>
+            </Card>
+            <Card className="space-y-3 p-5">
+              <div className="text-base font-semibold text-ink-900">Modelo para mapa</div>
+              <div className="text-sm leading-6 text-ink-700">El dataset ya incorpora `geoKey`, centroides, actividad y riesgo por alcaldía para un futuro choropleth o heatmap sin depender de APIs externas.</div>
+            </Card>
+            <Card className="space-y-3 p-5">
+              <div className="text-base font-semibold text-ink-900">Estado del corte</div>
+              <div className="text-sm leading-6 text-ink-700">Año base de salud: {dataset.meta.healthBaseYear}. Años base de actividad: {dataset.meta.activityBaseYears.join(", ")}. Años proyectados: {dataset.meta.projectedYears.join(", ")}.</div>
+            </Card>
+          </div>
+          <ExportableTable title="Tabla territorial" columns={territorialColumns} data={territorialTable} fileName="datos_territoriales_deporte_cdmx.csv" presentationMode={presentationMode} pageSize={12} />
+          <ExportableTable title="Modelo base para mapa" columns={mapColumns} data={mapRows} fileName="modelo_mapa_deporte_cdmx.csv" presentationMode={presentationMode} pageSize={12} />
+        </section>
+      ) : null}
     </div>
   );
 }

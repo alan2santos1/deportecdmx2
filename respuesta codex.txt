@@ -1,0 +1,307 @@
+Voy a revisar primero /docs y la estructura actual del repositorio para identificar qué conservar, qué eliminar y dónde sigue viva la lógica heredada. Después te entrego una auditoría breve y continúo directamente con la reestructura e implementación.
+
+Terminal en segundo plano completado con pwd
+
+
+Explorado(s) 2 listas
+Estoy levantando el mapa del proyecto y ya se ve un patrón claro: hay una base UI útil, una capa de datos genérica y todavía varios artefactos y nombres heredados que no pertenecen al nuevo producto. Ahora voy a contrastar eso contra /docs para convertir la auditoría en una propuesta concreta de reestructura.
+
+Explorado(s) 11 archivos
+Ya tengo suficiente contexto para la auditoría inicial: la base técnica sí sirve, pero el producto actual sigue montado sobre un modelo genérico de workbook y conserva demasiada lógica de “visor de Excel” y herencia analítica innecesaria. Mi siguiente paso es revisar la capa lib/ y los componentes UI para decidir qué reutilizo tal cual y qué sustituyo por una arquitectura de dominio deportivo más explícita.
+
+Explorado(s) 6 archivos
+La auditoría ya está cerrando: conviene conservar la base visual, las primitivas de tabla/tarjetas y parte del loader, pero no la arquitectura centrada en “workbook arbitrario”. Voy a simplificar el sistema hacia un contrato de dominio deportivo explícito y dejar la parte metodológica visible como producto, no como fallback técnico.
+
+Explorado(s) 6 archivos
+Auditoría inicial
+
+Reutilizable y valioso:
+Primitivas UI en components/ui/ como Card, Badge, Tabs, DataTable, MultiSelect, StatusPill.
+Base visual en [app/globals.css](/Users/alansantos/Proyectos web/deportecdmx2/app/globals.css) y layout general en [app/dashboard/page.tsx](/Users/alansantos/Proyectos web/deportecdmx2/app/dashboard/page.tsx).
+Carga de JSON local y modo sin backend en [lib/useWorkbookJsonLoader.ts](/Users/alansantos/Proyectos web/deportecdmx2/lib/useWorkbookJsonLoader.ts).
+Contaminación heredada o acoplamientos a recortar:
+Arquitectura centrada en “workbook arbitrario” en [store/useWorkbookStore.ts](/Users/alansantos/Proyectos web/deportecdmx2/store/useWorkbookStore.ts), [lib/xlsx.ts](/Users/alansantos/Proyectos web/deportecdmx2/lib/xlsx.ts), [scripts/convert-xlsx-to-json.ts](/Users/alansantos/Proyectos web/deportecdmx2/scripts/convert-xlsx-to-json.ts).
+Restos explícitos de proyecto previo en docs/CONTEXTO_DASHBOARD_ACTUAL.txt: funnel, ASCVD, KIO, charts clínicos, rutas legacy.
+Seed actual útil como demo, pero demasiado mezclado entre “preparado”, “proxy” y “estimado” en [data/deporte-cdmx-seed.ts](/Users/alansantos/Proyectos web/deportecdmx2/data/deporte-cdmx-seed.ts).
+Estructura que conviene conservar:
+Next.js + TypeScript + Tailwind + Recharts.
+Ruta principal /dashboard.
+Exportación CSV y tabla exploratoria.
+Componentes visuales ya hechos en vez de rehacer la UI desde cero.
+Qué refactorizar:
+Separar dominio deportivo en capas real / base oficial / estimado / insight.
+Reemplazar el modelo de columnas semánticas difusas por tipos explícitos del dashboard.
+Reordenar el dashboard por módulos institucionales: Panorama, Actividad, Infraestructura, Salud, Riesgo, Metodología, Datos.
+Hacer visibles fuente, tipo de dato y notas metodológicas en cada bloque clave.
+Voy a implementar sobre esa línea: conservaré la base visual y sustituiré la capa de datos y composición del dashboard por una arquitectura explícita de Deporte CDMX.
+
+Explorado(s) 3 archivos
+Voy a cambiar ya la capa técnica: el objetivo es dejar de depender del “workbook genérico” y pasar a un dashboard.json con contrato explícito del dominio. Eso simplifica filtros, trazabilidad, notas metodológicas y evita seguir cargando herencia clínica en el runtime.
+
+Explorado(s) 7 archivos
+Estoy entrando a la fase de edición. Voy a reemplazar el store y el loader por versiones de dominio, generar un dataset estructurado en data/raw|processed|models|insights, y reescribir el dashboard alrededor de esos contratos para que la separación real / base oficial / estimado / insight sea visible en la interfaz y en la lógica.
+
+Explorado(s) 3 archivos
+Estoy en la parte más grande del cambio. La implementación va a dejar dos resultados visibles: una estructura de datos modular en data/ y un dashboard nuevo que ya no depende del workbook genérico ni de semántica difusa de columnas.
+
+Creado
+index.ts
++3
+-0
+Creado
+notes.ts
++141
+-0
+Creado
+build-dashboard-data.ts
++191
+-0
+Creado
+population.ts
++10
+-0
+Creado
+alcaldias.ts
++32
+-0
+Creado
+official-benchmarks.ts
++43
+-0
+Creado
+dashboard-selectors.ts
++285
+-0
+Creado
+dashboard-types.ts
++105
+-0
+Creado
+useDashboardDataLoader.ts
++34
+-0
+Editado
+convert-xlsx-to-json.ts
++3
+-43
+Creado
+useDashboardStore.ts
++26
+-0
+La siguiente edición ya es completamente de producto: tabs nuevas, filtros globales, módulos institucionales y trazabilidad visible por KPI. Después de eso corro build y limpio archivos que ya no deben seguir en el runtime.
+
+Creado
+page.tsx
++40
+-0
+Creado
+Dashboard.tsx
++578
+-0
+Editado
+Dashboard.tsx
++13
+-4
+Editado
+dashboard-selectors.ts
++1
+-4
+La implementación principal ya quedó montada. Ahora estoy validando compilación y TypeScript para detectar fallas de integración antes de limpiar archivos legacy del runtime.
+
+Terminal en segundo plano completado con npm run build
+
+
+La compilación ya pasó en producción. Voy a hacer una limpieza final del árbol para retirar archivos que ya no participan en el producto y dejar una salida clara de modificados, creados y eliminados.
+
+Terminal en segundo plano completado con git status --short
+
+
+Explorado(s) 5 búsquedas
+Eliminado
+AdminModal.tsx
++0
+-65
+Eliminado
+DataQuality.tsx
++0
+-91
+Eliminado
+FileLoader.tsx
++0
+-89
+Eliminado
+FilterPanel.tsx
++0
+-68
+Eliminado
+Methodology.tsx
++0
+-88
+Eliminado
+RawSheets.tsx
++0
+-95
+Eliminado
+StatusPill.tsx
++0
+-10
+Eliminado
+deporte-cdmx-seed.ts
++0
+-285
+Eliminado
+ageDistribution.ts
++0
+-158
+Eliminado
+deporte.ts
++0
+-343
+Eliminado
+model.ts
++0
+-49
+Eliminado
+selectors.ts
++0
+-60
+Eliminado
+semantic.ts
++0
+-33
+Eliminado
+types.ts
++0
+-68
+Eliminado
+useWorkbookJsonLoader.ts
++0
+-34
+Eliminado
+xlsx.ts
++0
+-89
+Eliminado
+useWorkbookStore.ts
++0
+-105
+Explorado(s) 1 búsqueda
+Terminal en segundo plano completado con npm run build
+
+
+Terminal en segundo plano completado con git status --short
+
+
+Procesado durante 12m 2s
+Auditoría
+La base reutilizable valiosa era la UI y la estructura Next.js/Tailwind; lo que estaba sobrando era la arquitectura centrada en workbook.json, carga de Excel genérica y varios módulos heredados de análisis no deportivo. La ruta limpia fue conservar la capa visual y reemplazar la lógica por un contrato explícito de dominio deportivo con trazabilidad por capa de dato.
+
+Implementación
+Refactoricé el proyecto hacia un dashboard institucional con 7 módulos: Panorama, Actividad, Infraestructura, Salud, Riesgo, Metodología y Datos. La nueva base vive en [components/Dashboard.tsx](/Users/alansantos/Proyectos web/deportecdmx2/components/Dashboard.tsx), con loader/store nuevos en [lib/useDashboardDataLoader.ts](/Users/alansantos/Proyectos web/deportecdmx2/lib/useDashboardDataLoader.ts) y [store/useDashboardStore.ts](/Users/alansantos/Proyectos web/deportecdmx2/store/useDashboardStore.ts).
+
+También reorganicé los datos en capas modulares:
+
+[data/raw/alcaldias.ts](/Users/alansantos/Proyectos web/deportecdmx2/data/raw/alcaldias.ts)
+[data/raw/official-benchmarks.ts](/Users/alansantos/Proyectos web/deportecdmx2/data/raw/official-benchmarks.ts)
+[data/processed/population.ts](/Users/alansantos/Proyectos web/deportecdmx2/data/processed/population.ts)
+[data/models/build-dashboard-data.ts](/Users/alansantos/Proyectos web/deportecdmx2/data/models/build-dashboard-data.ts)
+[data/insights/notes.ts](/Users/alansantos/Proyectos web/deportecdmx2/data/insights/notes.ts)
+La lógica nueva implementada cubre:
+
+actividad física por alcaldía, sexo y grupo de edad;
+salud por alcaldía;
+bloque combinado de sobrepeso + obesidad;
+infraestructura por alcaldía y tipo;
+índice de riesgo físico con ranking y semáforo;
+top 5 / top 10 de deportes;
+filtros globales;
+notas metodológicas y separación visible entre real, base_oficial, estimado, preparado, proyectado e insight.
+Archivos
+Modificados:
+
+[app/dashboard/page.tsx](/Users/alansantos/Proyectos web/deportecdmx2/app/dashboard/page.tsx)
+[components/Dashboard.tsx](/Users/alansantos/Proyectos web/deportecdmx2/components/Dashboard.tsx)
+[scripts/convert-xlsx-to-json.ts](/Users/alansantos/Proyectos web/deportecdmx2/scripts/convert-xlsx-to-json.ts)
+Creados:
+
+[data/index.ts](/Users/alansantos/Proyectos web/deportecdmx2/data/index.ts)
+[data/raw/alcaldias.ts](/Users/alansantos/Proyectos web/deportecdmx2/data/raw/alcaldias.ts)
+[data/raw/official-benchmarks.ts](/Users/alansantos/Proyectos web/deportecdmx2/data/raw/official-benchmarks.ts)
+[data/processed/population.ts](/Users/alansantos/Proyectos web/deportecdmx2/data/processed/population.ts)
+[data/models/build-dashboard-data.ts](/Users/alansantos/Proyectos web/deportecdmx2/data/models/build-dashboard-data.ts)
+[data/insights/notes.ts](/Users/alansantos/Proyectos web/deportecdmx2/data/insights/notes.ts)
+[lib/dashboard-types.ts](/Users/alansantos/Proyectos web/deportecdmx2/lib/dashboard-types.ts)
+[lib/dashboard-selectors.ts](/Users/alansantos/Proyectos web/deportecdmx2/lib/dashboard-selectors.ts)
+[lib/useDashboardDataLoader.ts](/Users/alansantos/Proyectos web/deportecdmx2/lib/useDashboardDataLoader.ts)
+[store/useDashboardStore.ts](/Users/alansantos/Proyectos web/deportecdmx2/store/useDashboardStore.ts)
+[public/data/dashboard.json](/Users/alansantos/Proyectos web/deportecdmx2/public/data/dashboard.json)
+Eliminados:
+
+[components/AdminModal.tsx](/Users/alansantos/Proyectos web/deportecdmx2/components/AdminModal.tsx)
+[components/DataQuality.tsx](/Users/alansantos/Proyectos web/deportecdmx2/components/DataQuality.tsx)
+[components/FileLoader.tsx](/Users/alansantos/Proyectos web/deportecdmx2/components/FileLoader.tsx)
+[components/FilterPanel.tsx](/Users/alansantos/Proyectos web/deportecdmx2/components/FilterPanel.tsx)
+[components/Methodology.tsx](/Users/alansantos/Proyectos web/deportecdmx2/components/Methodology.tsx)
+[components/RawSheets.tsx](/Users/alansantos/Proyectos web/deportecdmx2/components/RawSheets.tsx)
+[components/ui/StatusPill.tsx](/Users/alansantos/Proyectos web/deportecdmx2/components/ui/StatusPill.tsx)
+[data/deporte-cdmx-seed.ts](/Users/alansantos/Proyectos web/deportecdmx2/data/deporte-cdmx-seed.ts)
+[lib/ageDistribution.ts](/Users/alansantos/Proyectos web/deportecdmx2/lib/ageDistribution.ts)
+[lib/deporte.ts](/Users/alansantos/Proyectos web/deportecdmx2/lib/deporte.ts)
+[lib/model.ts](/Users/alansantos/Proyectos web/deportecdmx2/lib/model.ts)
+[lib/selectors.ts](/Users/alansantos/Proyectos web/deportecdmx2/lib/selectors.ts)
+[lib/semantic.ts](/Users/alansantos/Proyectos web/deportecdmx2/lib/semantic.ts)
+[lib/types.ts](/Users/alansantos/Proyectos web/deportecdmx2/lib/types.ts)
+[lib/useWorkbookJsonLoader.ts](/Users/alansantos/Proyectos web/deportecdmx2/lib/useWorkbookJsonLoader.ts)
+[lib/xlsx.ts](/Users/alansantos/Proyectos web/deportecdmx2/lib/xlsx.ts)
+[store/useWorkbookStore.ts](/Users/alansantos/Proyectos web/deportecdmx2/store/useWorkbookStore.ts)
+La distinción real vs estimado quedó resuelta en dos niveles: en el dato, cada registro guarda su tipo (activityDataType, healthDataType, infrastructureDataType, populationDataType), y en la UI se expone en Metodología/Fuentes con capas separadas y notas de limitación. Infraestructura se presenta como real; salud y actividad territorializadas como estimado; 2026 como proyectado; rankings y semáforos como insight.
+
+Estado final: el proyecto compila correctamente, genera [public/data/dashboard.json](/Users/alansantos/Proyectos web/deportecdmx2/public/data/dashboard.json) en build y /dashboard queda listo para revisión institucional. Comando validado: npm run build.
+
+Comandos ejecutados:
+
+rg --files
+sed -n '...' docs/...
+rg -n '...' app components lib store scripts data
+npm run build
+Siguientes pasos recomendados:
+
+conectar ETL real por recurso para PILARES, deportivos públicos, DENUE y áreas verdes con fecha de corte;
+incorporar población oficial por alcaldía/sexo/edad desde Censo y proyecciones más robustas;
+sustituir la territorialización heurística por un modelo formal SAE/MRP con microdatos MOPRADEF y, si se consigue, ENSANUT;
+agregar capa geoespacial de alcaldías y cobertura para mapa institucional.
+
+30 archivos modificados
++1405
+-2257
+Deshacer
+app/dashboard/page.tsx
+components/AdminModal.tsx
+components/Dashboard.tsx
+components/DataQuality.tsx
+components/FileLoader.tsx
+components/FilterPanel.tsx
+components/Methodology.tsx
+components/RawSheets.tsx
+components/ui/StatusPill.tsx
+data/deporte-cdmx-seed.ts
+data/index.ts
+data/insights/notes.ts
+data/models/build-dashboard-data.ts
+data/processed/population.ts
+data/raw/alcaldias.ts
+data/raw/official-benchmarks.ts
+lib/ageDistribution.ts
+lib/dashboard-selectors.ts
+lib/dashboard-types.ts
+lib/deporte.ts
+lib/model.ts
+lib/selectors.ts
+lib/semantic.ts
+lib/types.ts
+lib/useDashboardDataLoader.ts
+lib/useWorkbookJsonLoader.ts
+lib/xlsx.ts
+scripts/convert-xlsx-to-json.ts
+store/useDashboardStore.ts
+store/useWorkbookStore.ts

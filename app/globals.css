@@ -25,7 +25,7 @@ body {
 }
 
 .card {
-  @apply rounded-2xl border border-mist-200 bg-white shadow-soft;
+  @apply rounded-3xl border border-mist-200/90 bg-white shadow-soft;
 }
 
 .badge {
@@ -49,15 +49,39 @@ body {
 }
 
 .section-block {
-  @apply space-y-5;
+  @apply space-y-6 rounded-[28px] border border-mist-200/80 bg-white/70 p-5 shadow-soft md:p-6;
 }
 
 .section-heading {
-  @apply text-lg font-semibold text-ink-900;
+  @apply text-xl font-semibold text-ink-900;
 }
 
 .section-copy {
-  @apply text-sm text-ink-600;
+  @apply max-w-3xl text-sm leading-6 text-ink-600;
+}
+
+.section-kicker {
+  @apply text-[11px] font-semibold uppercase tracking-[0.18em] text-ink-600;
+}
+
+.meta-panel {
+  @apply rounded-2xl border border-mist-200 bg-mist-100/80 p-3;
+}
+
+.meta-grid {
+  @apply grid gap-3 md:grid-cols-3;
+}
+
+.meta-label {
+  @apply text-[11px] font-semibold uppercase tracking-wide text-ink-600;
+}
+
+.meta-value {
+  @apply mt-1 text-sm leading-6 text-ink-800;
+}
+
+.subtle-divider {
+  @apply border-t border-mist-200/80 pt-4;
 }
 
 .tab {
@@ -65,9 +89,9 @@ body {
 }
 
 .tab-active {
-  @apply bg-ink-900 text-white;
+  @apply bg-ink-900 text-white shadow-soft;
 }
 
 .tab-inactive {
-  @apply bg-white text-ink-700 hover:text-ink-900;
+  @apply bg-white/90 text-ink-700 hover:border-mist-300 hover:text-ink-900;
 }

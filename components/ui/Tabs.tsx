@@ -10,7 +10,7 @@ type TabsProps<T extends string> = {
 
 export default function Tabs<T extends string>({ tabs, active, onChange }: TabsProps<T>) {
   return (
-    <div className="flex flex-wrap gap-2">
+    <div className="flex flex-wrap gap-2 rounded-3xl border border-mist-200 bg-white/80 p-2 shadow-soft">
       {tabs.map((tab) => (
         <button
           key={tab}

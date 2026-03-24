@@ -1,5 +1,6 @@
 "use client";
 
+import type { MetricMetadata } from "../lib/dashboard-types";
 import {
   Bar,
   BarChart,
@@ -69,28 +70,43 @@ const StackedTooltip = ({
 type ChartCardProps = {
   title: string;
   helper?: string;
-  tooltip?: string;
+  tooltip: MetricMetadata;
   children: React.ReactNode;
 };
 
 export function ChartCard({ title, helper, tooltip, children }: ChartCardProps) {
+  const tooltipText = `Fuente: ${tooltip.source}\nTipo: ${tooltip.dataType.replace("_", " ")}\nNota: ${tooltip.note}`;
   return (
-    <div className="card space-y-4 p-5">
-      <div>
+    <div className="card space-y-5 p-5">
+      <div className="space-y-2">
         <div className="flex items-center gap-2">
           <div className="text-base font-semibold text-ink-900">{title}</div>
-          {tooltip ? (
-            <span
-              className="inline-flex h-5 w-5 items-center justify-center rounded-full border border-mist-200 text-[11px] font-semibold text-ink-500"
-              title={tooltip}
-            >
-              i
-            </span>
-          ) : null}
+          <span
+            className="inline-flex h-5 w-5 items-center justify-center rounded-full border border-mist-200 text-[11px] font-semibold text-ink-500"
+            title={tooltipText}
+          >
+            i
+          </span>
         </div>
         {helper ? <div className="text-xs text-ink-600">{helper}</div> : null}
       </div>
       <div className="h-64">{children}</div>
+      <div className="meta-panel">
+        <div className="meta-grid">
+          <div>
+            <div className="meta-label">Fuente</div>
+            <div className="meta-value">{tooltip.source}</div>
+          </div>
+          <div>
+            <div className="meta-label">Tipo de dato</div>
+            <div className="meta-value">{tooltip.dataType.replace("_", " ")}</div>
+          </div>
+          <div>
+            <div className="meta-label">Nota metodológica</div>
+            <div className="meta-value">{tooltip.note}</div>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
