@@ -4,7 +4,14 @@ import type { DataLayer, InfrastructureDetailRecord } from "../../../lib/dashboa
 import { officialSourceConfig } from "./official-source-config";
 import { normalizeAlcaldia } from "./normalize-alcaldia";
 
-type OfficialInfrastructureLayer = {
+type DenueGeojson = {
+  features: Array<{
+    properties: Record<string, string | null>;
+    geometry?: { type: string; coordinates?: [number, number] };
+  }>;
+};
+
+export type OfficialInfrastructureLayer = {
   meta: {
     generatedAt: string;
     integratedSources: Array<{
@@ -17,7 +24,17 @@ type OfficialInfrastructureLayer = {
     }>;
   };
   details: InfrastructureDetailRecord[];
-  summaryByAlcaldia: Record<string, { pilares: number; publicSportsCenters: number }>;
+  summaryByAlcaldia: Record<
+    string,
+    {
+      pilares: number;
+      publicSportsCenters: number;
+      privateFacilities: number;
+      privateGyms: number;
+      privateClubs: number;
+      privateSchools: number;
+    }
+  >;
   geometryPlaceholder: Array<{ alcaldia: string; geoKey: string; status: DataLayer; note: string }>;
 };
 
@@ -77,6 +94,21 @@ const toNumber = (value: string) => {
   return Number.isFinite(parsed) ? parsed : null;
 };
 
+const normalizeText = (value: string | null | undefined) =>
+  (value ?? "")
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9\s]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+
+const readJson = <T,>(filePath: string): T | null => {
+  const absolutePath = path.join(process.cwd(), filePath);
+  if (!fs.existsSync(absolutePath)) return null;
+  return JSON.parse(fs.readFileSync(absolutePath, "utf-8")) as T;
+};
+
 const defaultSportsByType: Record<string, string[]> = {
   PILARES: ["Activación física", "Zumba", "Yoga"],
   "Deportivos públicos": ["Fútbol", "Básquetbol", "Acondicionamiento"],
@@ -85,9 +117,97 @@ const defaultSportsByType: Record<string, string[]> = {
   "Escuelas de deporte": ["Iniciación deportiva", "Entrenamiento"]
 };
 
+const denueSubtypeConfig = [
+  {
+    subtype: "Clubes deportivos",
+    match: (text: string) =>
+      text.includes("club deportivo") ||
+      /club\s+(de\s+)?(tenis|natacion|futbol|golf|padel|deportivo)/.test(text),
+    sports: defaultSportsByType["Clubes deportivos"]
+  },
+  {
+    subtype: "Escuelas de deporte",
+    match: (text: string) =>
+      (text.includes("academia") || text.includes("escuela")) &&
+      /(futbol|natacion|box|taekwondo|karate|tenis|basquet|voleibol|deporte|fitness|gimnas)/.test(text),
+    sports: defaultSportsByType["Escuelas de deporte"]
+  },
+  {
+    subtype: "Gimnasios",
+    match: (text: string) =>
+      /(gimnasio| gym |gym$|gymnasium|fitness|crossfit|pilates|spinning|box|boxing|yoga|calistenia|acondicionamiento)/.test(
+        ` ${text} `
+      ),
+    sports: defaultSportsByType.Gimnasios
+  }
+] as const;
+
+const denueExcludePattern =
+  /(articulos y aparatos deportivos|ropa deportiva|suplement|nutricion|farmacia|vinos|joyeria|papeleria|musica|instrumentos|moto|automovil|llantas|bazar|figuras coleccionables)/;
+
+const buildDenueDetails = (): InfrastructureDetailRecord[] => {
+  const denue = readJson<DenueGeojson>(officialSourceConfig.denue.localPath);
+  if (!denue?.features) return [];
+
+  return denue.features.flatMap((feature, index) => {
+    const name = feature.properties.nmbr_st ?? feature.properties.rzn_scl ?? `DENUE ${index + 1}`;
+    const text = normalizeText(
+      [
+        feature.properties.nmbr_st,
+        feature.properties.rzn_scl,
+        feature.properties.activdd,
+        feature.properties.ctgr_ct
+      ]
+        .filter(Boolean)
+        .join(" ")
+    );
+
+    if (!text || denueExcludePattern.test(text)) return [];
+
+    const subtypeMatch = denueSubtypeConfig.find((item) => item.match(text));
+    if (!subtypeMatch) return [];
+
+    const normalized = normalizeAlcaldia(feature.properties.alcaldi);
+    const coordinates = feature.geometry?.coordinates;
+
+    return [
+      {
+        id: `denue-${index + 1}`,
+        spaceName: name,
+        tipo_espacio:
+          subtypeMatch.subtype === "Gimnasios"
+            ? "gimnasio / acondicionamiento"
+            : subtypeMatch.subtype === "Clubes deportivos"
+              ? "club deportivo"
+              : "academia / escuela de deporte",
+        infrastructureType: "Gimnasios" as const,
+        alcaldia: normalized.alcaldia,
+        originalAlcaldia: normalized.original,
+        needsAlcaldiaNormalization: !normalized.matched,
+        geoKey: normalized.geoKey,
+        year: 2025,
+        sportsAvailable: subtypeMatch.sports,
+        capacity: subtypeMatch.subtype === "Gimnasios" ? 55 : subtypeMatch.subtype === "Clubes deportivos" ? 80 : 35,
+        capacityType: "estimada" as const,
+        units: 1,
+        latitude: Array.isArray(coordinates) ? coordinates[1] : null,
+        longitude: Array.isArray(coordinates) ? coordinates[0] : null,
+        status: "Fuente económica sin estatus operativo",
+        sourceDataset: officialSourceConfig.denue.dataset,
+        subtype: subtypeMatch.subtype,
+        dataType: "preparado" as const,
+        source: officialSourceConfig.denue.url,
+        methodologicalNote:
+          "Registro descargado de DENUE CDMX y clasificado por heurística textual porque este export no expone el código SCIAN objetivo de forma usable. Debe sustituirse por un corte con SCIAN verificable para tratarse como real."
+      }
+    ];
+  });
+};
+
 export const buildOfficialInfrastructureLayer = (): OfficialInfrastructureLayer => {
   const pilaresRows = readCsv(officialSourceConfig.pilares.localPath);
   const publicSportsRows = readCsv(officialSourceConfig.publicSports.localPath);
+  const denueDetails = buildDenueDetails();
 
   const pilaresDetails: InfrastructureDetailRecord[] = pilaresRows.map((row) => {
     const normalized = normalizeAlcaldia(row.ALCALDIA);
@@ -145,12 +265,25 @@ export const buildOfficialInfrastructureLayer = (): OfficialInfrastructureLayer 
     };
   });
 
-  const details = [...pilaresDetails, ...publicSportsDetails];
-  const summaryByAlcaldia = details.reduce<Record<string, { pilares: number; publicSportsCenters: number }>>((acc, item) => {
+  const details = [...pilaresDetails, ...publicSportsDetails, ...denueDetails];
+  const summaryByAlcaldia = details.reduce<OfficialInfrastructureLayer["summaryByAlcaldia"]>((acc, item) => {
     const key = item.alcaldia;
-    acc[key] = acc[key] ?? { pilares: 0, publicSportsCenters: 0 };
+    acc[key] = acc[key] ?? {
+      pilares: 0,
+      publicSportsCenters: 0,
+      privateFacilities: 0,
+      privateGyms: 0,
+      privateClubs: 0,
+      privateSchools: 0
+    };
     if (item.infrastructureType === "PILARES") acc[key].pilares += 1;
     if (item.infrastructureType === "Deportivos públicos") acc[key].publicSportsCenters += 1;
+    if (item.sourceDataset === officialSourceConfig.denue.dataset) {
+      acc[key].privateFacilities += 1;
+      if (item.subtype === "Gimnasios") acc[key].privateGyms += 1;
+      if (item.subtype === "Clubes deportivos") acc[key].privateClubs += 1;
+      if (item.subtype === "Escuelas de deporte") acc[key].privateSchools += 1;
+    }
     return acc;
   }, {});
 
@@ -185,17 +318,17 @@ export const buildOfficialInfrastructureLayer = (): OfficialInfrastructureLayer 
           key: "denue",
           dataset: officialSourceConfig.denue.dataset,
           localPath: officialSourceConfig.denue.localPath,
-          integrated: false,
-          recordCount: 0,
-          note: "Conector preparado; falta descarga y filtrado real por SCIAN."
+          integrated: denueDetails.length > 0,
+          recordCount: denueDetails.length,
+          note: "Capa privada preparada desde DENUE. Queda etiquetada como preparado hasta contar con SCIAN verificable."
         },
         {
           key: "geometry",
           dataset: officialSourceConfig.geometry.dataset,
           localPath: officialSourceConfig.geometry.localPath,
-          integrated: false,
+          integrated: fs.existsSync(path.join(process.cwd(), officialSourceConfig.geometry.localPath)),
           recordCount: geometryPlaceholder.length,
-          note: "Placeholder técnico listo; falta geometría oficial."
+          note: "GeoJSON oficial descargado y compatible con geoKey; el render vive en la capa de mapa."
         }
       ]
     },

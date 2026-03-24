@@ -17,10 +17,10 @@ export const sourceRegistry: SourceRegistryEntry[] = [
   },
   {
     metric: "Gimnasios y centros privados",
-    layer: "real",
-    source: "DENUE / SCIAN 713943, 713941 y 611621",
-    coverage: "Oferta privada observable por unidad económica",
-    note: "Se reconoce cobertura real, pero no acceso universal."
+    layer: "preparado",
+    source: "DENUE CDMX descargado + clasificación textual compatible con SCIAN objetivo",
+    coverage: "Oferta privada preparada por unidad económica y alcaldía",
+    note: "Mientras el export no exponga SCIAN verificable, la capa privada debe leerse como preparada y no como conteo oficial definitivo."
   },
   {
     metric: "Parques y áreas verdes",
@@ -52,17 +52,17 @@ export const sourceRegistry: SourceRegistryEntry[] = [
   },
   {
     metric: "Infraestructura detallada",
-    layer: "real",
+    layer: "insight",
     source: "Consolidación por tipo desde PILARES, deportivos públicos, DENUE y espacios abiertos",
     coverage: "Detalle por alcaldía y tipo de espacio",
-    note: "Incluye deportes disponibles y capacidad estimada cuando no existe aforo oficial."
+    note: "Combina registros reales, preparados y capacidad estimada cuando no existe aforo oficial."
   },
   {
     metric: "Mapa territorial",
     layer: "insight",
-    source: "Modelo de mapa listo para alcaldías",
+    source: "GeoJSON oficial de alcaldías + modelo territorial Deporte CDMX",
     coverage: "Actividad, riesgo e infraestructura por alcaldía",
-    note: "Listo para choropleth o heatmap cuando se conecte geometría oficial."
+    note: "La geometría ya está integrada; actividad y riesgo siguen dependiendo de capas estimadas o de insight."
   }
 ];
 
@@ -81,7 +81,7 @@ export const methodologyEntries: MethodologyEntry[] = [
     layer: "real",
     source: "PILARES, deportivos públicos, DENUE e inventarios de áreas verdes",
     logic: "Se consolida por alcaldía y se transforma en densidad por 100 mil habitantes.",
-    limitation: "Falta ETL puntual con georreferencia y fecha de corte por recurso."
+    limitation: "La infraestructura privada descargada desde DENUE sigue preparada hasta validar SCIAN y fecha de corte con un extracto más robusto."
   },
   {
     module: "Salud",
@@ -102,18 +102,18 @@ export const methodologyEntries: MethodologyEntry[] = [
   {
     module: "Infraestructura detallada",
     metric: "Espacios, deportes disponibles y capacidad",
-    layer: "real",
+    layer: "insight",
     source: "Capas de infraestructura pública y privada consolidadas",
     logic: "Se resume la oferta por tipo de espacio; la capacidad se estima cuando no hay aforo operativo oficial.",
-    limitation: "Falta integración a nivel de sede con inventario nominal definitivo."
+    limitation: "La mezcla de capas reales y preparadas obliga a conservar visible el tipo de dato en cada lectura."
   },
   {
     module: "Mapa",
     metric: "Modelo por alcaldía",
     layer: "insight",
-    source: "Dataset preparado para mapa institucional",
-    logic: "Cada alcaldía incluye `geoKey`, centroide, actividad, riesgo e infraestructura para futura capa espacial.",
-    limitation: "No incluye aún geometría oficial embebida ni rendering cartográfico."
+    source: "GeoJSON oficial de alcaldías + dataset territorial Deporte CDMX",
+    logic: "Cada alcaldía incluye geometría SVG, `geoKey`, actividad, riesgo e infraestructura para choropleth institucional sin APIs externas.",
+    limitation: "La geometría es oficial, pero la métrica visualizada depende de la capa seleccionada: real, preparada, estimada o insight."
   },
   {
     module: "Serie temporal",
@@ -155,6 +155,12 @@ export const qualityChecks: QualityEntry[] = [
     scope: "2020-2026",
     status: "ATENCION",
     note: "2020-2023 y 2026 deben mostrarse como preparados o proyectados según el caso."
+  },
+  {
+    check: "Capa privada DENUE",
+    scope: "Infraestructura económica",
+    status: "ATENCION",
+    note: "La clasificación privada usa heurísticas textuales porque el export descargado no trae SCIAN verificable en la salida usada por este MVP."
   }
 ];
 

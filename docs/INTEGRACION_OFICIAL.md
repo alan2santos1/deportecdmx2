@@ -8,18 +8,21 @@
 - Deportivos públicos
   - CSV oficial descargado en `data/raw/external/deportivos_publicos.csv`
   - Configuración en `data/models/integration/official-source-config.ts`
+- Geometría de alcaldías
+  - GeoJSON oficial descargado en `data/raw/external/alcaldias.geojson`
+  - Conversión a SVG path en `data/models/integration/build-map-geometry.ts`
+  - Conectado al dashboard mediante `geoKey`
 
-## Fuentes preparadas
+## Fuentes preparadas o parcialmente integradas
 
 - DENUE / SCIAN
-  - Configuración lista en `data/models/integration/official-source-config.ts`
+  - Configuración y descarga listas en `data/models/integration/official-source-config.ts`
+  - Archivo local: `data/raw/external/denue_cdmx.geojson`
   - Códigos objetivo:
     - `713943` gimnasios
     - `713941` clubes deportivos
     - `611621` escuelas de deporte
-- Geometría de alcaldías
-  - Placeholder listo con `geoKey`
-  - Falta incorporar `GeoJSON` oficial
+  - El corte actual se clasifica como `preparado` porque el export usado no expone SCIAN verificable en la salida final y requiere heurística textual.
 
 ## ETL mínimo reproducible
 
@@ -38,4 +41,5 @@
 - Si la fuente oficial no trae alcaldía limpia, se normaliza con `normalize-alcaldia.ts`.
 - Si la fuente no publica aforo/capacidad, el sistema deja `capacityType = estimada`.
 - PILARES y Deportivos Públicos entran hoy como integración nominal real.
-- DENUE y geometría quedan preparados para integración real posterior.
+- La geometría oficial ya entra al mapa institucional sin depender de APIs externas.
+- DENUE ya entra al processed, pero debe seguir marcado como `preparado` hasta validar un extracto con SCIAN verificable.

@@ -1,6 +1,6 @@
 {
   "meta": {
-    "generatedAt": "2026-03-24T04:12:25.542Z",
+    "generatedAt": "2026-03-24T04:37:34.871Z",
     "integratedSources": [
       {
         "key": "pilares",
@@ -22,17 +22,17 @@
         "key": "denue",
         "dataset": "Directorio Estadístico de Unidades Económicas CDMX",
         "localPath": "data/raw/external/denue_cdmx.geojson",
-        "integrated": false,
-        "recordCount": 0,
-        "note": "Conector preparado; falta descarga y filtrado real por SCIAN."
+        "integrated": true,
+        "recordCount": 24,
+        "note": "Capa privada preparada desde DENUE. Queda etiquetada como preparado hasta contar con SCIAN verificable."
       },
       {
         "key": "geometry",
         "dataset": "Geometría de alcaldías CDMX",
         "localPath": "data/raw/external/alcaldias.geojson",
-        "integrated": false,
+        "integrated": true,
         "recordCount": 16,
-        "note": "Placeholder técnico listo; falta geometría oficial."
+        "note": "GeoJSON oficial descargado y compatible con geoKey; el render vive en la capa de mapa."
       }
     ]
   },
@@ -14726,72 +14726,760 @@
       "dataType": "real",
       "source": "https://datos.cdmx.gob.mx/dataset/c35ecde0-ab8b-43ba-a002-6c99173a97cf/resource/2782b1fa-7c4a-4c35-a9f2-a8670059253e/download/deportivos_publicos-r.xlsx-todos2.0.csv",
       "methodologicalNote": "Instalación real integrada desde el inventario oficial. La fuente no publica aforo ni deportes disponibles por sede."
+    },
+    {
+      "id": "denue-4568",
+      "spaceName": "ABARROTES EL GYM",
+      "tipo_espacio": "gimnasio / acondicionamiento",
+      "infrastructureType": "Gimnasios",
+      "alcaldia": "Iztapalapa",
+      "originalAlcaldia": "IZTAPALAPA",
+      "needsAlcaldiaNormalization": false,
+      "geoKey": "iztapalapa",
+      "year": 2025,
+      "sportsAvailable": [
+        "Acondicionamiento",
+        "Pesas"
+      ],
+      "capacity": 55,
+      "capacityType": "estimada",
+      "units": 1,
+      "latitude": 19.35116177,
+      "longitude": -99.02665026,
+      "status": "Fuente económica sin estatus operativo",
+      "sourceDataset": "Directorio Estadístico de Unidades Económicas CDMX",
+      "subtype": "Gimnasios",
+      "dataType": "preparado",
+      "source": "https://datos.cdmx.gob.mx/dataset/b042f288-836d-4e29-9be2-d25e7a311a5c/resource/3ffedf9d-10ad-429c-aa7c-db305b3e7909/download/directorio-de-unidades-econmicas.json",
+      "methodologicalNote": "Registro descargado de DENUE CDMX y clasificado por heurística textual porque este export no expone el código SCIAN objetivo de forma usable. Debe sustituirse por un corte con SCIAN verificable para tratarse como real."
+    },
+    {
+      "id": "denue-42485",
+      "spaceName": "CADY BOX",
+      "tipo_espacio": "gimnasio / acondicionamiento",
+      "infrastructureType": "Gimnasios",
+      "alcaldia": "Coyoacán",
+      "originalAlcaldia": "COYOACAN",
+      "needsAlcaldiaNormalization": false,
+      "geoKey": "coyoacan",
+      "year": 2025,
+      "sportsAvailable": [
+        "Acondicionamiento",
+        "Pesas"
+      ],
+      "capacity": 55,
+      "capacityType": "estimada",
+      "units": 1,
+      "latitude": 19.3358675,
+      "longitude": -99.12433814,
+      "status": "Fuente económica sin estatus operativo",
+      "sourceDataset": "Directorio Estadístico de Unidades Económicas CDMX",
+      "subtype": "Gimnasios",
+      "dataType": "preparado",
+      "source": "https://datos.cdmx.gob.mx/dataset/b042f288-836d-4e29-9be2-d25e7a311a5c/resource/3ffedf9d-10ad-429c-aa7c-db305b3e7909/download/directorio-de-unidades-econmicas.json",
+      "methodologicalNote": "Registro descargado de DENUE CDMX y clasificado por heurística textual porque este export no expone el código SCIAN objetivo de forma usable. Debe sustituirse por un corte con SCIAN verificable para tratarse como real."
+    },
+    {
+      "id": "denue-63886",
+      "spaceName": "JUGOS Y LICUADOS GYM DE ALBERCA OLIMPICA",
+      "tipo_espacio": "gimnasio / acondicionamiento",
+      "infrastructureType": "Gimnasios",
+      "alcaldia": "Coyoacán",
+      "originalAlcaldia": "COYOACAN",
+      "needsAlcaldiaNormalization": false,
+      "geoKey": "coyoacan",
+      "year": 2025,
+      "sportsAvailable": [
+        "Acondicionamiento",
+        "Pesas"
+      ],
+      "capacity": 55,
+      "capacityType": "estimada",
+      "units": 1,
+      "latitude": 19.33049938,
+      "longitude": -99.18457753,
+      "status": "Fuente económica sin estatus operativo",
+      "sourceDataset": "Directorio Estadístico de Unidades Económicas CDMX",
+      "subtype": "Gimnasios",
+      "dataType": "preparado",
+      "source": "https://datos.cdmx.gob.mx/dataset/b042f288-836d-4e29-9be2-d25e7a311a5c/resource/3ffedf9d-10ad-429c-aa7c-db305b3e7909/download/directorio-de-unidades-econmicas.json",
+      "methodologicalNote": "Registro descargado de DENUE CDMX y clasificado por heurística textual porque este export no expone el código SCIAN objetivo de forma usable. Debe sustituirse por un corte con SCIAN verificable para tratarse como real."
+    },
+    {
+      "id": "denue-63973",
+      "spaceName": "KING BOXING PRIVATE",
+      "tipo_espacio": "gimnasio / acondicionamiento",
+      "infrastructureType": "Gimnasios",
+      "alcaldia": "Benito Juárez",
+      "originalAlcaldia": "BENITO JUAREZ",
+      "needsAlcaldiaNormalization": false,
+      "geoKey": "benito-juarez",
+      "year": 2025,
+      "sportsAvailable": [
+        "Acondicionamiento",
+        "Pesas"
+      ],
+      "capacity": 55,
+      "capacityType": "estimada",
+      "units": 1,
+      "latitude": 19.3672365,
+      "longitude": -99.1874576,
+      "status": "Fuente económica sin estatus operativo",
+      "sourceDataset": "Directorio Estadístico de Unidades Económicas CDMX",
+      "subtype": "Gimnasios",
+      "dataType": "preparado",
+      "source": "https://datos.cdmx.gob.mx/dataset/b042f288-836d-4e29-9be2-d25e7a311a5c/resource/3ffedf9d-10ad-429c-aa7c-db305b3e7909/download/directorio-de-unidades-econmicas.json",
+      "methodologicalNote": "Registro descargado de DENUE CDMX y clasificado por heurística textual porque este export no expone el código SCIAN objetivo de forma usable. Debe sustituirse por un corte con SCIAN verificable para tratarse como real."
+    },
+    {
+      "id": "denue-85708",
+      "spaceName": "THE PINK BOX BAKERY",
+      "tipo_espacio": "gimnasio / acondicionamiento",
+      "infrastructureType": "Gimnasios",
+      "alcaldia": "Miguel Hidalgo",
+      "originalAlcaldia": "MIGUEL HIDALGO",
+      "needsAlcaldiaNormalization": false,
+      "geoKey": "miguel-hidalgo",
+      "year": 2025,
+      "sportsAvailable": [
+        "Acondicionamiento",
+        "Pesas"
+      ],
+      "capacity": 55,
+      "capacityType": "estimada",
+      "units": 1,
+      "latitude": 19.42757193,
+      "longitude": -99.21041209,
+      "status": "Fuente económica sin estatus operativo",
+      "sourceDataset": "Directorio Estadístico de Unidades Económicas CDMX",
+      "subtype": "Gimnasios",
+      "dataType": "preparado",
+      "source": "https://datos.cdmx.gob.mx/dataset/b042f288-836d-4e29-9be2-d25e7a311a5c/resource/3ffedf9d-10ad-429c-aa7c-db305b3e7909/download/directorio-de-unidades-econmicas.json",
+      "methodologicalNote": "Registro descargado de DENUE CDMX y clasificado por heurística textual porque este export no expone el código SCIAN objetivo de forma usable. Debe sustituirse por un corte con SCIAN verificable para tratarse como real."
+    },
+    {
+      "id": "denue-94144",
+      "spaceName": "ZONA FITNESS",
+      "tipo_espacio": "gimnasio / acondicionamiento",
+      "infrastructureType": "Gimnasios",
+      "alcaldia": "Benito Juárez",
+      "originalAlcaldia": "BENITO JUAREZ",
+      "needsAlcaldiaNormalization": false,
+      "geoKey": "benito-juarez",
+      "year": 2025,
+      "sportsAvailable": [
+        "Acondicionamiento",
+        "Pesas"
+      ],
+      "capacity": 55,
+      "capacityType": "estimada",
+      "units": 1,
+      "latitude": 19.38975919,
+      "longitude": -99.1508186,
+      "status": "Fuente económica sin estatus operativo",
+      "sourceDataset": "Directorio Estadístico de Unidades Económicas CDMX",
+      "subtype": "Gimnasios",
+      "dataType": "preparado",
+      "source": "https://datos.cdmx.gob.mx/dataset/b042f288-836d-4e29-9be2-d25e7a311a5c/resource/3ffedf9d-10ad-429c-aa7c-db305b3e7909/download/directorio-de-unidades-econmicas.json",
+      "methodologicalNote": "Registro descargado de DENUE CDMX y clasificado por heurística textual porque este export no expone el código SCIAN objetivo de forma usable. Debe sustituirse por un corte con SCIAN verificable para tratarse como real."
+    },
+    {
+      "id": "denue-95980",
+      "spaceName": "BABY BOX",
+      "tipo_espacio": "gimnasio / acondicionamiento",
+      "infrastructureType": "Gimnasios",
+      "alcaldia": "Cuauhtémoc",
+      "originalAlcaldia": "CUAUHTEMOC",
+      "needsAlcaldiaNormalization": false,
+      "geoKey": "cuauhtemoc",
+      "year": 2025,
+      "sportsAvailable": [
+        "Acondicionamiento",
+        "Pesas"
+      ],
+      "capacity": 55,
+      "capacityType": "estimada",
+      "units": 1,
+      "latitude": 19.42968072,
+      "longitude": -99.13037680999999,
+      "status": "Fuente económica sin estatus operativo",
+      "sourceDataset": "Directorio Estadístico de Unidades Económicas CDMX",
+      "subtype": "Gimnasios",
+      "dataType": "preparado",
+      "source": "https://datos.cdmx.gob.mx/dataset/b042f288-836d-4e29-9be2-d25e7a311a5c/resource/3ffedf9d-10ad-429c-aa7c-db305b3e7909/download/directorio-de-unidades-econmicas.json",
+      "methodologicalNote": "Registro descargado de DENUE CDMX y clasificado por heurística textual porque este export no expone el código SCIAN objetivo de forma usable. Debe sustituirse por un corte con SCIAN verificable para tratarse como real."
+    },
+    {
+      "id": "denue-97656",
+      "spaceName": "BONETERIA JIMMY BOXER",
+      "tipo_espacio": "gimnasio / acondicionamiento",
+      "infrastructureType": "Gimnasios",
+      "alcaldia": "Cuauhtémoc",
+      "originalAlcaldia": "CUAUHTEMOC",
+      "needsAlcaldiaNormalization": false,
+      "geoKey": "cuauhtemoc",
+      "year": 2025,
+      "sportsAvailable": [
+        "Acondicionamiento",
+        "Pesas"
+      ],
+      "capacity": 55,
+      "capacityType": "estimada",
+      "units": 1,
+      "latitude": 19.43052547,
+      "longitude": -99.13034738,
+      "status": "Fuente económica sin estatus operativo",
+      "sourceDataset": "Directorio Estadístico de Unidades Económicas CDMX",
+      "subtype": "Gimnasios",
+      "dataType": "preparado",
+      "source": "https://datos.cdmx.gob.mx/dataset/b042f288-836d-4e29-9be2-d25e7a311a5c/resource/3ffedf9d-10ad-429c-aa7c-db305b3e7909/download/directorio-de-unidades-econmicas.json",
+      "methodologicalNote": "Registro descargado de DENUE CDMX y clasificado por heurística textual porque este export no expone el código SCIAN objetivo de forma usable. Debe sustituirse por un corte con SCIAN verificable para tratarse como real."
+    },
+    {
+      "id": "denue-98871",
+      "spaceName": "BOXER ABRAHAM",
+      "tipo_espacio": "gimnasio / acondicionamiento",
+      "infrastructureType": "Gimnasios",
+      "alcaldia": "Venustiano Carranza",
+      "originalAlcaldia": "VENUSTIANO CARRANZA",
+      "needsAlcaldiaNormalization": false,
+      "geoKey": "venustiano-carranza",
+      "year": 2025,
+      "sportsAvailable": [
+        "Acondicionamiento",
+        "Pesas"
+      ],
+      "capacity": 55,
+      "capacityType": "estimada",
+      "units": 1,
+      "latitude": 19.45056724,
+      "longitude": -99.1168767,
+      "status": "Fuente económica sin estatus operativo",
+      "sourceDataset": "Directorio Estadístico de Unidades Económicas CDMX",
+      "subtype": "Gimnasios",
+      "dataType": "preparado",
+      "source": "https://datos.cdmx.gob.mx/dataset/b042f288-836d-4e29-9be2-d25e7a311a5c/resource/3ffedf9d-10ad-429c-aa7c-db305b3e7909/download/directorio-de-unidades-econmicas.json",
+      "methodologicalNote": "Registro descargado de DENUE CDMX y clasificado por heurística textual porque este export no expone el código SCIAN objetivo de forma usable. Debe sustituirse por un corte con SCIAN verificable para tratarse como real."
+    },
+    {
+      "id": "denue-98872",
+      "spaceName": "BOXER MAXIM0N",
+      "tipo_espacio": "gimnasio / acondicionamiento",
+      "infrastructureType": "Gimnasios",
+      "alcaldia": "Venustiano Carranza",
+      "originalAlcaldia": "VENUSTIANO CARRANZA",
+      "needsAlcaldiaNormalization": false,
+      "geoKey": "venustiano-carranza",
+      "year": 2025,
+      "sportsAvailable": [
+        "Acondicionamiento",
+        "Pesas"
+      ],
+      "capacity": 55,
+      "capacityType": "estimada",
+      "units": 1,
+      "latitude": 19.45089712,
+      "longitude": -99.11670383,
+      "status": "Fuente económica sin estatus operativo",
+      "sourceDataset": "Directorio Estadístico de Unidades Económicas CDMX",
+      "subtype": "Gimnasios",
+      "dataType": "preparado",
+      "source": "https://datos.cdmx.gob.mx/dataset/b042f288-836d-4e29-9be2-d25e7a311a5c/resource/3ffedf9d-10ad-429c-aa7c-db305b3e7909/download/directorio-de-unidades-econmicas.json",
+      "methodologicalNote": "Registro descargado de DENUE CDMX y clasificado por heurística textual porque este export no expone el código SCIAN objetivo de forma usable. Debe sustituirse por un corte con SCIAN verificable para tratarse como real."
+    },
+    {
+      "id": "denue-98874",
+      "spaceName": "BOXERS CAMERINO",
+      "tipo_espacio": "gimnasio / acondicionamiento",
+      "infrastructureType": "Gimnasios",
+      "alcaldia": "Venustiano Carranza",
+      "originalAlcaldia": "VENUSTIANO CARRANZA",
+      "needsAlcaldiaNormalization": false,
+      "geoKey": "venustiano-carranza",
+      "year": 2025,
+      "sportsAvailable": [
+        "Acondicionamiento",
+        "Pesas"
+      ],
+      "capacity": 55,
+      "capacityType": "estimada",
+      "units": 1,
+      "latitude": 19.45089503,
+      "longitude": -99.11769443,
+      "status": "Fuente económica sin estatus operativo",
+      "sourceDataset": "Directorio Estadístico de Unidades Económicas CDMX",
+      "subtype": "Gimnasios",
+      "dataType": "preparado",
+      "source": "https://datos.cdmx.gob.mx/dataset/b042f288-836d-4e29-9be2-d25e7a311a5c/resource/3ffedf9d-10ad-429c-aa7c-db305b3e7909/download/directorio-de-unidades-econmicas.json",
+      "methodologicalNote": "Registro descargado de DENUE CDMX y clasificado por heurística textual porque este export no expone el código SCIAN objetivo de forma usable. Debe sustituirse por un corte con SCIAN verificable para tratarse como real."
+    },
+    {
+      "id": "denue-103241",
+      "spaceName": "DISTRITO BOX PROMOTION",
+      "tipo_espacio": "gimnasio / acondicionamiento",
+      "infrastructureType": "Gimnasios",
+      "alcaldia": "Miguel Hidalgo",
+      "originalAlcaldia": "MIGUEL HIDALGO",
+      "needsAlcaldiaNormalization": false,
+      "geoKey": "miguel-hidalgo",
+      "year": 2025,
+      "sportsAvailable": [
+        "Acondicionamiento",
+        "Pesas"
+      ],
+      "capacity": 55,
+      "capacityType": "estimada",
+      "units": 1,
+      "latitude": 19.43133493,
+      "longitude": -99.21532038,
+      "status": "Fuente económica sin estatus operativo",
+      "sourceDataset": "Directorio Estadístico de Unidades Económicas CDMX",
+      "subtype": "Gimnasios",
+      "dataType": "preparado",
+      "source": "https://datos.cdmx.gob.mx/dataset/b042f288-836d-4e29-9be2-d25e7a311a5c/resource/3ffedf9d-10ad-429c-aa7c-db305b3e7909/download/directorio-de-unidades-econmicas.json",
+      "methodologicalNote": "Registro descargado de DENUE CDMX y clasificado por heurística textual porque este export no expone el código SCIAN objetivo de forma usable. Debe sustituirse por un corte con SCIAN verificable para tratarse como real."
+    },
+    {
+      "id": "denue-110765",
+      "spaceName": "FLAMINGO BOXER",
+      "tipo_espacio": "gimnasio / acondicionamiento",
+      "infrastructureType": "Gimnasios",
+      "alcaldia": "Cuauhtémoc",
+      "originalAlcaldia": "CUAUHTEMOC",
+      "needsAlcaldiaNormalization": false,
+      "geoKey": "cuauhtemoc",
+      "year": 2025,
+      "sportsAvailable": [
+        "Acondicionamiento",
+        "Pesas"
+      ],
+      "capacity": 55,
+      "capacityType": "estimada",
+      "units": 1,
+      "latitude": 19.42006412,
+      "longitude": -99.17041765999998,
+      "status": "Fuente económica sin estatus operativo",
+      "sourceDataset": "Directorio Estadístico de Unidades Económicas CDMX",
+      "subtype": "Gimnasios",
+      "dataType": "preparado",
+      "source": "https://datos.cdmx.gob.mx/dataset/b042f288-836d-4e29-9be2-d25e7a311a5c/resource/3ffedf9d-10ad-429c-aa7c-db305b3e7909/download/directorio-de-unidades-econmicas.json",
+      "methodologicalNote": "Registro descargado de DENUE CDMX y clasificado por heurística textual porque este export no expone el código SCIAN objetivo de forma usable. Debe sustituirse por un corte con SCIAN verificable para tratarse como real."
+    },
+    {
+      "id": "denue-111768",
+      "spaceName": "GYM COMMANDO STUDIO FITNESS BOUTIQUE",
+      "tipo_espacio": "gimnasio / acondicionamiento",
+      "infrastructureType": "Gimnasios",
+      "alcaldia": "Álvaro Obregón",
+      "originalAlcaldia": "ALVARO OBREGON",
+      "needsAlcaldiaNormalization": false,
+      "geoKey": "alvaro-obregon",
+      "year": 2025,
+      "sportsAvailable": [
+        "Acondicionamiento",
+        "Pesas"
+      ],
+      "capacity": 55,
+      "capacityType": "estimada",
+      "units": 1,
+      "latitude": 19.31437711,
+      "longitude": -99.22045324,
+      "status": "Fuente económica sin estatus operativo",
+      "sourceDataset": "Directorio Estadístico de Unidades Económicas CDMX",
+      "subtype": "Gimnasios",
+      "dataType": "preparado",
+      "source": "https://datos.cdmx.gob.mx/dataset/b042f288-836d-4e29-9be2-d25e7a311a5c/resource/3ffedf9d-10ad-429c-aa7c-db305b3e7909/download/directorio-de-unidades-econmicas.json",
+      "methodologicalNote": "Registro descargado de DENUE CDMX y clasificado por heurística textual porque este export no expone el código SCIAN objetivo de forma usable. Debe sustituirse por un corte con SCIAN verificable para tratarse como real."
+    },
+    {
+      "id": "denue-138046",
+      "spaceName": "RANDOM BOX",
+      "tipo_espacio": "gimnasio / acondicionamiento",
+      "infrastructureType": "Gimnasios",
+      "alcaldia": "Coyoacán",
+      "originalAlcaldia": "COYOACAN",
+      "needsAlcaldiaNormalization": false,
+      "geoKey": "coyoacan",
+      "year": 2025,
+      "sportsAvailable": [
+        "Acondicionamiento",
+        "Pesas"
+      ],
+      "capacity": 55,
+      "capacityType": "estimada",
+      "units": 1,
+      "latitude": 19.34538057,
+      "longitude": -99.17139291999999,
+      "status": "Fuente económica sin estatus operativo",
+      "sourceDataset": "Directorio Estadístico de Unidades Económicas CDMX",
+      "subtype": "Gimnasios",
+      "dataType": "preparado",
+      "source": "https://datos.cdmx.gob.mx/dataset/b042f288-836d-4e29-9be2-d25e7a311a5c/resource/3ffedf9d-10ad-429c-aa7c-db305b3e7909/download/directorio-de-unidades-econmicas.json",
+      "methodologicalNote": "Registro descargado de DENUE CDMX y clasificado por heurística textual porque este export no expone el código SCIAN objetivo de forma usable. Debe sustituirse por un corte con SCIAN verificable para tratarse como real."
+    },
+    {
+      "id": "denue-141076",
+      "spaceName": "SOON BOX PARK",
+      "tipo_espacio": "gimnasio / acondicionamiento",
+      "infrastructureType": "Gimnasios",
+      "alcaldia": "Cuauhtémoc",
+      "originalAlcaldia": "CUAUHTEMOC",
+      "needsAlcaldiaNormalization": false,
+      "geoKey": "cuauhtemoc",
+      "year": 2025,
+      "sportsAvailable": [
+        "Acondicionamiento",
+        "Pesas"
+      ],
+      "capacity": 55,
+      "capacityType": "estimada",
+      "units": 1,
+      "latitude": 19.43593868,
+      "longitude": -99.12737486,
+      "status": "Fuente económica sin estatus operativo",
+      "sourceDataset": "Directorio Estadístico de Unidades Económicas CDMX",
+      "subtype": "Gimnasios",
+      "dataType": "preparado",
+      "source": "https://datos.cdmx.gob.mx/dataset/b042f288-836d-4e29-9be2-d25e7a311a5c/resource/3ffedf9d-10ad-429c-aa7c-db305b3e7909/download/directorio-de-unidades-econmicas.json",
+      "methodologicalNote": "Registro descargado de DENUE CDMX y clasificado por heurística textual porque este export no expone el código SCIAN objetivo de forma usable. Debe sustituirse por un corte con SCIAN verificable para tratarse como real."
+    },
+    {
+      "id": "denue-145671",
+      "spaceName": "TOYS IN THE BOX",
+      "tipo_espacio": "gimnasio / acondicionamiento",
+      "infrastructureType": "Gimnasios",
+      "alcaldia": "Coyoacán",
+      "originalAlcaldia": "COYOACAN",
+      "needsAlcaldiaNormalization": false,
+      "geoKey": "coyoacan",
+      "year": 2025,
+      "sportsAvailable": [
+        "Acondicionamiento",
+        "Pesas"
+      ],
+      "capacity": 55,
+      "capacityType": "estimada",
+      "units": 1,
+      "latitude": 19.35150859,
+      "longitude": -99.15207766,
+      "status": "Fuente económica sin estatus operativo",
+      "sourceDataset": "Directorio Estadístico de Unidades Económicas CDMX",
+      "subtype": "Gimnasios",
+      "dataType": "preparado",
+      "source": "https://datos.cdmx.gob.mx/dataset/b042f288-836d-4e29-9be2-d25e7a311a5c/resource/3ffedf9d-10ad-429c-aa7c-db305b3e7909/download/directorio-de-unidades-econmicas.json",
+      "methodologicalNote": "Registro descargado de DENUE CDMX y clasificado por heurística textual porque este export no expone el código SCIAN objetivo de forma usable. Debe sustituirse por un corte con SCIAN verificable para tratarse como real."
+    },
+    {
+      "id": "denue-151192",
+      "spaceName": "VIDEO JUEGOS XBOX",
+      "tipo_espacio": "gimnasio / acondicionamiento",
+      "infrastructureType": "Gimnasios",
+      "alcaldia": "Iztapalapa",
+      "originalAlcaldia": "IZTAPALAPA",
+      "needsAlcaldiaNormalization": false,
+      "geoKey": "iztapalapa",
+      "year": 2025,
+      "sportsAvailable": [
+        "Acondicionamiento",
+        "Pesas"
+      ],
+      "capacity": 55,
+      "capacityType": "estimada",
+      "units": 1,
+      "latitude": 19.34333141,
+      "longitude": -98.99432324,
+      "status": "Fuente económica sin estatus operativo",
+      "sourceDataset": "Directorio Estadístico de Unidades Económicas CDMX",
+      "subtype": "Gimnasios",
+      "dataType": "preparado",
+      "source": "https://datos.cdmx.gob.mx/dataset/b042f288-836d-4e29-9be2-d25e7a311a5c/resource/3ffedf9d-10ad-429c-aa7c-db305b3e7909/download/directorio-de-unidades-econmicas.json",
+      "methodologicalNote": "Registro descargado de DENUE CDMX y clasificado por heurística textual porque este export no expone el código SCIAN objetivo de forma usable. Debe sustituirse por un corte con SCIAN verificable para tratarse como real."
+    },
+    {
+      "id": "denue-156023",
+      "spaceName": "ADASA  ACONDICIONAMIENTO DEL AGUA AQUARII",
+      "tipo_espacio": "gimnasio / acondicionamiento",
+      "infrastructureType": "Gimnasios",
+      "alcaldia": "Iztapalapa",
+      "originalAlcaldia": "IZTAPALAPA",
+      "needsAlcaldiaNormalization": false,
+      "geoKey": "iztapalapa",
+      "year": 2025,
+      "sportsAvailable": [
+        "Acondicionamiento",
+        "Pesas"
+      ],
+      "capacity": 55,
+      "capacityType": "estimada",
+      "units": 1,
+      "latitude": 19.35754307,
+      "longitude": -99.0786927,
+      "status": "Fuente económica sin estatus operativo",
+      "sourceDataset": "Directorio Estadístico de Unidades Económicas CDMX",
+      "subtype": "Gimnasios",
+      "dataType": "preparado",
+      "source": "https://datos.cdmx.gob.mx/dataset/b042f288-836d-4e29-9be2-d25e7a311a5c/resource/3ffedf9d-10ad-429c-aa7c-db305b3e7909/download/directorio-de-unidades-econmicas.json",
+      "methodologicalNote": "Registro descargado de DENUE CDMX y clasificado por heurística textual porque este export no expone el código SCIAN objetivo de forma usable. Debe sustituirse por un corte con SCIAN verificable para tratarse como real."
+    },
+    {
+      "id": "denue-161234",
+      "spaceName": "BLACK BOX DE MEXICO NETWORK SERVICES",
+      "tipo_espacio": "gimnasio / acondicionamiento",
+      "infrastructureType": "Gimnasios",
+      "alcaldia": "Álvaro Obregón",
+      "originalAlcaldia": "ALVARO OBREGON",
+      "needsAlcaldiaNormalization": false,
+      "geoKey": "alvaro-obregon",
+      "year": 2025,
+      "sportsAvailable": [
+        "Acondicionamiento",
+        "Pesas"
+      ],
+      "capacity": 55,
+      "capacityType": "estimada",
+      "units": 1,
+      "latitude": 19.36307622,
+      "longitude": -99.17930522,
+      "status": "Fuente económica sin estatus operativo",
+      "sourceDataset": "Directorio Estadístico de Unidades Económicas CDMX",
+      "subtype": "Gimnasios",
+      "dataType": "preparado",
+      "source": "https://datos.cdmx.gob.mx/dataset/b042f288-836d-4e29-9be2-d25e7a311a5c/resource/3ffedf9d-10ad-429c-aa7c-db305b3e7909/download/directorio-de-unidades-econmicas.json",
+      "methodologicalNote": "Registro descargado de DENUE CDMX y clasificado por heurística textual porque este export no expone el código SCIAN objetivo de forma usable. Debe sustituirse por un corte con SCIAN verificable para tratarse como real."
+    },
+    {
+      "id": "denue-166781",
+      "spaceName": "DISTRIBUIDORA BEBOX",
+      "tipo_espacio": "gimnasio / acondicionamiento",
+      "infrastructureType": "Gimnasios",
+      "alcaldia": "Gustavo A. Madero",
+      "originalAlcaldia": "GUSTAVO A. MADERO",
+      "needsAlcaldiaNormalization": false,
+      "geoKey": "gustavo-a-madero",
+      "year": 2025,
+      "sportsAvailable": [
+        "Acondicionamiento",
+        "Pesas"
+      ],
+      "capacity": 55,
+      "capacityType": "estimada",
+      "units": 1,
+      "latitude": 19.54317373,
+      "longitude": -99.13923165999998,
+      "status": "Fuente económica sin estatus operativo",
+      "sourceDataset": "Directorio Estadístico de Unidades Económicas CDMX",
+      "subtype": "Gimnasios",
+      "dataType": "preparado",
+      "source": "https://datos.cdmx.gob.mx/dataset/b042f288-836d-4e29-9be2-d25e7a311a5c/resource/3ffedf9d-10ad-429c-aa7c-db305b3e7909/download/directorio-de-unidades-econmicas.json",
+      "methodologicalNote": "Registro descargado de DENUE CDMX y clasificado por heurística textual porque este export no expone el código SCIAN objetivo de forma usable. Debe sustituirse por un corte con SCIAN verificable para tratarse como real."
+    },
+    {
+      "id": "denue-175595",
+      "spaceName": "JC CHAVEZ",
+      "tipo_espacio": "gimnasio / acondicionamiento",
+      "infrastructureType": "Gimnasios",
+      "alcaldia": "Álvaro Obregón",
+      "originalAlcaldia": "ALVARO OBREGON",
+      "needsAlcaldiaNormalization": false,
+      "geoKey": "alvaro-obregon",
+      "year": 2025,
+      "sportsAvailable": [
+        "Acondicionamiento",
+        "Pesas"
+      ],
+      "capacity": 55,
+      "capacityType": "estimada",
+      "units": 1,
+      "latitude": 19.36505501,
+      "longitude": -99.26525555,
+      "status": "Fuente económica sin estatus operativo",
+      "sourceDataset": "Directorio Estadístico de Unidades Económicas CDMX",
+      "subtype": "Gimnasios",
+      "dataType": "preparado",
+      "source": "https://datos.cdmx.gob.mx/dataset/b042f288-836d-4e29-9be2-d25e7a311a5c/resource/3ffedf9d-10ad-429c-aa7c-db305b3e7909/download/directorio-de-unidades-econmicas.json",
+      "methodologicalNote": "Registro descargado de DENUE CDMX y clasificado por heurística textual porque este export no expone el código SCIAN objetivo de forma usable. Debe sustituirse por un corte con SCIAN verificable para tratarse como real."
+    },
+    {
+      "id": "denue-190855",
+      "spaceName": "SEX SHOP BLACK BOX SEX",
+      "tipo_espacio": "gimnasio / acondicionamiento",
+      "infrastructureType": "Gimnasios",
+      "alcaldia": "Venustiano Carranza",
+      "originalAlcaldia": "VENUSTIANO CARRANZA",
+      "needsAlcaldiaNormalization": false,
+      "geoKey": "venustiano-carranza",
+      "year": 2025,
+      "sportsAvailable": [
+        "Acondicionamiento",
+        "Pesas"
+      ],
+      "capacity": 55,
+      "capacityType": "estimada",
+      "units": 1,
+      "latitude": 19.44423196,
+      "longitude": -99.08726872,
+      "status": "Fuente económica sin estatus operativo",
+      "sourceDataset": "Directorio Estadístico de Unidades Económicas CDMX",
+      "subtype": "Gimnasios",
+      "dataType": "preparado",
+      "source": "https://datos.cdmx.gob.mx/dataset/b042f288-836d-4e29-9be2-d25e7a311a5c/resource/3ffedf9d-10ad-429c-aa7c-db305b3e7909/download/directorio-de-unidades-econmicas.json",
+      "methodologicalNote": "Registro descargado de DENUE CDMX y clasificado por heurística textual porque este export no expone el código SCIAN objetivo de forma usable. Debe sustituirse por un corte con SCIAN verificable para tratarse como real."
+    },
+    {
+      "id": "denue-197158",
+      "spaceName": "TRIXBOX DE MEXICO",
+      "tipo_espacio": "gimnasio / acondicionamiento",
+      "infrastructureType": "Gimnasios",
+      "alcaldia": "Benito Juárez",
+      "originalAlcaldia": "BENITO JUAREZ",
+      "needsAlcaldiaNormalization": false,
+      "geoKey": "benito-juarez",
+      "year": 2025,
+      "sportsAvailable": [
+        "Acondicionamiento",
+        "Pesas"
+      ],
+      "capacity": 55,
+      "capacityType": "estimada",
+      "units": 1,
+      "latitude": 19.38049362,
+      "longitude": -99.15489759,
+      "status": "Fuente económica sin estatus operativo",
+      "sourceDataset": "Directorio Estadístico de Unidades Económicas CDMX",
+      "subtype": "Gimnasios",
+      "dataType": "preparado",
+      "source": "https://datos.cdmx.gob.mx/dataset/b042f288-836d-4e29-9be2-d25e7a311a5c/resource/3ffedf9d-10ad-429c-aa7c-db305b3e7909/download/directorio-de-unidades-econmicas.json",
+      "methodologicalNote": "Registro descargado de DENUE CDMX y clasificado por heurística textual porque este export no expone el código SCIAN objetivo de forma usable. Debe sustituirse por un corte con SCIAN verificable para tratarse como real."
     }
   ],
   "summaryByAlcaldia": {
     "Gustavo A. Madero": {
       "pilares": 49,
-      "publicSportsCenters": 34
+      "publicSportsCenters": 34,
+      "privateFacilities": 1,
+      "privateGyms": 1,
+      "privateClubs": 0,
+      "privateSchools": 0
     },
     "Azcapotzalco": {
       "pilares": 15,
-      "publicSportsCenters": 10
+      "publicSportsCenters": 10,
+      "privateFacilities": 0,
+      "privateGyms": 0,
+      "privateClubs": 0,
+      "privateSchools": 0
     },
     "Álvaro Obregón": {
       "pilares": 28,
-      "publicSportsCenters": 20
+      "publicSportsCenters": 20,
+      "privateFacilities": 3,
+      "privateGyms": 3,
+      "privateClubs": 0,
+      "privateSchools": 0
     },
     "Cuajimalpa": {
       "pilares": 5,
-      "publicSportsCenters": 8
+      "publicSportsCenters": 8,
+      "privateFacilities": 0,
+      "privateGyms": 0,
+      "privateClubs": 0,
+      "privateSchools": 0
     },
     "Iztacalco": {
       "pilares": 11,
-      "publicSportsCenters": 17
+      "publicSportsCenters": 17,
+      "privateFacilities": 0,
+      "privateGyms": 0,
+      "privateClubs": 0,
+      "privateSchools": 0
     },
     "Iztapalapa": {
       "pilares": 60,
-      "publicSportsCenters": 30
+      "publicSportsCenters": 30,
+      "privateFacilities": 3,
+      "privateGyms": 3,
+      "privateClubs": 0,
+      "privateSchools": 0
     },
     "Cuauhtémoc": {
       "pilares": 16,
-      "publicSportsCenters": 10
+      "publicSportsCenters": 10,
+      "privateFacilities": 4,
+      "privateGyms": 4,
+      "privateClubs": 0,
+      "privateSchools": 0
     },
     "Tláhuac": {
       "pilares": 18,
-      "publicSportsCenters": 14
+      "publicSportsCenters": 14,
+      "privateFacilities": 0,
+      "privateGyms": 0,
+      "privateClubs": 0,
+      "privateSchools": 0
     },
     "La Magdalena Contreras": {
       "pilares": 9,
-      "publicSportsCenters": 12
+      "publicSportsCenters": 12,
+      "privateFacilities": 0,
+      "privateGyms": 0,
+      "privateClubs": 0,
+      "privateSchools": 0
     },
     "Coyoacán": {
       "pilares": 14,
-      "publicSportsCenters": 20
+      "publicSportsCenters": 20,
+      "privateFacilities": 4,
+      "privateGyms": 4,
+      "privateClubs": 0,
+      "privateSchools": 0
     },
     "Milpa Alta": {
       "pilares": 10,
-      "publicSportsCenters": 10
+      "publicSportsCenters": 10,
+      "privateFacilities": 0,
+      "privateGyms": 0,
+      "privateClubs": 0,
+      "privateSchools": 0
     },
     "Xochimilco": {
       "pilares": 20,
-      "publicSportsCenters": 14
+      "publicSportsCenters": 14,
+      "privateFacilities": 0,
+      "privateGyms": 0,
+      "privateClubs": 0,
+      "privateSchools": 0
     },
     "Miguel Hidalgo": {
       "pilares": 6,
-      "publicSportsCenters": 14
+      "publicSportsCenters": 14,
+      "privateFacilities": 2,
+      "privateGyms": 2,
+      "privateClubs": 0,
+      "privateSchools": 0
     },
     "Tlalpan": {
       "pilares": 22,
-      "publicSportsCenters": 29
+      "publicSportsCenters": 29,
+      "privateFacilities": 0,
+      "privateGyms": 0,
+      "privateClubs": 0,
+      "privateSchools": 0
     },
     "Benito Juárez": {
       "pilares": 4,
-      "publicSportsCenters": 7
+      "publicSportsCenters": 7,
+      "privateFacilities": 3,
+      "privateGyms": 3,
+      "privateClubs": 0,
+      "privateSchools": 0
     },
     "Venustiano Carranza": {
       "pilares": 13,
-      "publicSportsCenters": 16
+      "publicSportsCenters": 16,
+      "privateFacilities": 4,
+      "privateGyms": 4,
+      "privateClubs": 0,
+      "privateSchools": 0
     }
   },
   "geometryPlaceholder": [

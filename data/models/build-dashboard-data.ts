@@ -10,6 +10,7 @@ import { alcaldiasSeed } from "../raw/alcaldias";
 import { ageSeeds, methodologyBreaks, sexSeeds, sportSeeds, timelineNotes, yearSeeds } from "../raw/official-benchmarks";
 import { executiveInsights, methodologyEntries, qualityChecks, sourceRegistry } from "../insights/notes";
 import { buildOfficialInfrastructureLayer } from "./integration/build-official-infrastructure";
+import { buildMapGeometry } from "./integration/build-map-geometry";
 import { projectPopulation } from "../processed/population";
 
 const round = (value: number) => Math.round(value);
@@ -220,9 +221,6 @@ const infrastructureTemplates = [
 
 const buildInfrastructureDetails = (): InfrastructureDetailRecord[] => {
   const officialInfrastructure = buildOfficialInfrastructureLayer();
-  const officialByType = new Map(
-    officialInfrastructure.details.map((detail) => [`${detail.alcaldia}-${detail.infrastructureType}`, detail] as const)
-  );
 
   return yearSeeds.flatMap((yearSeed) =>
     alcaldiasSeed.flatMap((alcaldia) => {
@@ -234,11 +232,22 @@ const buildInfrastructureDetails = (): InfrastructureDetailRecord[] => {
       } as const;
 
       return infrastructureTemplates.map((template) => {
-        const officialDetail = officialByType.get(`${alcaldia.name}-${template.infrastructureType}`);
-        const units = officialInfrastructure.summaryByAlcaldia[alcaldia.name]?.[
-          template.infrastructureType === "PILARES" ? "pilares" : "publicSportsCenters"
-        ] ?? counts[template.infrastructureType];
-        const capacity = officialDetail?.capacity ?? round(units * template.capacityFactor);
+        if (yearSeed.year === 2025 && template.infrastructureType !== "Parques / áreas verdes") {
+          return null;
+        }
+        const units =
+          template.infrastructureType === "PILARES"
+            ? (officialInfrastructure.summaryByAlcaldia[alcaldia.name]?.pilares ?? counts[template.infrastructureType])
+            : template.infrastructureType === "Deportivos públicos"
+              ? (officialInfrastructure.summaryByAlcaldia[alcaldia.name]?.publicSportsCenters ?? counts[template.infrastructureType])
+              : counts[template.infrastructureType];
+        const safeUnits =
+          template.infrastructureType === "Gimnasios" && yearSeed.year === 2025
+            ? officialInfrastructure.summaryByAlcaldia[alcaldia.name]?.privateFacilities ?? counts[template.infrastructureType]
+            : template.infrastructureType === "Gimnasios"
+              ? counts[template.infrastructureType]
+              : units;
+        const capacity = round(safeUnits * template.capacityFactor);
         return {
           id: `${yearSeed.year}-${alcaldia.name}-${template.infrastructureType}`,
           spaceName: `${template.infrastructureType} - ${alcaldia.name}`,
@@ -246,25 +255,19 @@ const buildInfrastructureDetails = (): InfrastructureDetailRecord[] => {
           infrastructureType: template.infrastructureType,
           alcaldia: alcaldia.name,
           year: yearSeed.year,
-          sportsAvailable: officialDetail?.sportsAvailable ?? template.sportsAvailable,
+          sportsAvailable: template.sportsAvailable,
           capacity,
-          capacityType: officialDetail?.capacityType ?? "estimada",
-          units,
-          latitude: officialDetail?.latitude,
-          longitude: officialDetail?.longitude,
-          status: officialDetail?.status,
-          sourceDataset: officialDetail?.sourceDataset,
-          originalAlcaldia: officialDetail?.originalAlcaldia,
-          needsAlcaldiaNormalization: officialDetail?.needsAlcaldiaNormalization,
-          geoKey: officialDetail?.geoKey,
-          dataType: "real",
-          source: officialDetail?.source ?? template.source,
+          capacityType: "estimada",
+          units: safeUnits,
+          geoKey: alcaldia.name.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]+/g, "-"),
+          dataType: template.infrastructureType === "Gimnasios" ? "preparado" : "real",
+          source: template.source,
           methodologicalNote:
             yearSeed.year === 2026
               ? `${template.note} La capacidad es estimada y el corte 2026 se usa para planeación.`
               : `${template.note} La capacidad es estimada en ausencia de aforo oficial consolidado.`
         };
-      });
+      }).filter(Boolean) as InfrastructureDetailRecord[];
     })
   );
 };
@@ -332,11 +335,12 @@ export const buildDashboardData = (): DashboardDataset => {
   const infrastructureDetails = [
     ...officialInfrastructure.details,
     ...buildInfrastructureDetails()
-      .filter((item) => !["PILARES", "Deportivos públicos"].includes(item.infrastructureType))
+      .filter((item) => item.year !== 2025 || item.infrastructureType === "Parques / áreas verdes")
   ];
   const sportsRecords = buildSportsRecords(territorialRecords);
   const healthProfiles = buildHealthProfiles(territorialRecords);
   const mapAreas = buildMapAreas(territorialRecords);
+  const mapGeometry = buildMapGeometry();
 
   return {
     meta: {
@@ -354,6 +358,7 @@ export const buildDashboardData = (): DashboardDataset => {
     sportsRecords,
     healthProfiles,
     mapAreas,
+    mapGeometry,
     methodology: methodologyEntries,
     sourceRegistry,
     qualityChecks,

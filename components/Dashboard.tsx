@@ -8,9 +8,12 @@ import {
   buildFilterConfig,
   buildFlattenedTableRows,
   buildHealthDistribution,
+  buildInfrastructureAlcaldiaExtremes,
   buildInfrastructureByAlcaldia,
   buildInfrastructureDetailRows,
+  buildInfrastructureExecutiveSummary,
   buildInfrastructureSportsSummary,
+  buildMapAreaLookup,
   buildMetricByAlcaldia,
   buildOverviewKpis,
   buildRateDistribution,
@@ -28,6 +31,7 @@ import { useDashboardStore } from "../store/useDashboardStore";
 import { formatNumber } from "../lib/utils";
 import { ChartCard, DistributionBar, DistributionPie, StackedBar } from "./Charts";
 import KpiGrid from "./KpiGrid";
+import TerritorialMap, { type TerritorialMetricKey } from "./TerritorialMap";
 import Card from "./ui/Card";
 import DataTable from "./ui/DataTable";
 import MultiSelect from "./ui/MultiSelect";
@@ -82,9 +86,9 @@ const chartMeta = {
     note: "Score = actividad inversa + obesidad + sedentarismo + infraestructura per cápita inversa."
   },
   map: {
-    source: "Dataset map-ready por alcaldía",
+    source: "GeoJSON oficial de alcaldías + dataset map-ready por alcaldía",
     dataType: "insight",
-    note: "Incluye `geoKey`, centroide, actividad, riesgo e infraestructura para futura capa cartográfica."
+    note: "La geometría es real; actividad e infraestructura territorializada combinan capas reales, preparadas y estimadas según el indicador."
   }
 } satisfies Record<string, MetricMetadata>;
 
@@ -158,6 +162,9 @@ export default function Dashboard() {
   const [filters, setFilters] = useState<DashboardFilterState>(emptyFilters);
   const [sportsLimit, setSportsLimit] = useState<5 | 10>(5);
   const [showFullInfrastructure, setShowFullInfrastructure] = useState(false);
+  const [selectedMapMetric, setSelectedMapMetric] = useState<TerritorialMetricKey>("risk");
+  const [selectedMapGeoKey, setSelectedMapGeoKey] = useState<string | null>(null);
+  const [selectedSpaceType, setSelectedSpaceType] = useState<string | null>(null);
 
   const filterConfig = useMemo(() => (dataset ? buildFilterConfig(dataset) : []), [dataset]);
   const territorialRecords = useMemo(() => (dataset ? filterTerritorialRecords(dataset.territorialRecords, filters) : []), [dataset, filters]);
@@ -192,7 +199,39 @@ export default function Dashboard() {
   const riskIndex = useMemo(() => buildRiskIndex(territorialRecords, filters), [territorialRecords, filters]);
   const layerSummary = useMemo(() => buildDataLayerSummary(territorialRecords), [territorialRecords]);
   const territorialTable = useMemo(() => buildFlattenedTableRows(territorialRecords), [territorialRecords]);
-  const infrastructureTable = useMemo(() => buildInfrastructureDetailRows(infrastructureDetails), [infrastructureDetails]);
+  const infrastructureExecutive = useMemo(() => buildInfrastructureExecutiveSummary(infrastructureDetails), [infrastructureDetails]);
+  const scopedInfrastructureDetails = useMemo(
+    () => (selectedSpaceType ? infrastructureDetails.filter((item) => item.tipo_espacio === selectedSpaceType) : infrastructureDetails),
+    [infrastructureDetails, selectedSpaceType]
+  );
+  const infrastructureExtremes = useMemo(() => buildInfrastructureAlcaldiaExtremes(scopedInfrastructureDetails), [scopedInfrastructureDetails]);
+  const infrastructureTable = useMemo(() => buildInfrastructureDetailRows(scopedInfrastructureDetails), [scopedInfrastructureDetails]);
+  const mapYear = useMemo(() => {
+    if (filters.years.length === 0) return 2025;
+    return Math.max(...filters.years.map((item) => Number(item)));
+  }, [filters.years]);
+  const mapAreas = useMemo(
+    () =>
+      dataset?.mapAreas.filter((record) => record.year === mapYear).filter((record) => (
+        filters.alcaldias.length > 0 ? filters.alcaldias.includes(record.alcaldia) : true
+      )) ?? [],
+    [dataset, filters.alcaldias, mapYear]
+  );
+  const mapAreaLookup = useMemo(() => buildMapAreaLookup(mapAreas), [mapAreas]);
+  const activeMapGeoKey = selectedMapGeoKey && mapAreaLookup[selectedMapGeoKey] ? selectedMapGeoKey : (mapAreas[0]?.geoKey ?? null);
+  const selectedMapArea = activeMapGeoKey ? mapAreaLookup[activeMapGeoKey] : undefined;
+  const selectedMapInfrastructure = useMemo(
+    () => (selectedMapArea ? infrastructureDetails.filter((item) => item.alcaldia === selectedMapArea.alcaldia && item.year === mapYear) : []),
+    [infrastructureDetails, mapYear, selectedMapArea]
+  );
+  const privateMapUnits = useMemo(
+    () => selectedMapInfrastructure.filter((item) => item.sourceDataset === "Directorio Estadístico de Unidades Económicas CDMX").reduce((sum, item) => sum + item.units, 0),
+    [selectedMapInfrastructure]
+  );
+  const publicMapUnits = useMemo(
+    () => selectedMapInfrastructure.filter((item) => item.dataType === "real" && item.sourceDataset !== "Directorio Estadístico de Unidades Económicas CDMX").reduce((sum, item) => sum + item.units, 0),
+    [selectedMapInfrastructure]
+  );
   const mapRows = useMemo(
     () =>
       dataset?.mapAreas
@@ -270,6 +309,13 @@ export default function Dashboard() {
   const selectedRecordsText = `${formatNumber(territorialRecords.length)} celdas territoriales`;
   const average = (items: Array<{ value: number }>) => (items.length > 0 ? items.reduce((sum, item) => sum + item.value, 0) / items.length : 0);
   const visibleInfrastructureTable = showFullInfrastructure ? infrastructureTable : infrastructureTable.slice(0, 12);
+  const visibleInfrastructureUnits = scopedInfrastructureDetails.reduce((sum, item) => sum + item.units, 0);
+  const visiblePublicUnits = scopedInfrastructureDetails
+    .filter((item) => item.dataType === "real" && item.sourceDataset !== "Directorio Estadístico de Unidades Económicas CDMX")
+    .reduce((sum, item) => sum + item.units, 0);
+  const visiblePrivateUnits = scopedInfrastructureDetails
+    .filter((item) => item.sourceDataset === "Directorio Estadístico de Unidades Económicas CDMX")
+    .reduce((sum, item) => sum + item.units, 0);
   const healthKpis = [
     { label: "Obesidad", value: `${average(obesityByAlcaldia).toFixed(1)}%`, helper: "ENSANUT 2022 segmentada y territorializada" },
     { label: "Sobrepeso", value: `${average(overweightByAlcaldia).toFixed(1)}%`, helper: "Base oficial 2022 con lectura por sexo y edad" },
@@ -415,6 +461,227 @@ export default function Dashboard() {
               <DistributionBar data={infrastructureSports.slice(0, 8)} />
             </ChartCard>
           </div>
+          <div className="grid gap-4 xl:grid-cols-[1.1fr_0.9fr]">
+            <Card className="space-y-5 p-6">
+              <div className="flex flex-wrap items-start justify-between gap-3">
+                <div>
+                  <div className="text-base font-semibold text-ink-900">Resumen ejecutivo de infraestructura</div>
+                  <div className="text-sm leading-6 text-ink-600">
+                    Mantiene la lectura agregada y permite enfocar la tabla en un tipo de espacio concreto sin tocar la gráfica principal.
+                  </div>
+                </div>
+                {selectedSpaceType ? (
+                  <button className="btn-ghost" type="button" onClick={() => setSelectedSpaceType(null)}>
+                    Quitar foco de tipo
+                  </button>
+                ) : null}
+              </div>
+              <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-5">
+                <div className="rounded-2xl border border-mist-200 bg-white px-4 py-4">
+                  <div className="text-[11px] font-semibold uppercase tracking-wide text-ink-600">Total visible</div>
+                  <div className="mt-2 text-2xl font-semibold text-ink-900">{formatNumber(visibleInfrastructureUnits)}</div>
+                  <div className="mt-2 text-xs text-ink-600">Unidades filtradas en la vista ejecutiva</div>
+                </div>
+                <div className="rounded-2xl border border-mist-200 bg-white px-4 py-4">
+                  <div className="text-[11px] font-semibold uppercase tracking-wide text-ink-600">Pública / comunitaria</div>
+                  <div className="mt-2 text-2xl font-semibold text-ink-900">{formatNumber(visiblePublicUnits)}</div>
+                  <div className="mt-2 text-xs text-ink-600">PILARES, deportivos y otras capas reales</div>
+                </div>
+                <div className="rounded-2xl border border-mist-200 bg-white px-4 py-4">
+                  <div className="text-[11px] font-semibold uppercase tracking-wide text-ink-600">Privada preparada</div>
+                  <div className="mt-2 text-2xl font-semibold text-ink-900">{formatNumber(visiblePrivateUnits)}</div>
+                  <div className="mt-2 text-xs text-ink-600">DENUE clasificado; pendiente SCIAN verificable</div>
+                </div>
+                <div className="rounded-2xl border border-mist-200 bg-white px-4 py-4">
+                  <div className="text-[11px] font-semibold uppercase tracking-wide text-ink-600">Alcaldía con más infraestructura</div>
+                  <div className="mt-2 text-lg font-semibold text-ink-900">{infrastructureExtremes.highest?.alcaldia ?? "Sin dato"}</div>
+                  <div className="mt-2 text-xs text-ink-600">{infrastructureExtremes.highest ? `${formatNumber(infrastructureExtremes.highest.total)} unidades` : "Sin dato"}</div>
+                </div>
+                <div className="rounded-2xl border border-mist-200 bg-white px-4 py-4">
+                  <div className="text-[11px] font-semibold uppercase tracking-wide text-ink-600">Alcaldía con menos infraestructura</div>
+                  <div className="mt-2 text-lg font-semibold text-ink-900">{infrastructureExtremes.lowest?.alcaldia ?? "Sin dato"}</div>
+                  <div className="mt-2 text-xs text-ink-600">{infrastructureExtremes.lowest ? `${formatNumber(infrastructureExtremes.lowest.total)} unidades` : "Sin dato"}</div>
+                </div>
+              </div>
+              <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+                {infrastructureExecutive.slice(0, 6).map((item) => {
+                  const isActive = selectedSpaceType === item.key;
+                  return (
+                    <button
+                      key={item.key}
+                      type="button"
+                      className={`rounded-2xl border px-4 py-4 text-left transition ${isActive ? "border-ink-900 bg-ink-900 text-white" : "border-mist-200 bg-white hover:border-ink-400"}`}
+                      onClick={() => setSelectedSpaceType((prev) => (prev === item.key ? null : item.key))}
+                    >
+                      <div className="flex items-center justify-between gap-3">
+                        <div className="text-sm font-semibold">{item.label}</div>
+                        <LayerBadge layer={item.isPrivate ? "preparado" : "real"} />
+                      </div>
+                      <div className="mt-3 text-2xl font-semibold">{formatNumber(item.total)}</div>
+                      <div className={`mt-2 text-xs ${isActive ? "text-white/80" : "text-ink-600"}`}>{(item.percent * 100).toFixed(1)}% del total visible</div>
+                    </button>
+                  );
+                })}
+              </div>
+              <div className="text-xs text-ink-600">
+                El foco por tipo de espacio afecta esta vista ejecutiva y la tabla detallada. La gráfica principal se conserva como lectura institucional estable.
+              </div>
+            </Card>
+            <Card className="space-y-5 p-6">
+              <div className="flex items-center gap-2">
+                <div className="text-base font-semibold text-ink-900">Público vs privado</div>
+                <LayerBadge layer="real" />
+                <LayerBadge layer="preparado" />
+              </div>
+              <div className="space-y-4">
+                <div className="rounded-2xl border border-mist-200 bg-white px-4 py-4">
+                  <div className="flex items-center justify-between gap-3">
+                    <div>
+                      <div className="text-sm font-semibold text-ink-900">Infraestructura pública y comunitaria</div>
+                      <div className="mt-1 text-xs text-ink-600">PILARES y deportivos públicos integrados por sede real; parques siguen como capa operativa real agregada.</div>
+                    </div>
+                    <div className="text-2xl font-semibold text-ink-900">{formatNumber(visiblePublicUnits)}</div>
+                  </div>
+                </div>
+                <div className="rounded-2xl border border-mist-200 bg-white px-4 py-4">
+                  <div className="flex items-center justify-between gap-3">
+                    <div>
+                      <div className="text-sm font-semibold text-ink-900">Infraestructura privada</div>
+                      <div className="mt-1 text-xs text-ink-600">DENUE CDMX descargado y normalizado por alcaldía; mientras no entre un corte con SCIAN verificable se reporta como preparado.</div>
+                    </div>
+                    <div className="text-2xl font-semibold text-ink-900">{formatNumber(visiblePrivateUnits)}</div>
+                  </div>
+                </div>
+              </div>
+              <div className="meta-panel">
+                <div className="meta-grid">
+                  <div>
+                    <div className="meta-label">Fuente</div>
+                    <div className="meta-value">{chartMeta.infrastructure.source}</div>
+                  </div>
+                  <div>
+                    <div className="meta-label">Tipo de dato</div>
+                    <div className="meta-value">Real para PILARES/deportivos; preparado para DENUE privado</div>
+                  </div>
+                  <div>
+                    <div className="meta-label">Nota metodológica</div>
+                    <div className="meta-value">La comparación pública vs privada es útil para lectura ejecutiva, pero no debe interpretarse como aforo equivalente entre sectores.</div>
+                  </div>
+                </div>
+              </div>
+            </Card>
+          </div>
+          <div className="grid gap-4 xl:grid-cols-[1.2fr_0.8fr]">
+            <Card className="space-y-5 p-6">
+              <div className="flex flex-wrap items-start justify-between gap-3">
+                <div>
+                  <div className="text-base font-semibold text-ink-900">Mapa territorial</div>
+                  <div className="text-sm leading-6 text-ink-600">
+                    Geometría oficial de alcaldías conectada al modelo territorial. Año visualizado: {mapYear}.
+                  </div>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {[
+                    { key: "activity" as const, label: "Actividad" },
+                    { key: "risk" as const, label: "Riesgo" },
+                    { key: "infrastructure" as const, label: "Infraestructura" }
+                  ].map((item) => (
+                    <button
+                      key={item.key}
+                      type="button"
+                      className={`btn-ghost ${selectedMapMetric === item.key ? "border-ink-900 bg-ink-900 text-white hover:text-white" : ""}`}
+                      onClick={() => setSelectedMapMetric(item.key)}
+                    >
+                      {item.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <TerritorialMap
+                geometry={dataset.mapGeometry}
+                areas={mapAreas}
+                metric={selectedMapMetric}
+                selectedGeoKey={activeMapGeoKey}
+                onSelect={setSelectedMapGeoKey}
+              />
+              <div className="meta-panel">
+                <div className="meta-grid">
+                  <div>
+                    <div className="meta-label">Fuente</div>
+                    <div className="meta-value">{chartMeta.map.source}</div>
+                  </div>
+                  <div>
+                    <div className="meta-label">Tipo de dato</div>
+                    <div className="meta-value">Geometría real; actividad estimada; riesgo insight; privada DENUE preparada</div>
+                  </div>
+                  <div>
+                    <div className="meta-label">Nota metodológica</div>
+                    <div className="meta-value">{chartMeta.map.note}</div>
+                  </div>
+                </div>
+              </div>
+            </Card>
+            <Card className="space-y-5 p-6">
+              <div>
+                <div className="text-base font-semibold text-ink-900">Resumen rápido por alcaldía</div>
+                <div className="text-sm leading-6 text-ink-600">
+                  Selecciona una alcaldía en el mapa para revisar actividad, riesgo y contraste público/privado.
+                </div>
+              </div>
+              {selectedMapArea ? (
+                <>
+                  <div className="rounded-2xl border border-mist-200 bg-white px-4 py-4">
+                    <div className="text-lg font-semibold text-ink-900">{selectedMapArea.alcaldia}</div>
+                    <div className="mt-2 text-sm text-ink-600">`geoKey`: {selectedMapArea.geoKey}</div>
+                  </div>
+                  <div className="grid gap-3 md:grid-cols-2">
+                    <div className="rounded-2xl border border-mist-200 bg-white px-4 py-4">
+                      <div className="text-[11px] font-semibold uppercase tracking-wide text-ink-600">Actividad</div>
+                      <div className="mt-2 text-2xl font-semibold text-ink-900">{(selectedMapArea.activityRate * 100).toFixed(1)}%</div>
+                      <div className="mt-2 text-xs text-ink-600">Estimado territorial</div>
+                    </div>
+                    <div className="rounded-2xl border border-mist-200 bg-white px-4 py-4">
+                      <div className="text-[11px] font-semibold uppercase tracking-wide text-ink-600">Riesgo</div>
+                      <div className="mt-2 flex items-center gap-2">
+                        <div className="text-2xl font-semibold text-ink-900">{selectedMapArea.riskScore.toFixed(1)}</div>
+                        <span className={`rounded-full px-3 py-1 text-xs font-semibold ${selectedMapArea.riskLevel === "Rojo" ? "bg-red-100 text-red-700" : selectedMapArea.riskLevel === "Amarillo" ? "bg-amber-100 text-amber-700" : "bg-emerald-100 text-emerald-700"}`}>
+                          {selectedMapArea.riskLevel}
+                        </span>
+                      </div>
+                      <div className="mt-2 text-xs text-ink-600">Insight compuesto</div>
+                    </div>
+                    <div className="rounded-2xl border border-mist-200 bg-white px-4 py-4">
+                      <div className="text-[11px] font-semibold uppercase tracking-wide text-ink-600">PILARES</div>
+                      <div className="mt-2 text-2xl font-semibold text-ink-900">{formatNumber(selectedMapInfrastructure.filter((item) => item.infrastructureType === "PILARES").reduce((sum, item) => sum + item.units, 0))}</div>
+                      <div className="mt-2 text-xs text-ink-600">Sedes reales integradas</div>
+                    </div>
+                    <div className="rounded-2xl border border-mist-200 bg-white px-4 py-4">
+                      <div className="text-[11px] font-semibold uppercase tracking-wide text-ink-600">Deportivos públicos</div>
+                      <div className="mt-2 text-2xl font-semibold text-ink-900">{formatNumber(selectedMapInfrastructure.filter((item) => item.infrastructureType === "Deportivos públicos").reduce((sum, item) => sum + item.units, 0))}</div>
+                      <div className="mt-2 text-xs text-ink-600">Instalaciones reales integradas</div>
+                    </div>
+                    <div className="rounded-2xl border border-mist-200 bg-white px-4 py-4 md:col-span-2">
+                      <div className="flex items-center justify-between gap-3">
+                        <div>
+                          <div className="text-[11px] font-semibold uppercase tracking-wide text-ink-600">Infraestructura privada</div>
+                          <div className="mt-2 text-2xl font-semibold text-ink-900">{formatNumber(privateMapUnits)}</div>
+                        </div>
+                        <div className="text-right">
+                          <div className="text-[11px] font-semibold uppercase tracking-wide text-ink-600">Infraestructura pública visible</div>
+                          <div className="mt-2 text-xl font-semibold text-ink-900">{formatNumber(publicMapUnits)}</div>
+                        </div>
+                      </div>
+                      <div className="mt-2 text-xs text-ink-600">La capa privada proviene de DENUE y permanece etiquetada como preparada hasta validar SCIAN objetivo.</div>
+                    </div>
+                  </div>
+                </>
+              ) : (
+                <div className="rounded-2xl border border-dashed border-mist-300 bg-mist-100/60 p-6 text-sm text-ink-600">
+                  No hay alcaldías visibles para la selección actual.
+                </div>
+              )}
+            </Card>
+          </div>
           <Card className="space-y-4 p-6">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div>
@@ -427,6 +694,11 @@ export default function Dashboard() {
                 {showFullInfrastructure ? "Resumir vista" : "Expandir detalle"}
               </button>
             </div>
+            {selectedSpaceType ? (
+              <div className="rounded-2xl border border-mist-200 bg-mist-100/80 px-4 py-3 text-sm text-ink-700">
+                Foco activo por tipo de espacio: <span className="font-semibold text-ink-900">{selectedSpaceType}</span>.
+              </div>
+            ) : null}
             <div className="meta-panel">
               <div className="meta-grid">
                 <div>
@@ -435,7 +707,7 @@ export default function Dashboard() {
                 </div>
                 <div>
                   <div className="meta-label">Tipo de dato</div>
-                  <div className="meta-value">{chartMeta.infrastructure.dataType}</div>
+                  <div className="meta-value">Mixto: real para infraestructura pública nominal; preparado para privada DENUE; estimada para capacidad cuando no existe aforo.</div>
                 </div>
                 <div>
                   <div className="meta-label">Nota metodológica</div>
@@ -600,10 +872,10 @@ export default function Dashboard() {
             <Card className="space-y-4 p-5">
               <div className="text-base font-semibold text-ink-900">Preparación para integración real</div>
               <div className="space-y-3 text-sm leading-6 text-ink-700">
-                <p><span className="font-semibold">PILARES:</span> conectar catálogo nominal por sede con `tipo_espacio`, deportes disponibles y estatus.</p>
-                <p><span className="font-semibold">Deportivos públicos:</span> conectar inventario oficial por instalación y alcaldía con aforo cuando exista.</p>
-                <p><span className="font-semibold">Directorio económico / gimnasios:</span> conectar recortes DENUE/SCIAN y versionado por año.</p>
-                <p><span className="font-semibold">Mapa:</span> conectar geometría oficial de alcaldías usando `geoKey` ya existente en el modelo.</p>
+                <p><span className="font-semibold">PILARES:</span> ya integrado por sede real con nombre, estatus, latitud, longitud y alcaldía normalizada.</p>
+                <p><span className="font-semibold">Deportivos públicos:</span> ya integrado por instalación real con alcaldía y coordenadas cuando existen.</p>
+                <p><span className="font-semibold">Directorio económico / gimnasios:</span> DENUE ya descargado y normalizado; permanece como preparado por falta de SCIAN verificable en este export.</p>
+                <p><span className="font-semibold">Mapa:</span> geometría oficial de alcaldías ya conectada al `geoKey` del modelo territorial.</p>
               </div>
             </Card>
             <Card className="space-y-4 p-5">
@@ -611,7 +883,7 @@ export default function Dashboard() {
               <div className="space-y-3 text-sm leading-6 text-ink-700">
                 <p><span className="font-semibold">Infraestructura detallada:</span> ya existe contrato para registro real por tipo, deporte y capacidad.</p>
                 <p><span className="font-semibold">Salud segmentada:</span> ya existe contrato por sexo, edad y año para sustituir la capa modelada.</p>
-                <p><span className="font-semibold">Mapa institucional:</span> ya existe tabla derivada con centroides, `geoKey`, riesgo y actividad.</p>
+                <p><span className="font-semibold">Mapa institucional:</span> ya existe geometría SVG derivada de GeoJSON oficial, `geoKey`, riesgo, actividad e infraestructura por alcaldía.</p>
               </div>
             </Card>
           </div>

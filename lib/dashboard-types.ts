@@ -63,6 +63,7 @@ export type InfrastructureDetailRecord = {
   originalAlcaldia?: string | null;
   needsAlcaldiaNormalization?: boolean;
   geoKey?: string;
+  subtype?: string;
   dataType: DataLayer;
   source: string;
   methodologicalNote: string;
@@ -149,6 +150,12 @@ export type MapAreaRecord = {
   methodologicalNote: string;
 };
 
+export type MapGeometryFeature = {
+  geoKey: string;
+  alcaldia: string;
+  path: string;
+};
+
 export type DashboardDataset = {
   meta: DashboardMeta;
   territorialRecords: TerritorialRecord[];
@@ -156,6 +163,7 @@ export type DashboardDataset = {
   sportsRecords: SportsRecord[];
   healthProfiles: HealthProfileRecord[];
   mapAreas: MapAreaRecord[];
+  mapGeometry: MapGeometryFeature[];
   methodology: MethodologyEntry[];
   sourceRegistry: SourceRegistryEntry[];
   qualityChecks: QualityEntry[];

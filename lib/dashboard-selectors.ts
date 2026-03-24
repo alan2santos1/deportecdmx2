@@ -4,6 +4,7 @@ import type {
   DataLayer,
   HealthProfileRecord,
   InfrastructureDetailRecord,
+  MapAreaRecord,
   SportsRecord,
   TerritorialRecord
 } from "./dashboard-types";
@@ -37,6 +38,14 @@ export type RiskDatum = {
   obesityRate: number;
   sedentaryRate: number;
   infraCoverage: number;
+};
+
+export type ExecutiveInfrastructureDatum = {
+  key: string;
+  label: string;
+  total: number;
+  percent: number;
+  isPrivate: boolean;
 };
 
 export const emptyFilters: DashboardFilterState = {
@@ -314,6 +323,38 @@ export const buildInfrastructureSportsSummary = (records: InfrastructureDetailRe
   })).sort((a, b) => b.value - a.value);
 };
 
+export const buildInfrastructureExecutiveSummary = (records: InfrastructureDetailRecord[]) => {
+  const totalUnits = sum(records.map((record) => record.units)) || 1;
+  const grouped = Array.from(groupBy(records, (record) => record.tipo_espacio)).map(([tipo, items]) => {
+    const units = sum(items.map((item) => item.units));
+    const privateUnits = sum(
+      items.map((item) => (item.sourceDataset === "Directorio Estadístico de Unidades Económicas CDMX" ? item.units : 0))
+    );
+    return {
+      key: tipo,
+      label: tipo,
+      total: units,
+      percent: units / totalUnits,
+      isPrivate: privateUnits === units && units > 0
+    };
+  });
+
+  return grouped.sort((a, b) => b.total - a.total);
+};
+
+export const buildInfrastructureAlcaldiaExtremes = (records: InfrastructureDetailRecord[]) => {
+  const grouped = Array.from(groupBy(records, (record) => record.alcaldia)).map(([alcaldia, items]) => ({
+    alcaldia,
+    total: sum(items.map((item) => item.units))
+  }));
+
+  const sorted = grouped.sort((a, b) => b.total - a.total);
+  return {
+    highest: sorted[0] ?? null,
+    lowest: sorted[sorted.length - 1] ?? null
+  };
+};
+
 export const buildDataLayerSummary = (records: TerritorialRecord[]) => {
   const counts = new Map<DataLayer, number>();
   records.forEach((record) => {
@@ -385,4 +426,11 @@ export const buildFlattenedTableRows = (records: TerritorialRecord[]) => {
     "Fuente infraestructura": record.infrastructureSource,
     "Nota metodológica": record.methodologicalNote
   }));
+};
+
+export const buildMapAreaLookup = (records: MapAreaRecord[]) => {
+  return records.reduce<Record<string, MapAreaRecord>>((acc, record) => {
+    acc[record.geoKey] = record;
+    return acc;
+  }, {});
 };
