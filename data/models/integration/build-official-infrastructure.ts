@@ -117,6 +117,14 @@ const defaultSportsByType: Record<string, string[]> = {
   "Escuelas de deporte": ["Iniciación deportiva", "Entrenamiento"]
 };
 
+const operationalUnitFactors = {
+  pilares: 7,
+  publicSports: 4,
+  privateGym: 2,
+  privateClub: 3,
+  privateSchool: 2
+} as const;
+
 const denueSubtypeConfig = [
   {
     subtype: "Clubes deportivos",
@@ -187,6 +195,20 @@ const buildDenueDetails = (): InfrastructureDetailRecord[] => {
         geoKey: normalized.geoKey,
         year: 2025,
         sportsAvailable: subtypeMatch.sports,
+        administrativeCount: 1,
+        administrativeLabel: subtypeMatch.subtype === "Gimnasios" ? "Establecimientos privados" : subtypeMatch.subtype,
+        operationalUnits:
+          subtypeMatch.subtype === "Gimnasios"
+            ? operationalUnitFactors.privateGym
+            : subtypeMatch.subtype === "Clubes deportivos"
+              ? operationalUnitFactors.privateClub
+              : operationalUnitFactors.privateSchool,
+        operationalLabel:
+          subtypeMatch.subtype === "Gimnasios"
+            ? "Espacios operativos privados estimados"
+            : subtypeMatch.subtype === "Clubes deportivos"
+              ? "Unidades operativas de club estimadas"
+              : "Unidades operativas de academia estimadas",
         capacity: subtypeMatch.subtype === "Gimnasios" ? 55 : subtypeMatch.subtype === "Clubes deportivos" ? 80 : 35,
         capacityType: "estimada" as const,
         units: 1,
@@ -222,6 +244,10 @@ export const buildOfficialInfrastructureLayer = (): OfficialInfrastructureLayer 
       geoKey: normalized.geoKey,
       year: 2025,
       sportsAvailable: defaultSportsByType.PILARES,
+      administrativeCount: 1,
+      administrativeLabel: "Sedes PILARES",
+      operationalUnits: operationalUnitFactors.pilares,
+      operationalLabel: "Espacios operativos PILARES",
       capacity: 42,
       capacityType: "estimada",
       units: 1,
@@ -250,6 +276,10 @@ export const buildOfficialInfrastructureLayer = (): OfficialInfrastructureLayer 
       geoKey: normalized.geoKey,
       year: 2025,
       sportsAvailable: defaultSportsByType["Deportivos públicos"],
+      administrativeCount: 1,
+      administrativeLabel: "Instalaciones deportivas públicas",
+      operationalUnits: operationalUnitFactors.publicSports,
+      operationalLabel: "Espacios operativos deportivos estimados",
       capacity: 180,
       capacityType: "estimada",
       units: 1,

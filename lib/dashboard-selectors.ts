@@ -43,8 +43,10 @@ export type RiskDatum = {
 export type ExecutiveInfrastructureDatum = {
   key: string;
   label: string;
-  total: number;
-  percent: number;
+  administrativeTotal: number;
+  operationalTotal: number;
+  administrativePercent: number;
+  operationalPercent: number;
   isPrivate: boolean;
 };
 
@@ -294,7 +296,10 @@ export const buildInfrastructureDetailRows = (records: InfrastructureDetailRecor
     "Tipo de infraestructura": record.infrastructureType,
     "Tipo de espacio": record.tipo_espacio,
     "Espacio": record.spaceName,
-    "Unidades": String(record.units),
+    "Conteo administrativo": formatNumber(record.administrativeCount),
+    "Etiqueta administrativa": record.administrativeLabel,
+    "Espacios operativos estimados": formatNumber(record.operationalUnits),
+    "Etiqueta operativa": record.operationalLabel,
     "Capacidad": formatNumber(record.capacity),
     "Tipo de capacidad": record.capacityType,
     "Estatus": record.status ?? "",
@@ -312,7 +317,7 @@ export const buildInfrastructureSportsSummary = (records: InfrastructureDetailRe
   const sportMap = new Map<string, number>();
   records.forEach((record) => {
     record.sportsAvailable.forEach((sport) => {
-      sportMap.set(sport, (sportMap.get(sport) ?? 0) + record.units);
+      sportMap.set(sport, (sportMap.get(sport) ?? 0) + record.operationalUnits);
     });
   });
   return Array.from(sportMap.entries()).map(([name, value]) => ({
@@ -324,34 +329,42 @@ export const buildInfrastructureSportsSummary = (records: InfrastructureDetailRe
 };
 
 export const buildInfrastructureExecutiveSummary = (records: InfrastructureDetailRecord[]) => {
-  const totalUnits = sum(records.map((record) => record.units)) || 1;
+  const totalAdministrative = sum(records.map((record) => record.administrativeCount)) || 1;
+  const totalOperational = sum(records.map((record) => record.operationalUnits)) || 1;
   const grouped = Array.from(groupBy(records, (record) => record.tipo_espacio)).map(([tipo, items]) => {
-    const units = sum(items.map((item) => item.units));
+    const administrativeTotal = sum(items.map((item) => item.administrativeCount));
+    const operationalTotal = sum(items.map((item) => item.operationalUnits));
     const privateUnits = sum(
-      items.map((item) => (item.sourceDataset === "Directorio Estadístico de Unidades Económicas CDMX" ? item.units : 0))
+      items.map((item) => (item.sourceDataset === "Directorio Estadístico de Unidades Económicas CDMX" ? item.administrativeCount : 0))
     );
     return {
       key: tipo,
       label: tipo,
-      total: units,
-      percent: units / totalUnits,
-      isPrivate: privateUnits === units && units > 0
+      administrativeTotal,
+      operationalTotal,
+      administrativePercent: administrativeTotal / totalAdministrative,
+      operationalPercent: operationalTotal / totalOperational,
+      isPrivate: privateUnits === administrativeTotal && administrativeTotal > 0
     };
   });
 
-  return grouped.sort((a, b) => b.total - a.total);
+  return grouped.sort((a, b) => b.administrativeTotal - a.administrativeTotal);
 };
 
 export const buildInfrastructureAlcaldiaExtremes = (records: InfrastructureDetailRecord[]) => {
   const grouped = Array.from(groupBy(records, (record) => record.alcaldia)).map(([alcaldia, items]) => ({
     alcaldia,
-    total: sum(items.map((item) => item.units))
+    administrativeTotal: sum(items.map((item) => item.administrativeCount)),
+    operationalTotal: sum(items.map((item) => item.operationalUnits))
   }));
 
-  const sorted = grouped.sort((a, b) => b.total - a.total);
+  const byAdministrative = [...grouped].sort((a, b) => b.administrativeTotal - a.administrativeTotal);
+  const byOperational = [...grouped].sort((a, b) => b.operationalTotal - a.operationalTotal);
   return {
-    highest: sorted[0] ?? null,
-    lowest: sorted[sorted.length - 1] ?? null
+    highestAdministrative: byAdministrative[0] ?? null,
+    lowestAdministrative: byAdministrative[byAdministrative.length - 1] ?? null,
+    highestOperational: byOperational[0] ?? null,
+    lowestOperational: byOperational[byOperational.length - 1] ?? null
   };
 };
 

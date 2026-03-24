@@ -53,6 +53,10 @@ export type InfrastructureDetailRecord = {
   alcaldia: string;
   year: number;
   sportsAvailable: string[];
+  administrativeCount: number;
+  administrativeLabel: string;
+  operationalUnits: number;
+  operationalLabel: string;
   capacity: number;
   capacityType: "real" | "estimada";
   units: number;

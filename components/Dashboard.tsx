@@ -73,7 +73,7 @@ const chartMeta = {
   infrastructure: {
     source: "PILARES + Deportivos Públicos CDMX + DENUE + espacios abiertos",
     dataType: "real",
-    note: "La capacidad es estimada cuando no existe aforo consolidado."
+    note: "La gráfica principal usa conteos administrativos de sedes/instalaciones. Los espacios operativos y la capacidad se muestran aparte como estimaciones analíticas."
   },
   health: {
     source: "ENSANUT Continua 2022 + segmentación sexo/edad",
@@ -187,7 +187,15 @@ export default function Dashboard() {
     () => infrastructure.map((item) => ({ name: item.name, Deportivos: item.deportivos, PILARES: item.pilares, Gimnasios: item.gimnasios, Parques: item.parques })),
     [infrastructure]
   );
-  const infrastructureSports = useMemo(() => buildInfrastructureSportsSummary(infrastructureDetails), [infrastructureDetails]);
+  const infrastructureYear = useMemo(() => {
+    if (filters.years.length === 0) return 2025;
+    return Math.max(...filters.years.map((item) => Number(item)));
+  }, [filters.years]);
+  const infrastructureDisplayDetails = useMemo(
+    () => infrastructureDetails.filter((item) => item.year === infrastructureYear),
+    [infrastructureDetails, infrastructureYear]
+  );
+  const infrastructureSports = useMemo(() => buildInfrastructureSportsSummary(infrastructureDisplayDetails), [infrastructureDisplayDetails]);
   const obesityByAlcaldia = useMemo(() => buildMetricByAlcaldia(territorialRecords, "obesityRate"), [territorialRecords]);
   const overweightByAlcaldia = useMemo(() => buildMetricByAlcaldia(territorialRecords, "overweightRate"), [territorialRecords]);
   const combinedWeightByAlcaldia = useMemo(() => buildMetricByAlcaldia(territorialRecords, "combinedWeightRiskRate"), [territorialRecords]);
@@ -199,10 +207,10 @@ export default function Dashboard() {
   const riskIndex = useMemo(() => buildRiskIndex(territorialRecords, filters), [territorialRecords, filters]);
   const layerSummary = useMemo(() => buildDataLayerSummary(territorialRecords), [territorialRecords]);
   const territorialTable = useMemo(() => buildFlattenedTableRows(territorialRecords), [territorialRecords]);
-  const infrastructureExecutive = useMemo(() => buildInfrastructureExecutiveSummary(infrastructureDetails), [infrastructureDetails]);
+  const infrastructureExecutive = useMemo(() => buildInfrastructureExecutiveSummary(infrastructureDisplayDetails), [infrastructureDisplayDetails]);
   const scopedInfrastructureDetails = useMemo(
-    () => (selectedSpaceType ? infrastructureDetails.filter((item) => item.tipo_espacio === selectedSpaceType) : infrastructureDetails),
-    [infrastructureDetails, selectedSpaceType]
+    () => (selectedSpaceType ? infrastructureDisplayDetails.filter((item) => item.tipo_espacio === selectedSpaceType) : infrastructureDisplayDetails),
+    [infrastructureDisplayDetails, selectedSpaceType]
   );
   const infrastructureExtremes = useMemo(() => buildInfrastructureAlcaldiaExtremes(scopedInfrastructureDetails), [scopedInfrastructureDetails]);
   const infrastructureTable = useMemo(() => buildInfrastructureDetailRows(scopedInfrastructureDetails), [scopedInfrastructureDetails]);
@@ -225,11 +233,23 @@ export default function Dashboard() {
     [infrastructureDetails, mapYear, selectedMapArea]
   );
   const privateMapUnits = useMemo(
-    () => selectedMapInfrastructure.filter((item) => item.sourceDataset === "Directorio Estadístico de Unidades Económicas CDMX").reduce((sum, item) => sum + item.units, 0),
+    () => selectedMapInfrastructure.filter((item) => item.sourceDataset === "Directorio Estadístico de Unidades Económicas CDMX").reduce((sum, item) => sum + item.administrativeCount, 0),
     [selectedMapInfrastructure]
   );
   const publicMapUnits = useMemo(
-    () => selectedMapInfrastructure.filter((item) => item.dataType === "real" && item.sourceDataset !== "Directorio Estadístico de Unidades Económicas CDMX").reduce((sum, item) => sum + item.units, 0),
+    () => selectedMapInfrastructure.filter((item) => item.dataType === "real" && item.sourceDataset !== "Directorio Estadístico de Unidades Económicas CDMX").reduce((sum, item) => sum + item.administrativeCount, 0),
+    [selectedMapInfrastructure]
+  );
+  const pilaresMapSites = useMemo(
+    () => selectedMapInfrastructure.filter((item) => item.infrastructureType === "PILARES").reduce((sum, item) => sum + item.administrativeCount, 0),
+    [selectedMapInfrastructure]
+  );
+  const pilaresMapOperational = useMemo(
+    () => selectedMapInfrastructure.filter((item) => item.infrastructureType === "PILARES").reduce((sum, item) => sum + item.operationalUnits, 0),
+    [selectedMapInfrastructure]
+  );
+  const publicSportsMapSites = useMemo(
+    () => selectedMapInfrastructure.filter((item) => item.infrastructureType === "Deportivos públicos").reduce((sum, item) => sum + item.administrativeCount, 0),
     [selectedMapInfrastructure]
   );
   const mapRows = useMemo(
@@ -309,13 +329,41 @@ export default function Dashboard() {
   const selectedRecordsText = `${formatNumber(territorialRecords.length)} celdas territoriales`;
   const average = (items: Array<{ value: number }>) => (items.length > 0 ? items.reduce((sum, item) => sum + item.value, 0) / items.length : 0);
   const visibleInfrastructureTable = showFullInfrastructure ? infrastructureTable : infrastructureTable.slice(0, 12);
-  const visibleInfrastructureUnits = scopedInfrastructureDetails.reduce((sum, item) => sum + item.units, 0);
+  const visibleInfrastructureAdministrative = scopedInfrastructureDetails.reduce((sum, item) => sum + item.administrativeCount, 0);
+  const visibleInfrastructureOperational = scopedInfrastructureDetails.reduce((sum, item) => sum + item.operationalUnits, 0);
   const visiblePublicUnits = scopedInfrastructureDetails
     .filter((item) => item.dataType === "real" && item.sourceDataset !== "Directorio Estadístico de Unidades Económicas CDMX")
-    .reduce((sum, item) => sum + item.units, 0);
+    .reduce((sum, item) => sum + item.administrativeCount, 0);
   const visiblePrivateUnits = scopedInfrastructureDetails
     .filter((item) => item.sourceDataset === "Directorio Estadístico de Unidades Económicas CDMX")
-    .reduce((sum, item) => sum + item.units, 0);
+    .reduce((sum, item) => sum + item.administrativeCount, 0);
+  const pilaresRealSites = scopedInfrastructureDetails
+    .filter((item) => item.infrastructureType === "PILARES")
+    .reduce((sum, item) => sum + item.administrativeCount, 0);
+  const pilaresOperationalSpaces = scopedInfrastructureDetails
+    .filter((item) => item.infrastructureType === "PILARES")
+    .reduce((sum, item) => sum + item.operationalUnits, 0);
+  const publicSportsRealSites = scopedInfrastructureDetails
+    .filter((item) => item.infrastructureType === "Deportivos públicos")
+    .reduce((sum, item) => sum + item.administrativeCount, 0);
+  const topPilaresBySite = Array.from(
+    scopedInfrastructureDetails
+      .filter((item) => item.infrastructureType === "PILARES")
+      .reduce((acc, item) => {
+        acc.set(item.alcaldia, (acc.get(item.alcaldia) ?? 0) + item.administrativeCount);
+        return acc;
+      }, new Map<string, number>())
+      .entries()
+  ).sort((a, b) => b[1] - a[1])[0];
+  const topPilaresByOperational = Array.from(
+    scopedInfrastructureDetails
+      .filter((item) => item.infrastructureType === "PILARES")
+      .reduce((acc, item) => {
+        acc.set(item.alcaldia, (acc.get(item.alcaldia) ?? 0) + item.operationalUnits);
+        return acc;
+      }, new Map<string, number>())
+      .entries()
+  ).sort((a, b) => b[1] - a[1])[0];
   const healthKpis = [
     { label: "Obesidad", value: `${average(obesityByAlcaldia).toFixed(1)}%`, helper: "ENSANUT 2022 segmentada y territorializada" },
     { label: "Sobrepeso", value: `${average(overweightByAlcaldia).toFixed(1)}%`, helper: "Base oficial 2022 con lectura por sexo y edad" },
@@ -447,20 +495,30 @@ export default function Dashboard() {
           </div>
           <KpiGrid
             items={[
-              { label: "Total de espacios", value: formatNumber(infrastructure.reduce((sum, item) => sum + item.total, 0)), helper: "Suma del desglose visible" },
-              { label: "Densidad media", value: `${(infrastructure.reduce((sum, item) => sum + item.density, 0) / (infrastructure.length || 1)).toFixed(1)}`, helper: "Espacios por 100 mil habitantes" },
-              { label: "Capacidad estimada", value: formatNumber(infrastructureDetails.reduce((sum, item) => sum + item.capacity, 0)), helper: "Solo cuando no existe aforo oficial consolidado" },
-              { label: "Tipos de espacio", value: formatNumber(new Set(infrastructureDetails.map((item) => item.tipo_espacio)).size), helper: "Pilares, canchas, gimnasios, parques y derivados" }
+              { label: "Infraestructura visible", value: formatNumber(infrastructure.reduce((sum, item) => sum + item.total, 0)), helper: "Conteos administrativos de sedes, instalaciones o establecimientos" },
+              { label: "Espacios operativos estimados", value: formatNumber(visibleInfrastructureOperational), helper: "Aproximación analítica para lectura de capacidad territorial" },
+              { label: "Densidad media", value: `${(infrastructure.reduce((sum, item) => sum + item.density, 0) / (infrastructure.length || 1)).toFixed(1)}`, helper: "Infraestructura administrativa por 100 mil habitantes" },
+              { label: "Capacidad estimada", value: formatNumber(infrastructureDetails.reduce((sum, item) => sum + item.capacity, 0)), helper: "Solo cuando no existe aforo oficial consolidado" }
             ]}
           />
           <div className="grid gap-4 lg:grid-cols-2">
-            <ChartCard title="Desglose por tipo" helper="PILARES, deportivos públicos, gimnasios y espacios abiertos" tooltip={chartMeta.infrastructure}>
+            <ChartCard title="Desglose por tipo" helper="Conteo administrativo de sedes, instalaciones y establecimientos visibles" tooltip={chartMeta.infrastructure}>
               <StackedBar data={infraStacked} categories={["Deportivos", "PILARES", "Gimnasios", "Parques"]} />
             </ChartCard>
             <ChartCard title="Deportes disponibles en infraestructura" helper="Lectura consolidada del detalle de espacios" tooltip={chartMeta.infrastructure}>
               <DistributionBar data={infrastructureSports.slice(0, 8)} />
             </ChartCard>
           </div>
+          <Card className="space-y-3 p-5">
+            <div className="flex items-center gap-2">
+              <div className="text-base font-semibold text-ink-900">Cómo leer PILARES y métricas similares</div>
+              <LayerBadge layer="real" />
+              <LayerBadge layer="estimado" />
+            </div>
+            <div className="text-sm leading-6 text-ink-700">
+              Las sedes PILARES se contabilizan como registro real. Los espacios operativos son una aproximación analítica para estimar capacidad territorial y no equivalen al número oficial de sedes. El mismo criterio se aplica cuando una instalación real requiere una capa operativa o de capacidad para análisis.
+            </div>
+          </Card>
           <div className="grid gap-4 xl:grid-cols-[1.1fr_0.9fr]">
             <Card className="space-y-5 p-6">
               <div className="flex flex-wrap items-start justify-between gap-3">
@@ -469,6 +527,7 @@ export default function Dashboard() {
                   <div className="text-sm leading-6 text-ink-600">
                     Mantiene la lectura agregada y permite enfocar la tabla en un tipo de espacio concreto sin tocar la gráfica principal.
                   </div>
+                  <div className="mt-2 text-xs text-ink-600">Corte visible para esta lectura detallada: {infrastructureYear}.</div>
                 </div>
                 {selectedSpaceType ? (
                   <button className="btn-ghost" type="button" onClick={() => setSelectedSpaceType(null)}>
@@ -478,29 +537,51 @@ export default function Dashboard() {
               </div>
               <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-5">
                 <div className="rounded-2xl border border-mist-200 bg-white px-4 py-4">
-                  <div className="text-[11px] font-semibold uppercase tracking-wide text-ink-600">Total visible</div>
-                  <div className="mt-2 text-2xl font-semibold text-ink-900">{formatNumber(visibleInfrastructureUnits)}</div>
-                  <div className="mt-2 text-xs text-ink-600">Unidades filtradas en la vista ejecutiva</div>
+                  <div className="text-[11px] font-semibold uppercase tracking-wide text-ink-600">Infraestructura visible</div>
+                  <div className="mt-2 text-2xl font-semibold text-ink-900">{formatNumber(visibleInfrastructureAdministrative)}</div>
+                  <div className="mt-2 text-xs text-ink-600">Conteos administrativos visibles en la vista</div>
                 </div>
                 <div className="rounded-2xl border border-mist-200 bg-white px-4 py-4">
-                  <div className="text-[11px] font-semibold uppercase tracking-wide text-ink-600">Pública / comunitaria</div>
-                  <div className="mt-2 text-2xl font-semibold text-ink-900">{formatNumber(visiblePublicUnits)}</div>
-                  <div className="mt-2 text-xs text-ink-600">PILARES, deportivos y otras capas reales</div>
+                  <div className="text-[11px] font-semibold uppercase tracking-wide text-ink-600">Sedes PILARES reales</div>
+                  <div className="mt-2 text-2xl font-semibold text-ink-900">{formatNumber(pilaresRealSites)}</div>
+                  <div className="mt-2 text-xs text-ink-600">Conteo administrativo nominal por sede</div>
                 </div>
                 <div className="rounded-2xl border border-mist-200 bg-white px-4 py-4">
-                  <div className="text-[11px] font-semibold uppercase tracking-wide text-ink-600">Privada preparada</div>
+                  <div className="text-[11px] font-semibold uppercase tracking-wide text-ink-600">Espacios operativos PILARES</div>
+                  <div className="mt-2 text-2xl font-semibold text-ink-900">{formatNumber(pilaresOperationalSpaces)}</div>
+                  <div className="mt-2 text-xs text-ink-600">Estimación analítica de capacidad territorial, no sedes</div>
+                </div>
+                <div className="rounded-2xl border border-mist-200 bg-white px-4 py-4">
+                  <div className="text-[11px] font-semibold uppercase tracking-wide text-ink-600">Deportivos públicos reales</div>
+                  <div className="mt-2 text-2xl font-semibold text-ink-900">{formatNumber(publicSportsRealSites)}</div>
+                  <div className="mt-2 text-xs text-ink-600">Instalaciones oficiales integradas</div>
+                </div>
+                <div className="rounded-2xl border border-mist-200 bg-white px-4 py-4">
+                  <div className="text-[11px] font-semibold uppercase tracking-wide text-ink-600">Infraestructura privada</div>
                   <div className="mt-2 text-2xl font-semibold text-ink-900">{formatNumber(visiblePrivateUnits)}</div>
-                  <div className="mt-2 text-xs text-ink-600">DENUE clasificado; pendiente SCIAN verificable</div>
+                  <div className="mt-2 text-xs text-ink-600">Preparada desde DENUE; no equivalente a sedes públicas</div>
                 </div>
-                <div className="rounded-2xl border border-mist-200 bg-white px-4 py-4">
-                  <div className="text-[11px] font-semibold uppercase tracking-wide text-ink-600">Alcaldía con más infraestructura</div>
-                  <div className="mt-2 text-lg font-semibold text-ink-900">{infrastructureExtremes.highest?.alcaldia ?? "Sin dato"}</div>
-                  <div className="mt-2 text-xs text-ink-600">{infrastructureExtremes.highest ? `${formatNumber(infrastructureExtremes.highest.total)} unidades` : "Sin dato"}</div>
+              </div>
+              <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+                <div className="rounded-2xl border border-mist-200 bg-mist-100/60 px-4 py-4">
+                  <div className="text-[11px] font-semibold uppercase tracking-wide text-ink-600">Alcaldía con más sedes PILARES</div>
+                  <div className="mt-2 text-lg font-semibold text-ink-900">{topPilaresBySite?.[0] ?? "Sin dato"}</div>
+                  <div className="mt-2 text-xs text-ink-600">{topPilaresBySite ? `${formatNumber(topPilaresBySite[1])} sedes reales` : "Sin dato"}</div>
                 </div>
-                <div className="rounded-2xl border border-mist-200 bg-white px-4 py-4">
-                  <div className="text-[11px] font-semibold uppercase tracking-wide text-ink-600">Alcaldía con menos infraestructura</div>
-                  <div className="mt-2 text-lg font-semibold text-ink-900">{infrastructureExtremes.lowest?.alcaldia ?? "Sin dato"}</div>
-                  <div className="mt-2 text-xs text-ink-600">{infrastructureExtremes.lowest ? `${formatNumber(infrastructureExtremes.lowest.total)} unidades` : "Sin dato"}</div>
+                <div className="rounded-2xl border border-mist-200 bg-mist-100/60 px-4 py-4">
+                  <div className="text-[11px] font-semibold uppercase tracking-wide text-ink-600">Alcaldía con más espacios PILARES</div>
+                  <div className="mt-2 text-lg font-semibold text-ink-900">{topPilaresByOperational?.[0] ?? "Sin dato"}</div>
+                  <div className="mt-2 text-xs text-ink-600">{topPilaresByOperational ? `${formatNumber(topPilaresByOperational[1])} espacios estimados` : "Sin dato"}</div>
+                </div>
+                <div className="rounded-2xl border border-mist-200 bg-mist-100/60 px-4 py-4">
+                  <div className="text-[11px] font-semibold uppercase tracking-wide text-ink-600">Mayor infraestructura visible</div>
+                  <div className="mt-2 text-lg font-semibold text-ink-900">{infrastructureExtremes.highestAdministrative?.alcaldia ?? "Sin dato"}</div>
+                  <div className="mt-2 text-xs text-ink-600">{infrastructureExtremes.highestAdministrative ? `${formatNumber(infrastructureExtremes.highestAdministrative.administrativeTotal)} registros administrativos` : "Sin dato"}</div>
+                </div>
+                <div className="rounded-2xl border border-mist-200 bg-mist-100/60 px-4 py-4">
+                  <div className="text-[11px] font-semibold uppercase tracking-wide text-ink-600">Mayor capacidad operativa</div>
+                  <div className="mt-2 text-lg font-semibold text-ink-900">{infrastructureExtremes.highestOperational?.alcaldia ?? "Sin dato"}</div>
+                  <div className="mt-2 text-xs text-ink-600">{infrastructureExtremes.highestOperational ? `${formatNumber(infrastructureExtremes.highestOperational.operationalTotal)} espacios estimados` : "Sin dato"}</div>
                 </div>
               </div>
               <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
@@ -517,14 +598,15 @@ export default function Dashboard() {
                         <div className="text-sm font-semibold">{item.label}</div>
                         <LayerBadge layer={item.isPrivate ? "preparado" : "real"} />
                       </div>
-                      <div className="mt-3 text-2xl font-semibold">{formatNumber(item.total)}</div>
-                      <div className={`mt-2 text-xs ${isActive ? "text-white/80" : "text-ink-600"}`}>{(item.percent * 100).toFixed(1)}% del total visible</div>
+                      <div className="mt-3 text-2xl font-semibold">{formatNumber(item.administrativeTotal)}</div>
+                      <div className={`mt-2 text-xs ${isActive ? "text-white/80" : "text-ink-600"}`}>{(item.administrativePercent * 100).toFixed(1)}% del total administrativo visible</div>
+                      <div className={`mt-1 text-xs ${isActive ? "text-white/80" : "text-ink-600"}`}>{formatNumber(item.operationalTotal)} espacios operativos estimados</div>
                     </button>
                   );
                 })}
               </div>
               <div className="text-xs text-ink-600">
-                El foco por tipo de espacio afecta esta vista ejecutiva y la tabla detallada. La gráfica principal se conserva como lectura institucional estable.
+                El foco por tipo de espacio afecta esta vista ejecutiva y la tabla detallada. La gráfica principal se conserva como lectura institucional estable y trabaja solo con conteo administrativo.
               </div>
             </Card>
             <Card className="space-y-5 p-6">
@@ -538,7 +620,7 @@ export default function Dashboard() {
                   <div className="flex items-center justify-between gap-3">
                     <div>
                       <div className="text-sm font-semibold text-ink-900">Infraestructura pública y comunitaria</div>
-                      <div className="mt-1 text-xs text-ink-600">PILARES y deportivos públicos integrados por sede real; parques siguen como capa operativa real agregada.</div>
+                      <div className="mt-1 text-xs text-ink-600">PILARES y deportivos públicos se reportan como sedes/instalaciones reales; las capas operativas se presentan aparte.</div>
                     </div>
                     <div className="text-2xl font-semibold text-ink-900">{formatNumber(visiblePublicUnits)}</div>
                   </div>
@@ -561,7 +643,7 @@ export default function Dashboard() {
                   </div>
                   <div>
                     <div className="meta-label">Tipo de dato</div>
-                    <div className="meta-value">Real para PILARES/deportivos; preparado para DENUE privado</div>
+                    <div className="meta-value">Real para sedes e instalaciones públicas; preparado para DENUE privado; estimado para espacios operativos y capacidad</div>
                   </div>
                   <div>
                     <div className="meta-label">Nota metodológica</div>
@@ -651,13 +733,18 @@ export default function Dashboard() {
                       <div className="mt-2 text-xs text-ink-600">Insight compuesto</div>
                     </div>
                     <div className="rounded-2xl border border-mist-200 bg-white px-4 py-4">
-                      <div className="text-[11px] font-semibold uppercase tracking-wide text-ink-600">PILARES</div>
-                      <div className="mt-2 text-2xl font-semibold text-ink-900">{formatNumber(selectedMapInfrastructure.filter((item) => item.infrastructureType === "PILARES").reduce((sum, item) => sum + item.units, 0))}</div>
-                      <div className="mt-2 text-xs text-ink-600">Sedes reales integradas</div>
+                      <div className="text-[11px] font-semibold uppercase tracking-wide text-ink-600">Sedes PILARES</div>
+                      <div className="mt-2 text-2xl font-semibold text-ink-900">{formatNumber(pilaresMapSites)}</div>
+                      <div className="mt-2 text-xs text-ink-600">Conteo real por sede</div>
+                    </div>
+                    <div className="rounded-2xl border border-mist-200 bg-white px-4 py-4">
+                      <div className="text-[11px] font-semibold uppercase tracking-wide text-ink-600">Espacios PILARES</div>
+                      <div className="mt-2 text-2xl font-semibold text-ink-900">{formatNumber(pilaresMapOperational)}</div>
+                      <div className="mt-2 text-xs text-ink-600">Estimación operativa para lectura territorial</div>
                     </div>
                     <div className="rounded-2xl border border-mist-200 bg-white px-4 py-4">
                       <div className="text-[11px] font-semibold uppercase tracking-wide text-ink-600">Deportivos públicos</div>
-                      <div className="mt-2 text-2xl font-semibold text-ink-900">{formatNumber(selectedMapInfrastructure.filter((item) => item.infrastructureType === "Deportivos públicos").reduce((sum, item) => sum + item.units, 0))}</div>
+                      <div className="mt-2 text-2xl font-semibold text-ink-900">{formatNumber(publicSportsMapSites)}</div>
                       <div className="mt-2 text-xs text-ink-600">Instalaciones reales integradas</div>
                     </div>
                     <div className="rounded-2xl border border-mist-200 bg-white px-4 py-4 md:col-span-2">
@@ -671,7 +758,7 @@ export default function Dashboard() {
                           <div className="mt-2 text-xl font-semibold text-ink-900">{formatNumber(publicMapUnits)}</div>
                         </div>
                       </div>
-                      <div className="mt-2 text-xs text-ink-600">La capa privada proviene de DENUE y permanece etiquetada como preparada hasta validar SCIAN objetivo.</div>
+                      <div className="mt-2 text-xs text-ink-600">La capa privada proviene de DENUE y permanece etiquetada como preparada hasta validar SCIAN objetivo. Las cifras operativas no equivalen a sedes administrativas.</div>
                     </div>
                   </div>
                 </>
@@ -687,7 +774,7 @@ export default function Dashboard() {
               <div>
                 <div className="text-base font-semibold text-ink-900">Infraestructura detallada</div>
                 <div className="text-sm leading-6 text-ink-600">
-                  Tipos de espacio, deportes disponibles y capacidad. Se resume la tabla para evitar saturación inicial.
+                  Tipos de espacio, deportes disponibles, conteo administrativo real y espacios operativos estimados. Se resume la tabla para evitar saturación inicial.
                 </div>
               </div>
               <button className="btn-ghost" type="button" onClick={() => setShowFullInfrastructure((prev) => !prev)}>
@@ -711,7 +798,7 @@ export default function Dashboard() {
                 </div>
                 <div>
                   <div className="meta-label">Nota metodológica</div>
-                  <div className="meta-value">{chartMeta.infrastructure.note}</div>
+                  <div className="meta-value">Las sedes PILARES y deportivos públicos se cuentan como registros reales. Los espacios operativos son una aproximación analítica para capacidad territorial y no equivalen al número oficial de sedes.</div>
                 </div>
               </div>
             </div>
@@ -779,6 +866,9 @@ export default function Dashboard() {
             <div className="text-sm leading-6 text-ink-700">
               Obesidad, sobrepeso, diabetes y sedentarismo están modelados a partir de ENSANUT 2022 y reglas de segmentación. No representan una observación oficial directa publicada por alcaldía.
             </div>
+            <div className="text-xs text-ink-600">
+              Los filtros de sexo, edad y año cambian esta vista cuando existe segmentación compatible. Si una lectura no cambia por falta de base observada directa, se mantiene la nota metodológica visible.
+            </div>
           </Card>
         </section>
       ) : null}
@@ -819,6 +909,7 @@ export default function Dashboard() {
               </div>
               <div className="space-y-3 text-sm leading-6 text-ink-700">
                 <p>Riesgo = actividad física inversa + obesidad + sedentarismo + infraestructura per cápita inversa.</p>
+                <p>La lectura es relativa: un score más alto indica peor balance territorial entre activación, salud y cobertura disponible.</p>
                 <p>Semáforo verde indica mejor condición relativa; amarillo representa vigilancia; rojo marca prioridad de intervención.</p>
                 <p>El score es defendible para priorización institucional, no para diagnóstico clínico.</p>
               </div>
@@ -854,9 +945,10 @@ export default function Dashboard() {
             <Card className="space-y-4 p-5">
               <div className="text-base font-semibold text-ink-900">Qué es real, estimado y proyectado</div>
               <div className="space-y-3 text-sm leading-6 text-ink-700">
-                <p><span className="font-semibold">Real:</span> infraestructura observable por tipo y alcaldía.</p>
+                <p><span className="font-semibold">Real:</span> sedes, instalaciones o establecimientos observables por tipo y alcaldía.</p>
                 <p><span className="font-semibold">Base oficial:</span> ENSANUT 2022, benchmarks MOPRADEF y población base.</p>
                 <p><span className="font-semibold">Estimado:</span> actividad y salud territorializadas con reglas explícitas.</p>
+                <p><span className="font-semibold">Estimado operativo:</span> espacios operativos o capacidad derivados analíticamente a partir de una sede o instalación real.</p>
                 <p><span className="font-semibold">Proyectado:</span> 2026 y cualquier valor futuro sin observación oficial.</p>
               </div>
             </Card>

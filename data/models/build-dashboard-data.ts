@@ -191,7 +191,10 @@ const infrastructureTemplates = [
     source: "Datos Abiertos CDMX / PILARES",
     note: "Cobertura comunitaria con potencial de activación física.",
     sportsAvailable: ["Activación física", "Zumba", "Yoga", "Básquetbol recreativo"],
-    capacityFactor: 42
+    capacityFactor: 42,
+    operationalFactor: 7,
+    administrativeLabel: "Sedes PILARES",
+    operationalLabel: "Espacios operativos PILARES"
   },
   {
     infrastructureType: "Deportivos públicos" as const,
@@ -199,7 +202,10 @@ const infrastructureTemplates = [
     source: "Datos Abiertos CDMX / Deportivos públicos",
     note: "Infraestructura pública estructurada para práctica deportiva formal.",
     sportsAvailable: ["Fútbol", "Básquetbol", "Natación", "Atletismo"],
-    capacityFactor: 180
+    capacityFactor: 180,
+    operationalFactor: 4,
+    administrativeLabel: "Instalaciones deportivas públicas",
+    operationalLabel: "Espacios operativos deportivos"
   },
   {
     infrastructureType: "Gimnasios" as const,
@@ -207,7 +213,10 @@ const infrastructureTemplates = [
     source: "DENUE / SCIAN",
     note: "Oferta privada con acceso condicionado por costo.",
     sportsAvailable: ["Acondicionamiento", "Spinning", "Pesas", "Clases grupales"],
-    capacityFactor: 55
+    capacityFactor: 55,
+    operationalFactor: 2,
+    administrativeLabel: "Establecimientos privados",
+    operationalLabel: "Espacios operativos privados"
   },
   {
     infrastructureType: "Parques / áreas verdes" as const,
@@ -215,7 +224,10 @@ const infrastructureTemplates = [
     source: "Inventario de áreas verdes / espacio público CDMX",
     note: "Espacio abierto para caminata, running y activación de bajo costo.",
     sportsAvailable: ["Running / caminata", "Ciclismo", "Calistenia", "Activación libre"],
-    capacityFactor: 120
+    capacityFactor: 120,
+    operationalFactor: 3,
+    administrativeLabel: "Espacios públicos abiertos",
+    operationalLabel: "Zonas operativas estimadas"
   }
 ];
 
@@ -256,6 +268,10 @@ const buildInfrastructureDetails = (): InfrastructureDetailRecord[] => {
           alcaldia: alcaldia.name,
           year: yearSeed.year,
           sportsAvailable: template.sportsAvailable,
+          administrativeCount: safeUnits,
+          administrativeLabel: template.administrativeLabel,
+          operationalUnits: safeUnits * template.operationalFactor,
+          operationalLabel: template.operationalLabel,
           capacity,
           capacityType: "estimada",
           units: safeUnits,

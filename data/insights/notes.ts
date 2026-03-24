@@ -6,14 +6,14 @@ export const sourceRegistry: SourceRegistryEntry[] = [
     layer: "real",
     source: "Datos Abiertos CDMX / Ubicación y estatus de PILARES",
     coverage: "Infraestructura comunitaria observable por sede",
-    note: "Se usa como infraestructura de activación; su peso es menor que deportivos formales."
+    note: "El conteo real se reporta por sede. Cualquier capa de espacios operativos o capacidad debe leerse como estimación analítica."
   },
   {
     metric: "Deportivos públicos",
     layer: "real",
     source: "Datos Abiertos CDMX / Deportivos públicos",
     coverage: "Instalaciones deportivas públicas observables",
-    note: "Es la base principal de infraestructura pública estructurada."
+    note: "El registro administrativo se reporta por instalación; la capacidad o espacios operativos se estiman aparte."
   },
   {
     metric: "Gimnasios y centros privados",
@@ -80,8 +80,8 @@ export const methodologyEntries: MethodologyEntry[] = [
     metric: "Conteo de espacios por tipo",
     layer: "real",
     source: "PILARES, deportivos públicos, DENUE e inventarios de áreas verdes",
-    logic: "Se consolida por alcaldía y se transforma en densidad por 100 mil habitantes.",
-    limitation: "La infraestructura privada descargada desde DENUE sigue preparada hasta validar SCIAN y fecha de corte con un extracto más robusto."
+    logic: "La gráfica principal consolida conteos administrativos de sedes, instalaciones o establecimientos y los transforma en densidad por 100 mil habitantes.",
+    limitation: "No debe mezclarse con espacios operativos o capacidad estimada. La infraestructura privada descargada desde DENUE sigue preparada hasta validar SCIAN y fecha de corte con un extracto más robusto."
   },
   {
     module: "Salud",
@@ -104,7 +104,7 @@ export const methodologyEntries: MethodologyEntry[] = [
     metric: "Espacios, deportes disponibles y capacidad",
     layer: "insight",
     source: "Capas de infraestructura pública y privada consolidadas",
-    logic: "Se resume la oferta por tipo de espacio; la capacidad se estima cuando no hay aforo operativo oficial.",
+    logic: "Se distinguen conteo administrativo real, espacios operativos estimados y capacidad estimada cuando no hay aforo oficial.",
     limitation: "La mezcla de capas reales y preparadas obliga a conservar visible el tipo de dato en cada lectura."
   },
   {
@@ -161,6 +161,12 @@ export const qualityChecks: QualityEntry[] = [
     scope: "Infraestructura económica",
     status: "ATENCION",
     note: "La clasificación privada usa heurísticas textuales porque el export descargado no trae SCIAN verificable en la salida usada por este MVP."
+  },
+  {
+    check: "Separación sede vs espacio operativo",
+    scope: "PILARES y capas con capacidad analítica",
+    status: "OK",
+    note: "El dashboard separa conteo administrativo real de espacios operativos estimados para evitar interpretaciones institucionales erróneas."
   }
 ];
 
