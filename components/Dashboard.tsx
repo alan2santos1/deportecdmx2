@@ -5,6 +5,8 @@ import type { ColumnDef } from "@tanstack/react-table";
 import {
   buildBarrierDistribution,
   buildCanchasAlerts,
+  buildCanchasExecutiveInsights,
+  buildCanchasExecutiveKpis,
   buildCanchasFilterConfig,
   buildCanchasKpis,
   buildCanchasQualitySummary,
@@ -398,6 +400,8 @@ export default function Dashboard() {
   );
   const canchasKpis = useMemo(() => buildCanchasKpis(canchasRecords), [canchasRecords]);
   const canchasAlerts = useMemo(() => buildCanchasAlerts(canchasRecords), [canchasRecords]);
+  const canchasExecutiveKpis = useMemo(() => buildCanchasExecutiveKpis(canchasRecords), [canchasRecords]);
+  const canchasExecutiveInsights = useMemo(() => buildCanchasExecutiveInsights(canchasRecords), [canchasRecords]);
   const canchasQualitySummary = useMemo(() => buildCanchasQualitySummary(canchasRecords), [canchasRecords]);
   const canchasSummaryRows = useMemo(() => buildCanchasSummaryRows(canchasRecords), [canchasRecords]);
   const canchasTableRows = useMemo(() => buildCanchasTableRows(canchasRecords), [canchasRecords]);
@@ -528,6 +532,11 @@ export default function Dashboard() {
     : selectedCancha?.inaugurationStatus === "proxima"
       ? "Próxima"
       : "Sin fecha";
+  const selectedCanchaTrafficLight = selectedCancha?.operationalStatus === "completa"
+    ? "Verde"
+    : selectedCancha?.operationalStatus === "lista_para_operar" || selectedCancha?.operationalStatus === "parcial"
+      ? "Amarillo"
+      : "Rojo";
 
   return (
     <div className="space-y-8">
@@ -1083,6 +1092,18 @@ export default function Dashboard() {
             </div>
           </Card>
           <KpiGrid items={canchasKpis} />
+          <Card className="space-y-4 p-5">
+            <div className="text-base font-semibold text-ink-900">Lectura ejecutiva</div>
+            <div className="text-sm leading-6 text-ink-600">
+              Hallazgos calculados directamente desde la base operativa visible. Sirven para seguimiento de gestión y priorización territorial; no implican causalidad.
+            </div>
+            <KpiGrid items={canchasExecutiveKpis} />
+            <div className="grid gap-3 lg:grid-cols-2">
+              {canchasExecutiveInsights.map((item) => (
+                <NoteBlock key={item.title} title={item.title} body={item.body} />
+              ))}
+            </div>
+          </Card>
           <div className="grid gap-4 lg:grid-cols-2">
             <Card className="space-y-4 p-5">
               <div className="text-base font-semibold text-ink-900">Alertas operativas</div>
@@ -1103,10 +1124,13 @@ export default function Dashboard() {
                 Esta sección es operativa / administrativa y no es una estimación poblacional. La hoja <span className="font-semibold text-ink-900">Base</span> organiza la operación principal; <span className="font-semibold text-ink-900">Alc Dic</span>, <span className="font-semibold text-ink-900">AlcFeb</span> y <span className="font-semibold text-ink-900">Hoja 2</span> completan la lectura territorial; <span className="font-semibold text-ink-900">Hoja 1</span> enriquece PILARES cuando el match es posible.
               </div>
               <div className="text-sm leading-6 text-ink-700">
-                Los estatus se derivan con reglas transparentes sobre fecha de inauguración, figura educativa, teléfono, horario y actividades. No dependen del color visual del Excel.
+                Los estatus se derivan con reglas transparentes sobre fecha de inauguración, dato operativo básico, horario y actividades. No dependen del color visual del Excel.
               </div>
               <div className="text-sm leading-6 text-ink-700">
                 La geolocalización se distingue entre <span className="font-semibold text-ink-900">real</span>, <span className="font-semibold text-ink-900">aproximada por PILARES</span>, <span className="font-semibold text-ink-900">aproximada por alcaldía</span> y <span className="font-semibold text-ink-900">sin coordenada</span>. Las ubicaciones aproximadas sirven para lectura operativa, no para validación catastral o de obra.
+              </div>
+              <div className="text-sm leading-6 text-ink-700">
+                Los insights del módulo no explican causalidad. Solo sintetizan rezagos, cobertura documental y seguimiento operativo a partir del Excel institucional cargado.
               </div>
               <div className="meta-panel">
                 <div className="meta-grid">
@@ -1181,7 +1205,10 @@ export default function Dashboard() {
                     <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-ink-600">Estatus operativo derivado</div>
                     <div className="mt-3 flex flex-wrap items-center gap-2">
                       <div className="text-3xl font-semibold text-ink-900">{selectedCanchaStatusLabel}</div>
-                      <span className={`rounded-full px-3 py-1 text-xs font-semibold ${selectedCancha.operationalStatus === "completa" ? "bg-emerald-100 text-emerald-700" : selectedCancha.operationalStatus === "lista_para_operar" ? "bg-sky-100 text-sky-700" : selectedCancha.operationalStatus === "parcial" ? "bg-amber-100 text-amber-700" : "bg-red-100 text-red-700"}`}>
+                      <span className={`rounded-full px-3 py-1 text-xs font-semibold ${selectedCanchaTrafficLight === "Verde" ? "bg-emerald-100 text-emerald-700" : selectedCanchaTrafficLight === "Amarillo" ? "bg-amber-100 text-amber-700" : "bg-red-100 text-red-700"}`}>
+                        Semáforo {selectedCanchaTrafficLight}
+                      </span>
+                      <span className="rounded-full border border-mist-200 bg-mist-100 px-3 py-1 text-xs font-medium text-ink-700">
                         {selectedCanchaInaugurationLabel}
                       </span>
                       <span className="rounded-full border border-mist-200 bg-mist-100 px-3 py-1 text-xs font-medium text-ink-700">
@@ -1199,12 +1226,12 @@ export default function Dashboard() {
                     <div className="rounded-2xl border border-mist-200 bg-white px-4 py-4">
                       <div className="text-[11px] font-semibold uppercase tracking-wide text-ink-600">PILARES asignado</div>
                       <div className="mt-2 text-lg font-semibold text-ink-900">{selectedCanchaPilares}</div>
-                      <div className="mt-2 text-xs text-ink-600">{selectedCancha.assignedPilaresResponsibleName ?? selectedCancha.assignedPilaresContact ?? selectedCancha.assignedPilaresEmail ?? "Sin enriquecimiento institucional disponible"}</div>
+                      <div className="mt-2 text-xs text-ink-600">{selectedCancha.assignedPilaresResponsibleName ?? "Sin responsable PILARES identificable"}</div>
                     </div>
                     <div className="rounded-2xl border border-mist-200 bg-white px-4 py-4">
-                      <div className="text-[11px] font-semibold uppercase tracking-wide text-ink-600">Figura educativa</div>
-                      <div className="mt-2 text-lg font-semibold text-ink-900">{selectedCancha.nombreFiguraEducativa ?? "Sin dato"}</div>
-                      <div className="mt-2 text-xs text-ink-600">{selectedCancha.tipoFiguraEducativa ?? "Sin tipo de figura"} · {selectedCancha.telefonoFiguraEducativa ?? "Sin teléfono registrado"}</div>
+                      <div className="text-[11px] font-semibold uppercase tracking-wide text-ink-600">Responsable / contacto PILARES</div>
+                      <div className="mt-2 text-lg font-semibold text-ink-900">{selectedCancha.assignedPilaresResponsibleName ?? "Sin responsable"}</div>
+                      <div className="mt-2 text-xs text-ink-600">{selectedCancha.assignedPilaresContact ?? "Sin teléfono"} · {selectedCancha.assignedPilaresEmail ?? "Sin correo"}</div>
                     </div>
                     <div className="rounded-2xl border border-mist-200 bg-white px-4 py-4">
                       <div className="text-[11px] font-semibold uppercase tracking-wide text-ink-600">Horario</div>
@@ -1226,7 +1253,7 @@ export default function Dashboard() {
                       <div className="mt-2 text-lg font-semibold text-ink-900">
                         {selectedCancha.tienePromotorFutbol === "si" ? "Sí" : selectedCancha.tienePromotorFutbol === "no" ? "No" : "Sin dato"}
                       </div>
-                      <div className="mt-2 text-xs text-ink-600">{selectedCancha.mallaHorariaFutbol ?? "Sin malla horaria de futbol registrada"}</div>
+                      <div className="mt-2 text-xs text-ink-600">{selectedCancha.promoterCount !== null && selectedCancha.promoterCount !== undefined ? `${selectedCancha.promoterCount} promotores registrados` : "Sin cantidad de promotores registrada"}</div>
                     </div>
                   </div>
                   <div className="rounded-2xl border border-mist-200 bg-mist-100/60 px-4 py-4">
@@ -1234,6 +1261,8 @@ export default function Dashboard() {
                     <div className="mt-3 space-y-3 text-sm leading-6 text-ink-700">
                       <div><span className="font-semibold text-ink-900">Domicilio:</span> {selectedCancha.domicilio || "Sin dato"}</div>
                       <div><span className="font-semibold text-ink-900">Fecha de inauguración:</span> {selectedCancha.inaugurationDateIso ?? selectedCancha.inaugurationDateRaw ?? "Sin fecha"}</div>
+                      <div><span className="font-semibold text-ink-900">Coordinador:</span> No identificable de forma defendible en la fuente</div>
+                      <div><span className="font-semibold text-ink-900">Malla horaria futbol:</span> {selectedCancha.mallaHorariaFutbol ?? "Sin malla horaria de futbol"}</div>
                       <div><span className="font-semibold text-ink-900">Actividades:</span> {selectedCancha.activities.join(", ") || "Sin actividades registradas"}</div>
                       <div><span className="font-semibold text-ink-900">Disciplinas complementarias:</span> {selectedCancha.disciplinas.join(", ") || "Sin disciplinas complementarias"}</div>
                       <div><span className="font-semibold text-ink-900">Malla horaria de disciplinas:</span> {selectedCancha.mallaHorariaDisciplinas ?? "Sin malla horaria de disciplinas"}</div>
