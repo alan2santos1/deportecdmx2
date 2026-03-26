@@ -142,6 +142,99 @@ export type DashboardMeta = {
   timelineNotes: string[];
 };
 
+export type CanchaOperationalStatus = "completa" | "lista_para_operar" | "parcial" | "pendiente";
+export type CanchaInaugurationStatus = "inaugurada" | "proxima" | "sin_fecha";
+export type CanchaGeolocationType = "real" | "aproximada_pilares" | "aproximada_alcaldia" | "sin_coordenada";
+
+export type CanchaOperationalRecord = {
+  id: string;
+  consecutiveNumber: number;
+  year: number;
+  alcaldia: string;
+  geoKey: string;
+  name: string;
+  domicilio: string;
+  tipoCancha?: string | null;
+  material?: string | null;
+  origen?: string | null;
+  latitude?: number | null;
+  longitude?: number | null;
+  projectedPoint?: { x: number; y: number } | null;
+  geolocationType: CanchaGeolocationType;
+  geolocationLabel: string;
+  geolocationSource: string;
+  mapsLink?: string | null;
+  pilaresAssigned: string | null;
+  assignedPilaresOfficialName?: string | null;
+  assignedPilaresResponsibleName?: string | null;
+  assignedPilaresContact?: string | null;
+  assignedPilaresEmail?: string | null;
+  assignedPilaresSchedule?: string | null;
+  assignedPilaresAlcaldia?: string | null;
+  nearestPilares1?: string | null;
+  distanceToPilares1?: number | null;
+  nearestPilares2?: string | null;
+  distanceToPilares2?: number | null;
+  territorialStatus?: string | null;
+  territorialAdvance?: string | null;
+  territorialSourceSheet?: string | null;
+  nombreFiguraEducativa?: string | null;
+  tipoFiguraEducativa?: string | null;
+  telefonoFiguraEducativa?: string | null;
+  inaugurationDateRaw?: string | null;
+  inaugurationDateIso?: string | null;
+  inaugurationStatus: CanchaInaugurationStatus;
+  tienePromotorFutbol: "si" | "no" | "sin_dato";
+  mallaHorariaFutbol?: string | null;
+  schedule?: string | null;
+  mallaHorariaDisciplinas?: string | null;
+  disciplinas: string[];
+  activities: string[];
+  promoterCount?: number | null;
+  observations?: string | null;
+  operationalStatus: CanchaOperationalStatus;
+  hasFigureEducativa: boolean;
+  hasPhone: boolean;
+  hasSchedule: boolean;
+  hasActivities: boolean;
+  hasCoordinates: boolean;
+  sourceSheets: string[];
+  source: string;
+  dataType: "real";
+  methodologicalNote: string;
+  statusDerivedNote: string;
+  inaugurationDerivedNote: string;
+  dataQualityLabel: "alta" | "media" | "baja";
+};
+
+export type CanchasSummaryRecord = {
+  alcaldia: string;
+  total: number;
+  inauguradas: number;
+  proximas: number;
+  pendientes: number;
+  completas: number;
+  conHorario: number;
+  conFiguraEducativa: number;
+  conActividades: number;
+  conCoordenadas: number;
+  source: string;
+  dataType: "insight";
+  methodologicalNote: string;
+};
+
+export type CanchasFilterState = {
+  alcaldias: string[];
+  operationalStatuses: string[];
+  inaugurationStatuses: string[];
+  figurePresence: string[];
+  schedulePresence: string[];
+  activityPresence: string[];
+  types: string[];
+  materials: string[];
+  origins: string[];
+};
+
 export type MapAreaRecord = {
   alcaldia: string;
   year: number;
@@ -172,6 +265,8 @@ export type DashboardDataset = {
   meta: DashboardMeta;
   territorialRecords: TerritorialRecord[];
   infrastructureDetails: InfrastructureDetailRecord[];
+  canchasRecords: CanchaOperationalRecord[];
+  canchasSummary: CanchasSummaryRecord[];
   sportsRecords: SportsRecord[];
   healthProfiles: HealthProfileRecord[];
   mapAreas: MapAreaRecord[];

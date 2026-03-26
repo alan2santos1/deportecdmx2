@@ -4,6 +4,12 @@ import { useMemo, useState } from "react";
 import type { ColumnDef } from "@tanstack/react-table";
 import {
   buildBarrierDistribution,
+  buildCanchasAlerts,
+  buildCanchasFilterConfig,
+  buildCanchasKpis,
+  buildCanchasQualitySummary,
+  buildCanchasSummaryRows,
+  buildCanchasTableRows,
   buildDataLayerSummary,
   buildFilterConfig,
   buildFlattenedTableRows,
@@ -21,16 +27,19 @@ import {
   buildRiskIndex,
   buildSportsTop,
   buildYearTrend,
+  emptyCanchasFilters,
   emptyFilters,
+  filterCanchasRecords,
   filterHealthProfiles,
   filterInfrastructureDetails,
   filterSportsRecords,
   filterTerritorialRecords
 } from "../lib/dashboard-selectors";
-import type { DashboardFilterState, DataLayer, MetricMetadata } from "../lib/dashboard-types";
+import type { CanchasFilterState, DashboardFilterState, DataLayer, MetricMetadata } from "../lib/dashboard-types";
 import { useDashboardStore } from "../store/useDashboardStore";
 import { formatNumber } from "../lib/utils";
 import { ChartCard, DistributionBar, DistributionPie, StackedBar } from "./Charts";
+import CanchasMap, { type CanchasMapColorMode } from "./CanchasMap";
 import KpiGrid from "./KpiGrid";
 import TerritorialMap, { type TerritorialMetricKey } from "./TerritorialMap";
 import Card from "./ui/Card";
@@ -38,7 +47,7 @@ import DataTable from "./ui/DataTable";
 import MultiSelect from "./ui/MultiSelect";
 import Tabs from "./ui/Tabs";
 
-const sections = ["Panorama", "Actividad", "Infraestructura", "Salud", "Riesgo", "Metodología", "Datos"] as const;
+const sections = ["Panorama", "Actividad", "Infraestructura", "500 Canchas", "Salud", "Riesgo", "Metodología", "Datos"] as const;
 type SectionKey = (typeof sections)[number];
 
 const layerStyles: Record<DataLayer, string> = {
@@ -75,6 +84,11 @@ const chartMeta = {
     source: "PILARES + Deportivos Públicos CDMX + DENUE + espacios abiertos",
     dataType: "insight",
     note: "La lectura mezcla capas reales y preparadas: público/comunitario nominal por sede o instalación, privada desde DENUE como unidades económicas registradas."
+  },
+  canchas: {
+    source: "Excel operativo 500 Canchas PILARES asignado (Base + Alc Dic + AlcFeb + Hoja 2 + Hoja 1)",
+    dataType: "real",
+    note: "La sección es operativa / administrativa. Los estatus de inauguración y completitud se derivan de la base cargada y no del color visual del Excel."
   },
   health: {
     source: "ENSANUT Continua 2022 + segmentación sexo/edad",
@@ -236,6 +250,9 @@ export default function Dashboard() {
   const [selectedMapMetric, setSelectedMapMetric] = useState<TerritorialMetricKey>("risk");
   const [selectedMapGeoKey, setSelectedMapGeoKey] = useState<string | null>(null);
   const [selectedSpaceType, setSelectedSpaceType] = useState<string | null>(null);
+  const [canchasFilters, setCanchasFilters] = useState<CanchasFilterState>(emptyCanchasFilters);
+  const [selectedCanchaId, setSelectedCanchaId] = useState<string | null>(null);
+  const [canchasMapColorMode, setCanchasMapColorMode] = useState<CanchasMapColorMode>("inauguration");
 
   const filterConfig = useMemo(() => (dataset ? buildFilterConfig(dataset) : []), [dataset]);
   const territorialRecords = useMemo(() => (dataset ? filterTerritorialRecords(dataset.territorialRecords, filters) : []), [dataset, filters]);
@@ -244,6 +261,11 @@ export default function Dashboard() {
   const infrastructureDetails = useMemo(
     () => (dataset ? filterInfrastructureDetails(dataset.infrastructureDetails, filters) : []),
     [dataset, filters]
+  );
+  const canchasFilterConfig = useMemo(() => (dataset ? buildCanchasFilterConfig(dataset.canchasRecords) : []), [dataset]);
+  const canchasRecords = useMemo(
+    () => (dataset ? filterCanchasRecords(dataset.canchasRecords, canchasFilters, filters) : []),
+    [dataset, canchasFilters, filters]
   );
 
   const overviewKpis = useMemo(() => buildOverviewKpis(territorialRecords), [territorialRecords]);
@@ -374,6 +396,24 @@ export default function Dashboard() {
         })) ?? [],
     [dataset, filters.alcaldias, filters.years]
   );
+  const canchasKpis = useMemo(() => buildCanchasKpis(canchasRecords), [canchasRecords]);
+  const canchasAlerts = useMemo(() => buildCanchasAlerts(canchasRecords), [canchasRecords]);
+  const canchasQualitySummary = useMemo(() => buildCanchasQualitySummary(canchasRecords), [canchasRecords]);
+  const canchasSummaryRows = useMemo(() => buildCanchasSummaryRows(canchasRecords), [canchasRecords]);
+  const canchasTableRows = useMemo(() => buildCanchasTableRows(canchasRecords), [canchasRecords]);
+  const canchasSummaryColumns = useMemo<ColumnDef<Record<string, string>, string>[]>(
+    () => (canchasSummaryRows[0] ? Object.keys(canchasSummaryRows[0]).map((key) => ({ header: key, accessorKey: key })) : []),
+    [canchasSummaryRows]
+  );
+  const canchasTableColumns = useMemo<ColumnDef<Record<string, string>, string>[]>(
+    () => (canchasTableRows[0] ? Object.keys(canchasTableRows[0]).map((key) => ({ header: key, accessorKey: key })) : []),
+    [canchasTableRows]
+  );
+  const selectedCancha = useMemo(
+    () => canchasRecords.find((record) => record.id === selectedCanchaId) ?? canchasRecords.find((record) => record.projectedPoint) ?? canchasRecords[0] ?? null,
+    [canchasRecords, selectedCanchaId]
+  );
+  const canchasWithCoordinates = useMemo(() => canchasRecords.filter((record) => record.projectedPoint), [canchasRecords]);
 
   const methodologyRows = useMemo(
     () => dataset?.methodology.map((item) => ({ "Módulo": item.module, "Métrica": item.metric, "Capa": item.layer.replace("_", " "), "Fuente": item.source, "Lógica": item.logic, "Limitación": item.limitation })) ?? [],
@@ -474,6 +514,20 @@ export default function Dashboard() {
     { label: "Diabetes", value: `${average(diabetesByAlcaldia).toFixed(1)}%`, helper: "ENSANUT 2022 segmentada" },
     { label: "Sedentarismo", value: `${average(sedentaryByAlcaldia).toFixed(1)}%`, helper: "Complemento de actividad territorial" }
   ];
+  const canchasWithoutCoordinates = canchasRecords.filter((record) => record.geolocationType === "sin_coordenada").length;
+  const selectedCanchaPilares = selectedCancha?.assignedPilaresOfficialName ?? selectedCancha?.pilaresAssigned ?? "Sin dato";
+  const selectedCanchaStatusLabel = selectedCancha?.operationalStatus === "completa"
+    ? "Completa"
+    : selectedCancha?.operationalStatus === "lista_para_operar"
+      ? "Lista para operar"
+    : selectedCancha?.operationalStatus === "parcial"
+      ? "Parcial"
+      : "Pendiente";
+  const selectedCanchaInaugurationLabel = selectedCancha?.inaugurationStatus === "inaugurada"
+    ? "Inaugurada"
+    : selectedCancha?.inaugurationStatus === "proxima"
+      ? "Próxima"
+      : "Sin fecha";
 
   return (
     <div className="space-y-8">
@@ -999,10 +1053,226 @@ export default function Dashboard() {
         </section>
       ) : null}
 
+      {activeSection === "500 Canchas" ? (
+        <section className="section-block">
+          <div>
+            <div className="section-kicker">4. 500 Canchas</div>
+            <div className="section-heading">Operación territorial de canchas</div>
+            <div className="section-copy">Módulo administrativo basado en el Excel real de 500 Canchas. Integra operación, atributos territoriales, PILARES asociados y estatus derivados sin depender del color visual del archivo.</div>
+          </div>
+          <Card className={`space-y-4 p-5 ${presentationMode ? "hidden" : ""}`}>
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div>
+                <div className="text-base font-semibold text-ink-900">Filtros operativos de canchas</div>
+                <div className="text-xs text-ink-600">Permiten revisar completitud, inauguración, tipo de cancha, material y origen sin tocar el resto del dashboard.</div>
+              </div>
+              <button className="btn-ghost" type="button" onClick={() => setCanchasFilters(emptyCanchasFilters)}>
+                Limpiar filtros operativos
+              </button>
+            </div>
+            <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+              {canchasFilterConfig.map((filter) => (
+                <MultiSelect
+                  key={filter.key}
+                  title={filter.title}
+                  options={filter.options}
+                  selected={canchasFilters[filter.key]}
+                  onChange={(values) => setCanchasFilters((prev) => ({ ...prev, [filter.key]: values }))}
+                />
+              ))}
+            </div>
+          </Card>
+          <KpiGrid items={canchasKpis} />
+          <div className="grid gap-4 lg:grid-cols-2">
+            <Card className="space-y-4 p-5">
+              <div className="text-base font-semibold text-ink-900">Alertas operativas</div>
+              <KpiGrid items={canchasAlerts} />
+            </Card>
+            <Card className="space-y-4 p-5">
+              <div className="text-base font-semibold text-ink-900">Calidad territorial del dato</div>
+              <KpiGrid items={canchasQualitySummary} />
+            </Card>
+          </div>
+          <div className="grid gap-4 lg:grid-cols-2">
+            <Card className="space-y-4 p-5">
+              <div className="flex items-center gap-2">
+                <div className="text-base font-semibold text-ink-900">Cómo leer esta sección</div>
+                <LayerBadge layer="real" />
+              </div>
+              <div className="text-sm leading-6 text-ink-700">
+                Esta sección es operativa / administrativa y no es una estimación poblacional. La hoja <span className="font-semibold text-ink-900">Base</span> organiza la operación principal; <span className="font-semibold text-ink-900">Alc Dic</span>, <span className="font-semibold text-ink-900">AlcFeb</span> y <span className="font-semibold text-ink-900">Hoja 2</span> completan la lectura territorial; <span className="font-semibold text-ink-900">Hoja 1</span> enriquece PILARES cuando el match es posible.
+              </div>
+              <div className="text-sm leading-6 text-ink-700">
+                Los estatus se derivan con reglas transparentes sobre fecha de inauguración, figura educativa, teléfono, horario y actividades. No dependen del color visual del Excel.
+              </div>
+              <div className="text-sm leading-6 text-ink-700">
+                La geolocalización se distingue entre <span className="font-semibold text-ink-900">real</span>, <span className="font-semibold text-ink-900">aproximada por PILARES</span>, <span className="font-semibold text-ink-900">aproximada por alcaldía</span> y <span className="font-semibold text-ink-900">sin coordenada</span>. Las ubicaciones aproximadas sirven para lectura operativa, no para validación catastral o de obra.
+              </div>
+              <div className="meta-panel">
+                <div className="meta-grid">
+                  <div>
+                    <div className="meta-label">Fuente</div>
+                    <div className="meta-value">{chartMeta.canchas.source}</div>
+                  </div>
+                  <div>
+                    <div className="meta-label">Tipo de dato</div>
+                    <div className="meta-value">{chartMeta.canchas.dataType}</div>
+                  </div>
+                  <div>
+                    <div className="meta-label">Nota metodológica</div>
+                    <div className="meta-value">{chartMeta.canchas.note}</div>
+                  </div>
+                </div>
+              </div>
+            </Card>
+          </div>
+          <div className="grid gap-4 xl:grid-cols-[1.15fr_0.85fr]">
+            <Card className="space-y-5 p-6">
+              <div className="flex flex-wrap items-start justify-between gap-3">
+                <div>
+                  <div className="text-base font-semibold text-ink-900">Mapa operativo de canchas</div>
+                  <div className="text-sm leading-6 text-ink-600">
+                    Muestra puntos reales cuando existen coordenadas. Los registros sin coordenadas permanecen en la tabla y en el resumen territorial.
+                  </div>
+                  <div className="mt-2 text-xs text-ink-600">
+                    {formatNumber(canchasRecords.filter((item) => item.geolocationType === "real").length)} reales · {formatNumber(canchasRecords.filter((item) => item.geolocationType === "aproximada_pilares" || item.geolocationType === "aproximada_alcaldia").length)} aproximadas · {formatNumber(canchasWithoutCoordinates)} sin coordenada
+                  </div>
+                </div>
+                <div className="flex gap-2">
+                  <button
+                    className={`btn-ghost ${canchasMapColorMode === "inauguration" ? "border-ink-900 bg-ink-900 text-white hover:text-white" : ""}`}
+                    onClick={() => setCanchasMapColorMode("inauguration")}
+                    type="button"
+                  >
+                    Inauguración
+                  </button>
+                  <button
+                    className={`btn-ghost ${canchasMapColorMode === "completion" ? "border-ink-900 bg-ink-900 text-white hover:text-white" : ""}`}
+                    onClick={() => setCanchasMapColorMode("completion")}
+                    type="button"
+                  >
+                    Completitud
+                  </button>
+                </div>
+              </div>
+              <CanchasMap
+                geometry={dataset.mapGeometry}
+                records={canchasWithCoordinates}
+                selectedId={selectedCancha?.id ?? null}
+                onSelect={setSelectedCanchaId}
+                colorMode={canchasMapColorMode}
+              />
+              <div className="text-xs text-ink-600">
+                Fallback territorial: si falta coordenada exacta, el punto puede heredarse desde PILARES asignado o desde el centroide de alcaldía. La UI lo marca explícitamente para no confundir aproximación con ubicación real.
+              </div>
+            </Card>
+            <Card className="space-y-5 p-6">
+              <div>
+                <div className="text-base font-semibold text-ink-900">
+                  {selectedCancha ? `Ficha operativa – ${selectedCancha.name}` : "Ficha operativa"}
+                </div>
+                <div className="text-sm leading-6 text-ink-600">
+                  Selecciona una cancha en el mapa para revisar operación, vínculo con PILARES y trazabilidad administrativa.
+                </div>
+              </div>
+              {selectedCancha ? (
+                <>
+                  <div className="rounded-[26px] border border-mist-200 bg-white px-5 py-5">
+                    <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-ink-600">Estatus operativo derivado</div>
+                    <div className="mt-3 flex flex-wrap items-center gap-2">
+                      <div className="text-3xl font-semibold text-ink-900">{selectedCanchaStatusLabel}</div>
+                      <span className={`rounded-full px-3 py-1 text-xs font-semibold ${selectedCancha.operationalStatus === "completa" ? "bg-emerald-100 text-emerald-700" : selectedCancha.operationalStatus === "lista_para_operar" ? "bg-sky-100 text-sky-700" : selectedCancha.operationalStatus === "parcial" ? "bg-amber-100 text-amber-700" : "bg-red-100 text-red-700"}`}>
+                        {selectedCanchaInaugurationLabel}
+                      </span>
+                      <span className="rounded-full border border-mist-200 bg-mist-100 px-3 py-1 text-xs font-medium text-ink-700">
+                        {selectedCancha.geolocationLabel}
+                      </span>
+                      <span className="rounded-full border border-mist-200 bg-mist-100 px-3 py-1 text-xs font-medium text-ink-700">
+                        Calidad {selectedCancha.dataQualityLabel}
+                      </span>
+                    </div>
+                    <div className="mt-2 text-sm text-ink-600">{selectedCancha.alcaldia}</div>
+                    <div className="mt-3 text-xs leading-6 text-ink-600">{selectedCancha.statusDerivedNote}</div>
+                    <div className="mt-2 text-xs leading-6 text-ink-600">{selectedCancha.inaugurationDerivedNote}</div>
+                  </div>
+                  <div className="grid gap-3 md:grid-cols-2">
+                    <div className="rounded-2xl border border-mist-200 bg-white px-4 py-4">
+                      <div className="text-[11px] font-semibold uppercase tracking-wide text-ink-600">PILARES asignado</div>
+                      <div className="mt-2 text-lg font-semibold text-ink-900">{selectedCanchaPilares}</div>
+                      <div className="mt-2 text-xs text-ink-600">{selectedCancha.assignedPilaresResponsibleName ?? selectedCancha.assignedPilaresContact ?? selectedCancha.assignedPilaresEmail ?? "Sin enriquecimiento institucional disponible"}</div>
+                    </div>
+                    <div className="rounded-2xl border border-mist-200 bg-white px-4 py-4">
+                      <div className="text-[11px] font-semibold uppercase tracking-wide text-ink-600">Figura educativa</div>
+                      <div className="mt-2 text-lg font-semibold text-ink-900">{selectedCancha.nombreFiguraEducativa ?? "Sin dato"}</div>
+                      <div className="mt-2 text-xs text-ink-600">{selectedCancha.tipoFiguraEducativa ?? "Sin tipo de figura"} · {selectedCancha.telefonoFiguraEducativa ?? "Sin teléfono registrado"}</div>
+                    </div>
+                    <div className="rounded-2xl border border-mist-200 bg-white px-4 py-4">
+                      <div className="text-[11px] font-semibold uppercase tracking-wide text-ink-600">Horario</div>
+                      <div className="mt-2 text-sm font-semibold text-ink-900">{selectedCancha.schedule ?? "Sin horario"}</div>
+                      <div className="mt-2 text-xs text-ink-600">{selectedCancha.mallaHorariaFutbol ?? "Sin malla horaria específica de fútbol"}</div>
+                    </div>
+                    <div className="rounded-2xl border border-mist-200 bg-white px-4 py-4">
+                      <div className="text-[11px] font-semibold uppercase tracking-wide text-ink-600">Tipo y material</div>
+                      <div className="mt-2 text-lg font-semibold text-ink-900">{selectedCancha.tipoCancha ?? "Sin tipo"}</div>
+                      <div className="mt-2 text-xs text-ink-600">{selectedCancha.material ?? "Sin material"} · {selectedCancha.origen ?? "Sin origen"}</div>
+                    </div>
+                    <div className="rounded-2xl border border-mist-200 bg-white px-4 py-4">
+                      <div className="text-[11px] font-semibold uppercase tracking-wide text-ink-600">Ubicación</div>
+                      <div className="mt-2 text-lg font-semibold text-ink-900">{selectedCancha.geolocationLabel}</div>
+                      <div className="mt-2 text-xs text-ink-600">{selectedCancha.geolocationSource}</div>
+                    </div>
+                    <div className="rounded-2xl border border-mist-200 bg-white px-4 py-4">
+                      <div className="text-[11px] font-semibold uppercase tracking-wide text-ink-600">Promotor de futbol</div>
+                      <div className="mt-2 text-lg font-semibold text-ink-900">
+                        {selectedCancha.tienePromotorFutbol === "si" ? "Sí" : selectedCancha.tienePromotorFutbol === "no" ? "No" : "Sin dato"}
+                      </div>
+                      <div className="mt-2 text-xs text-ink-600">{selectedCancha.mallaHorariaFutbol ?? "Sin malla horaria de futbol registrada"}</div>
+                    </div>
+                  </div>
+                  <div className="rounded-2xl border border-mist-200 bg-mist-100/60 px-4 py-4">
+                    <div className="text-[11px] font-semibold uppercase tracking-wide text-ink-600">Detalle operativo</div>
+                    <div className="mt-3 space-y-3 text-sm leading-6 text-ink-700">
+                      <div><span className="font-semibold text-ink-900">Domicilio:</span> {selectedCancha.domicilio || "Sin dato"}</div>
+                      <div><span className="font-semibold text-ink-900">Fecha de inauguración:</span> {selectedCancha.inaugurationDateIso ?? selectedCancha.inaugurationDateRaw ?? "Sin fecha"}</div>
+                      <div><span className="font-semibold text-ink-900">Actividades:</span> {selectedCancha.activities.join(", ") || "Sin actividades registradas"}</div>
+                      <div><span className="font-semibold text-ink-900">Disciplinas complementarias:</span> {selectedCancha.disciplinas.join(", ") || "Sin disciplinas complementarias"}</div>
+                      <div><span className="font-semibold text-ink-900">Malla horaria de disciplinas:</span> {selectedCancha.mallaHorariaDisciplinas ?? "Sin malla horaria de disciplinas"}</div>
+                      <div><span className="font-semibold text-ink-900">Observaciones:</span> {selectedCancha.observations ?? "Sin observaciones"}</div>
+                    </div>
+                  </div>
+                </>
+              ) : (
+                <div className="rounded-2xl border border-dashed border-mist-300 bg-mist-100/60 p-6 text-sm text-ink-600">
+                  No hay canchas visibles para la combinación actual de filtros.
+                </div>
+              )}
+            </Card>
+          </div>
+          <div className="grid gap-4 lg:grid-cols-2">
+            <ExportableTable
+              title="Resumen territorial por alcaldía"
+              columns={canchasSummaryColumns}
+              data={canchasSummaryRows}
+              fileName="deporte-cdmx-500-canchas-resumen-territorial.csv"
+              presentationMode={presentationMode}
+              pageSize={8}
+            />
+            <ExportableTable
+              title="Tabla operativa de canchas"
+              columns={canchasTableColumns}
+              data={canchasTableRows}
+              fileName="deporte-cdmx-500-canchas-operacion.csv"
+              presentationMode={presentationMode}
+              pageSize={10}
+            />
+          </div>
+        </section>
+      ) : null}
+
       {activeSection === "Salud" ? (
         <section className="section-block">
           <div>
-            <div className="section-kicker">4. Salud</div>
+            <div className="section-kicker">5. Salud</div>
             <div className="section-heading">Salud relacionada y carga metabólica</div>
             <div className="section-copy">Los filtros de sexo, edad y año ajustan los indicadores cuando el modelo lo permite. La capa sigue etiquetada como estimada/modelada para evitar lecturas engañosas.</div>
           </div>
@@ -1045,7 +1315,7 @@ export default function Dashboard() {
       {activeSection === "Riesgo" ? (
         <section className="section-block">
           <div>
-            <div className="section-kicker">5. Riesgo</div>
+            <div className="section-kicker">6. Riesgo</div>
             <div className="section-heading">Índice de riesgo físico territorial</div>
             <div className="section-copy">Semáforo territorial para priorización institucional a partir de actividad, obesidad, sedentarismo e infraestructura per cápita.</div>
           </div>
@@ -1106,7 +1376,7 @@ export default function Dashboard() {
       {activeSection === "Metodología" ? (
         <section className="section-block">
           <div>
-            <div className="section-kicker">6. Metodología</div>
+            <div className="section-kicker">7. Metodología</div>
             <div className="section-heading">Trazabilidad y preparación institucional</div>
             <div className="section-copy">Explica qué es real, estimado o proyectado, y deja explícita la ruta para integrar datos públicos oficiales sin cambiar la arquitectura.</div>
           </div>
@@ -1160,7 +1430,7 @@ export default function Dashboard() {
       {activeSection === "Datos" ? (
         <section className="section-block">
           <div>
-            <div className="section-kicker">7. Datos</div>
+            <div className="section-kicker">8. Datos</div>
             <div className="section-heading">Tablas para revisión institucional</div>
             <div className="section-copy">Vista territorial, modelo base para mapa y metadata exportable para revisión con equipos de gobierno, PILARES e INDEPORTE.</div>
           </div>

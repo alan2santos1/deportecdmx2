@@ -1,4 +1,6 @@
 import type {
+  CanchaOperationalRecord,
+  CanchasFilterState,
   DashboardDataset,
   DashboardFilterState,
   DataLayer,
@@ -59,6 +61,18 @@ export const emptyFilters: DashboardFilterState = {
   ageGroups: [],
   sports: [],
   infrastructureTypes: []
+};
+
+export const emptyCanchasFilters: CanchasFilterState = {
+  alcaldias: [],
+  operationalStatuses: [],
+  inaugurationStatuses: [],
+  figurePresence: [],
+  schedulePresence: [],
+  activityPresence: [],
+  types: [],
+  materials: [],
+  origins: []
 };
 
 const uniq = (items: string[]) => Array.from(new Set(items)).sort((a, b) => a.localeCompare(b, "es"));
@@ -499,4 +513,176 @@ export const buildMapAreaLookup = (records: MapAreaRecord[]) => {
     acc[record.geoKey] = record;
     return acc;
   }, {});
+};
+
+const canchaPresenceLabel = (value: boolean, positive: string, negative: string) => (value ? positive : negative);
+
+export const buildCanchasFilterConfig = (records: CanchaOperationalRecord[]) => [
+  { title: "Alcaldía", key: "alcaldias" as const, options: uniq(records.map((item) => item.alcaldia)).map((value) => ({ label: value, value })) },
+  {
+    title: "Estatus operativo",
+    key: "operationalStatuses" as const,
+    options: [
+      { label: "Completa", value: "completa" },
+      { label: "Parcial", value: "parcial" },
+      { label: "Pendiente", value: "pendiente" }
+    ]
+  },
+  {
+    title: "Estatus de inauguración",
+    key: "inaugurationStatuses" as const,
+    options: [
+      { label: "Inaugurada", value: "inaugurada" },
+      { label: "Próxima", value: "proxima" },
+      { label: "Sin fecha", value: "sin_fecha" }
+    ]
+  },
+  {
+    title: "Figura educativa",
+    key: "figurePresence" as const,
+    options: [
+      { label: "Con figura educativa", value: "con_figura" },
+      { label: "Sin figura educativa", value: "sin_figura" }
+    ]
+  },
+  {
+    title: "Horario",
+    key: "schedulePresence" as const,
+    options: [
+      { label: "Con horario", value: "con_horario" },
+      { label: "Sin horario", value: "sin_horario" }
+    ]
+  },
+  {
+    title: "Actividades",
+    key: "activityPresence" as const,
+    options: [
+      { label: "Con actividades", value: "con_actividades" },
+      { label: "Sin actividades", value: "sin_actividades" }
+    ]
+  },
+  { title: "Tipo de cancha", key: "types" as const, options: uniq(records.map((item) => item.tipoCancha).filter(Boolean) as string[]).map((value) => ({ label: value, value })) },
+  { title: "Material", key: "materials" as const, options: uniq(records.map((item) => item.material).filter(Boolean) as string[]).map((value) => ({ label: value, value })) },
+  { title: "Origen", key: "origins" as const, options: uniq(records.map((item) => item.origen).filter(Boolean) as string[]).map((value) => ({ label: value, value })) }
+];
+
+export const filterCanchasRecords = (
+  records: CanchaOperationalRecord[],
+  filters: CanchasFilterState,
+  globalFilters: DashboardFilterState
+) => {
+  return records.filter((record) => {
+    if (globalFilters.alcaldias.length > 0 && !globalFilters.alcaldias.includes(record.alcaldia)) return false;
+    if (globalFilters.years.length > 0 && !globalFilters.years.includes(String(record.year))) return false;
+    if (filters.alcaldias.length > 0 && !filters.alcaldias.includes(record.alcaldia)) return false;
+    if (filters.operationalStatuses.length > 0 && !filters.operationalStatuses.includes(record.operationalStatus)) return false;
+    if (filters.inaugurationStatuses.length > 0 && !filters.inaugurationStatuses.includes(record.inaugurationStatus)) return false;
+    if (filters.figurePresence.length > 0 && !filters.figurePresence.includes(record.hasFigureEducativa ? "con_figura" : "sin_figura")) return false;
+    if (filters.schedulePresence.length > 0 && !filters.schedulePresence.includes(record.hasSchedule ? "con_horario" : "sin_horario")) return false;
+    if (filters.activityPresence.length > 0 && !filters.activityPresence.includes(record.hasActivities ? "con_actividades" : "sin_actividades")) return false;
+    if (filters.types.length > 0 && !filters.types.includes(record.tipoCancha ?? "")) return false;
+    if (filters.materials.length > 0 && !filters.materials.includes(record.material ?? "")) return false;
+    if (filters.origins.length > 0 && !filters.origins.includes(record.origen ?? "")) return false;
+    return true;
+  });
+};
+
+export const buildCanchasKpis = (records: CanchaOperationalRecord[]) => [
+  { label: "Total de canchas", value: formatNumber(records.length), helper: "Registros operativos integrados desde el Excel real" },
+  { label: "Inauguradas", value: formatNumber(records.filter((item) => item.inaugurationStatus === "inaugurada").length), helper: "Fecha válida pasada o señal explícita de inauguración" },
+  { label: "Próximas", value: formatNumber(records.filter((item) => item.inaugurationStatus === "proxima").length), helper: "Fecha futura o mención tentativa / por inaugurar" },
+  { label: "Pendientes", value: formatNumber(records.filter((item) => item.operationalStatus === "pendiente").length), helper: "Información mínima para operación" },
+  { label: "Con datos completos", value: formatNumber(records.filter((item) => item.operationalStatus === "completa").length), helper: "Fecha + figura educativa + teléfono + horario + actividades" },
+  { label: "Con horario", value: formatNumber(records.filter((item) => item.hasSchedule).length), helper: "Horario operativo o malla horaria capturada" },
+  { label: "Con figura educativa", value: formatNumber(records.filter((item) => item.hasFigureEducativa).length), helper: "LCPO / figura educativa registrada" },
+  { label: "Con actividades", value: formatNumber(records.filter((item) => item.hasActivities).length), helper: "Actividades operativas registradas en la base" }
+];
+
+export const buildCanchasSummaryRows = (records: CanchaOperationalRecord[]) => {
+  return Array.from(groupBy(records, (record) => record.alcaldia))
+    .map(([alcaldia, items]) => ({
+      Alcaldía: alcaldia,
+      "Total de canchas": formatNumber(items.length),
+      Inauguradas: formatNumber(items.filter((item) => item.inaugurationStatus === "inaugurada").length),
+      Próximas: formatNumber(items.filter((item) => item.inaugurationStatus === "proxima").length),
+      Pendientes: formatNumber(items.filter((item) => item.operationalStatus === "pendiente").length),
+      "Con horario": formatNumber(items.filter((item) => item.hasSchedule).length),
+      "Con figura educativa": formatNumber(items.filter((item) => item.hasFigureEducativa).length),
+      "Con actividades": formatNumber(items.filter((item) => item.hasActivities).length),
+      "Con coordenadas": formatNumber(items.filter((item) => item.hasCoordinates).length)
+    }))
+    .sort((a, b) => Number(b["Total de canchas"].replace(/,/g, "")) - Number(a["Total de canchas"].replace(/,/g, "")));
+};
+
+export const buildCanchasAlerts = (records: CanchaOperationalRecord[]) => [
+  { label: "Canchas sin fecha", value: formatNumber(records.filter((item) => item.inaugurationStatus === "sin_fecha").length), helper: "Requieren confirmación de inauguración" },
+  { label: "Sin figura educativa", value: formatNumber(records.filter((item) => !item.hasFigureEducativa).length), helper: "Sin LCPO / figura educativa registrada" },
+  { label: "Sin horario", value: formatNumber(records.filter((item) => !item.hasSchedule).length), helper: "Sin horario operativo o malla horaria" },
+  { label: "Sin actividades", value: formatNumber(records.filter((item) => !item.hasActivities).length), helper: "Sin actividades registradas en la base" }
+];
+
+export const buildCanchasQualitySummary = (records: CanchaOperationalRecord[]) => [
+  { label: "Total de canchas", value: formatNumber(records.length), helper: "Base operativa integrada" },
+  { label: "Coordenada real", value: formatNumber(records.filter((item) => item.geolocationType === "real").length), helper: "Tomada desde hojas territoriales" },
+  { label: "Coordenada aproximada", value: formatNumber(records.filter((item) => item.geolocationType === "aproximada_pilares" || item.geolocationType === "aproximada_alcaldia").length), helper: "Heredada desde PILARES o centroide de alcaldía" },
+  { label: "Sin coordenada", value: formatNumber(records.filter((item) => item.geolocationType === "sin_coordenada").length), helper: "Sin ubicación utilizable" },
+  { label: "Con figura educativa", value: formatNumber(records.filter((item) => item.hasFigureEducativa).length), helper: "LCPO / figura educativa capturada" },
+  { label: "Con horario", value: formatNumber(records.filter((item) => item.hasSchedule).length), helper: "Horario o malla horaria disponible" },
+  { label: "Con actividades", value: formatNumber(records.filter((item) => item.hasActivities).length), helper: "Actividades registradas" },
+  { label: "Con fecha válida", value: formatNumber(records.filter((item) => item.inaugurationStatus !== "sin_fecha").length), helper: "Fecha o señal textual usable" }
+];
+
+export const buildCanchasTableRows = (records: CanchaOperationalRecord[]) => {
+  return records.map((record) => ({
+    ID: record.id,
+    Año: String(record.year),
+    Alcaldía: record.alcaldia,
+    Nombre: record.name,
+    Domicilio: record.domicilio,
+    "Fecha de inauguración": record.inaugurationDateIso ?? record.inaugurationDateRaw ?? "",
+    "Estatus de inauguración": record.inaugurationStatus === "proxima" ? "Próxima" : record.inaugurationStatus === "sin_fecha" ? "Sin fecha" : "Inaugurada",
+    "Estatus operativo":
+      record.operationalStatus === "completa"
+        ? "Completa"
+        : record.operationalStatus === "lista_para_operar"
+          ? "Lista para operar"
+          : record.operationalStatus === "parcial"
+            ? "Parcial"
+            : "Pendiente",
+    "Cuenta con promotor de futbol":
+      record.tienePromotorFutbol === "si"
+        ? "Sí"
+        : record.tienePromotorFutbol === "no"
+          ? "No"
+          : "Sin dato",
+    "Fuente de ubicación": record.geolocationSource,
+    "Geolocalización": record.geolocationLabel,
+    "Calidad del dato": record.dataQualityLabel,
+    "PILARES asignado": record.assignedPilaresOfficialName ?? record.pilaresAssigned ?? "",
+    "PILARES cercano 1": record.nearestPilares1 ?? "",
+    "PILARES cercano 2": record.nearestPilares2 ?? "",
+    "Figura educativa": record.nombreFiguraEducativa ?? "",
+    "Tipo de figura": record.tipoFiguraEducativa ?? "",
+    "Teléfono figura educativa": record.telefonoFiguraEducativa ?? "",
+    "Responsable PILARES": record.assignedPilaresResponsibleName ?? "",
+    "Teléfono PILARES": record.assignedPilaresContact ?? "",
+    Horario: record.schedule ?? "",
+    "Malla horaria futbol": record.mallaHorariaFutbol ?? "",
+    "Malla horaria disciplinas": record.mallaHorariaDisciplinas ?? "",
+    "Tipo de cancha": record.tipoCancha ?? "",
+    Material: record.material ?? "",
+    Origen: record.origen ?? "",
+    Disciplinas: record.disciplinas.join(", "),
+    Actividades: record.activities.join(", "),
+    Observaciones: record.observations ?? "",
+    "Tiene horario": canchaPresenceLabel(record.hasSchedule, "Sí", "No"),
+    "Tiene figura educativa": canchaPresenceLabel(record.hasFigureEducativa, "Sí", "No"),
+    "Tiene actividades": canchaPresenceLabel(record.hasActivities, "Sí", "No"),
+    "Tiene coordenadas reales": canchaPresenceLabel(record.hasCoordinates, "Sí", "No"),
+    "Fuente": record.source,
+    "Tipo de dato": record.dataType,
+    "Nota metodológica": record.methodologicalNote,
+    "Regla de estatus operativo": record.statusDerivedNote,
+    "Regla de inauguración": record.inaugurationDerivedNote
+  }));
 };

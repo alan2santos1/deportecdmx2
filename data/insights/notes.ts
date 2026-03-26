@@ -70,6 +70,13 @@ export const sourceRegistry: SourceRegistryEntry[] = [
     source: "GeoJSON oficial de alcaldías + modelo territorial Deporte CDMX",
     coverage: "Actividad, riesgo e infraestructura por alcaldía",
     note: "La geometría ya está integrada; actividad y riesgo siguen dependiendo de capas estimadas o de insight."
+  },
+  {
+    metric: "500 Canchas / operación territorial",
+    layer: "real",
+    source: "Excel operativo 500 Canchas PILARES asignado",
+    coverage: "Canchas nominales con capa administrativa multi-hoja",
+    note: "Es una base operativa real. Los estatus de inauguración y completitud se derivan de la información capturada y no del color visual del archivo."
   }
 ];
 
@@ -123,6 +130,14 @@ export const methodologyEntries: MethodologyEntry[] = [
     limitation: "La geometría es oficial, pero la métrica visualizada depende de la capa seleccionada: real, preparada, estimada o insight."
   },
   {
+    module: "500 Canchas",
+    metric: "Operación territorial de canchas",
+    layer: "real",
+    source: "Excel operativo 500 Canchas (Base, Alc Dic, AlcFeb, Hoja 2, Hoja 1)",
+    logic: "Base prioriza operación administrativa; Alc Dic, AlcFeb y Hoja 2 complementan tipo, material, origen, coordenadas, distancia territorial y avance; Hoja 1 enriquece datos institucionales de PILARES cuando el match es posible.",
+    limitation: "No todos los registros tienen coordenadas exactas. El mapa distingue coordenada real, aproximación por PILARES, aproximación por alcaldía y ausencia total de coordenada. Los estatus de inauguración y completitud son derivados por reglas transparentes sobre fecha, figura educativa, teléfono, horario y actividades."
+  },
+  {
     module: "Serie temporal",
     metric: "Comparación 2024, 2025 y 2026",
     layer: "proyectado",
@@ -174,6 +189,12 @@ export const qualityChecks: QualityEntry[] = [
     scope: "PILARES y capas con capacidad analítica",
     status: "OK",
     note: "El dashboard separa conteo administrativo real de espacios operativos estimados para evitar interpretaciones institucionales erróneas."
+  },
+  {
+    check: "Integración operativa 500 Canchas",
+    scope: "Base administrativa multi-hoja",
+    status: "OK",
+    note: "La sección operativa usa el Excel real como fuente principal y deja visible cuándo faltan coordenadas, figura educativa, horario o actividades."
   }
 ];
 

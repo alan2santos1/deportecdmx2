@@ -9,6 +9,7 @@ import type {
 import { alcaldiasSeed } from "../raw/alcaldias";
 import { ageSeeds, methodologyBreaks, sexSeeds, sportSeeds, timelineNotes, yearSeeds } from "../raw/official-benchmarks";
 import { executiveInsights, methodologyEntries, qualityChecks, sourceRegistry } from "../insights/notes";
+import { buildCanchasOperativasLayer } from "./integration/build-canchas-operativas";
 import { buildOfficialInfrastructureLayer } from "./integration/build-official-infrastructure";
 import { buildMapGeometry } from "./integration/build-map-geometry";
 import { projectPopulation } from "../processed/population";
@@ -384,6 +385,7 @@ const buildMapAreas = (territorialRecords: TerritorialRecord[]): MapAreaRecord[]
 
 export const buildDashboardData = (): DashboardDataset => {
   const officialInfrastructure = buildOfficialInfrastructureLayer();
+  const canchasLayer = buildCanchasOperativasLayer();
   const territorialRecords = buildTerritorialRecords();
   const infrastructureDetails = [
     ...officialInfrastructure.details,
@@ -408,6 +410,8 @@ export const buildDashboardData = (): DashboardDataset => {
     },
     territorialRecords,
     infrastructureDetails,
+    canchasRecords: canchasLayer.records,
+    canchasSummary: canchasLayer.summaryByAlcaldia,
     sportsRecords,
     healthProfiles,
     mapAreas,

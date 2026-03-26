@@ -11,11 +11,13 @@ const geoKeyMap: Record<string, string> = {
   "iztapalapa": "iztapalapa",
   "la magdalena contreras": "la-magdalena-contreras",
   "magdalena contreras": "la-magdalena-contreras",
+  "m contreras": "la-magdalena-contreras",
   "miguel hidalgo": "miguel-hidalgo",
   "milpa alta": "milpa-alta",
   "tlahuac": "tlahuac",
   "tlalpan": "tlalpan",
   "venustiano carranza": "venustiano-carranza",
+  "v carranza": "venustiano-carranza",
   "xochimilco": "xochimilco"
 };
 
@@ -32,11 +34,13 @@ const displayNameMap: Record<string, string> = {
   "iztapalapa": "Iztapalapa",
   "la magdalena contreras": "La Magdalena Contreras",
   "magdalena contreras": "La Magdalena Contreras",
+  "m contreras": "La Magdalena Contreras",
   "miguel hidalgo": "Miguel Hidalgo",
   "milpa alta": "Milpa Alta",
   "tlahuac": "Tláhuac",
   "tlalpan": "Tlalpan",
   "venustiano carranza": "Venustiano Carranza",
+  "v carranza": "Venustiano Carranza",
   "xochimilco": "Xochimilco"
 };
 
