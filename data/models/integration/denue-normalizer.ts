@@ -27,6 +27,15 @@ const scianCategoryMap: Record<string, { category: DenueTargetCategory; label: s
   "611622": { category: "escuela_deportiva_mixta", label: "Escuela deportiva pública o mixta" }
 };
 
+export const denueScianFieldCandidates = [
+  "codigo_act",
+  "codigo_actividad",
+  "codigo_scian",
+  "scian",
+  "cod_scian",
+  "codigo"
+] as const;
+
 const normalizeGeoKey = (value: string | null | undefined) =>
   (value ?? "")
     .normalize("NFD")
@@ -36,6 +45,25 @@ const normalizeGeoKey = (value: string | null | undefined) =>
     .replace(/^-+|-+$/g, "") || null;
 
 export const supportedDenueScianCodes = Object.keys(scianCategoryMap);
+
+export const extractDenueScianCode = (properties: Record<string, string | null | undefined>) => {
+  for (const field of denueScianFieldCandidates) {
+    const value = properties[field];
+    if (value && supportedDenueScianCodes.includes(value.trim())) {
+      return value.trim();
+    }
+  }
+  return null;
+};
+
+export const getDashboardCategoryFromScian = (scianCode: string) => {
+  const match = scianCategoryMap[scianCode];
+  if (!match) return null;
+  if (match.category === "gimnasio_privado") return "Gimnasio privado" as const;
+  if (match.category === "club_deportivo_privado") return "Club deportivo privado" as const;
+  if (match.category === "escuela_deportiva_privada") return "Academia deportiva privada" as const;
+  return null;
+};
 
 export const normalizeDenueRecord = (input: {
   id: string;
@@ -59,4 +87,3 @@ export const normalizeDenueRecord = (input: {
     methodologicalNote: `Estructura preparada para integrar DENUE por SCIAN verificable. Este registro se clasifica como ${match.label} sin inferir disciplinas ni amenidades.`
   };
 };
-

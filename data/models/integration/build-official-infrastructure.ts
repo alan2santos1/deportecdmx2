@@ -2,15 +2,18 @@ import fs from "fs";
 import path from "path";
 import type { DataLayer, InfrastructureDetailRecord } from "../../../lib/dashboard-types";
 import { officialSourceConfig } from "./official-source-config";
+import { extractDenueScianCode, getDashboardCategoryFromScian, normalizeDenueRecord } from "./denue-normalizer";
 import { normalizeAlcaldia } from "./normalize-alcaldia";
 import utopias from "../../processed/infrastructure/utopias.json";
 
 type DenueGeojson = {
   features: Array<{
-    properties: Record<string, string | null>;
+    properties: Record<string, string | null | undefined>;
     geometry?: { type: string; coordinates?: [number, number] };
   }>;
 };
+
+type UtopiaSeedRecord = (typeof utopias)[number];
 
 export type OfficialInfrastructureLayer = {
   meta: {
@@ -141,54 +144,121 @@ const extractDocumentedSports = (...texts: Array<string | null | undefined>) => 
     .map((item) => item.label);
 };
 
-const denueSubtypeConfig = [
-  {
-    subtype: "Club deportivo privado",
-    match: (text: string) =>
-      text.includes("club deportivo") ||
-      /(club|centro)\s+(de\s+)?(tenis|natacion|futbol|golf|padel|deportivo|acuatico)/.test(text) ||
-      /(deportivo chapultepec|sport city club|club campestre|club de golf)/.test(text),
-  },
-  {
-    subtype: "Academia deportiva privada",
-    match: (text: string) =>
-      ((text.includes("academia") || text.includes("escuela") || text.includes("studio")) &&
-      /(futbol|natacion|box|boxing|taekwondo|karate|tenis|basquet|voleibol|deporte|fitness|gimnas|pilates|yoga|dance|ballet|artes marciales)/.test(text)) ||
-      /(boxing studio|martial arts|taekwondo|karate|jiu jitsu)/.test(text)
-  },
-  {
-    subtype: "Gimnasio privado",
-    match: (text: string) =>
-      /(gimnasio| gym |gym$|gymnasium|fitness|crossfit|pilates|spinning|box|boxing|yoga|calistenia|acondicionamiento)/.test(
-        ` ${text} `
-      )
-  }
-] as const;
+type PrivateInfrastructureSubtype = "Gimnasio privado" | "Club deportivo privado" | "Academia deportiva privada";
 
 const denueExcludePattern =
-  /(articulos y aparatos deportivos|ropa deportiva|suplement|nutricion|farmacia|vinos|joyeria|papeleria|musica|instrumentos|moto|automovil|llantas|bazar|figuras coleccionables|abarrotes|carniceria|dulces|bebidas|panader|juguetes|revistas|decoracion|refacciones|calzado|ropa, excepto|productos naturistas|farmacias sin minisuper)/;
+  /(articulos y aparatos deportivos|articulos para albercas|ropa deportiva|boutique|suplement|nutricion|farmacia|vinos|joyeria|papeleria|musica|instrumentos|moto|automovil|llantas|bazar|figuras coleccionables|abarrotes|carniceria|dulces|bebidas|panader|juguetes|revistas|decoracion|refacciones|calzado|ropa, excepto|productos naturistas|farmacias sin minisuper|cooperativa|escuela primaria|escuela secundaria|escuela nacional|escuela superior|escuela de manejo|escuela de musica|pronosticos|optica|lentes|autopartes|muebles|herramient|calentadores|bombas|ferreter)/;
+
+const denuePublicMarkerPattern =
+  /(gobierno|alcaldia|sector publico|indeporte|instituto del deporte|sedena|semar|imss|issste|cetram)/;
+
+const buildDenueDedupeKey = (feature: DenueGeojson["features"][number]) => {
+  const coordinates = feature.geometry?.coordinates;
+  return [
+    normalizeText(feature.properties.nmbr_st ?? feature.properties.rzn_scl ?? ""),
+    normalizeText(feature.properties.direccn),
+    normalizeText(feature.properties.alcaldi),
+    Array.isArray(coordinates) ? coordinates.map((item) => item.toFixed(5)).join(",") : ""
+  ].join("|");
+};
+
+const mapSubtypeLabels = (subtype: PrivateInfrastructureSubtype) => ({
+  tipo_espacio:
+    subtype === "Gimnasio privado"
+      ? "gimnasio / acondicionamiento"
+      : subtype === "Club deportivo privado"
+        ? "club deportivo"
+        : "academia / escuela de deporte",
+  administrativeLabel:
+    subtype === "Gimnasio privado"
+      ? "Gimnasios privados"
+      : subtype === "Club deportivo privado"
+        ? "Clubes deportivos privados"
+        : "Academias deportivas privadas",
+  operationalUnits:
+    subtype === "Gimnasio privado"
+      ? operationalUnitFactors.privateGym
+      : subtype === "Club deportivo privado"
+        ? operationalUnitFactors.privateClub
+        : operationalUnitFactors.privateSchool,
+  operationalLabel:
+    subtype === "Gimnasio privado"
+      ? "Espacios operativos privados estimados"
+      : subtype === "Club deportivo privado"
+        ? "Unidades operativas de club estimadas"
+        : "Unidades operativas de academia estimadas",
+  capacity:
+    subtype === "Gimnasio privado"
+      ? 55
+      : subtype === "Club deportivo privado"
+        ? 80
+        : 35
+});
+
+const inferDenueSubtypeFromText = (
+  nameText: string,
+  activityText: string,
+  categoryText: string
+): PrivateInfrastructureSubtype | null => {
+  const merged = ` ${nameText} ${activityText} ${categoryText} `;
+  if (!merged.trim() || denueExcludePattern.test(merged) || denuePublicMarkerPattern.test(merged)) return null;
+
+  if (
+    /(gimnasio| gym |gym$|gymnasium|fitness|crossfit|pilates|spinning|yoga|calistenia|acondicionamiento)/.test(
+      merged
+    )
+  ) {
+    return "Gimnasio privado";
+  }
+
+  if (
+    ((merged.includes("academia") || merged.includes("escuela") || merged.includes("studio")) &&
+      /(futbol|natacion|box|boxing|taekwondo|karate|tenis|basquet|voleibol|deporte|fitness|gimnas|pilates|yoga|dance|ballet|artes marciales)/.test(merged)) ||
+    /(boxing studio|martial arts|taekwondo|karate|jiu jitsu|jiujitsu)/.test(merged)
+  ) {
+    return "Academia deportiva privada";
+  }
+
+  if (
+    merged.includes("club deportivo") ||
+    /(club|centro)\s+(de\s+)?(tenis|natacion|futbol|golf|padel|deportivo|acuatico)/.test(merged) ||
+    /(deportivo chapultepec|sport city club|club campestre|club de golf)/.test(merged)
+  ) {
+    return "Club deportivo privado";
+  }
+
+  return null;
+};
 
 const buildDenueDetails = (): InfrastructureDetailRecord[] => {
   const denue = readJson<DenueGeojson>(officialSourceConfig.denue.localPath);
   if (!denue?.features) return [];
+  const seen = new Set<string>();
 
   return denue.features.flatMap((feature, index) => {
     const name = feature.properties.nmbr_st ?? feature.properties.rzn_scl ?? `DENUE ${index + 1}`;
-    const text = normalizeText(
-      [
-        feature.properties.nmbr_st,
-        feature.properties.rzn_scl,
-        feature.properties.activdd,
-        feature.properties.ctgr_ct
-      ]
-        .filter(Boolean)
-        .join(" ")
-    );
+    const nameText = normalizeText(feature.properties.nmbr_st ?? feature.properties.rzn_scl ?? "");
+    const activityText = normalizeText(feature.properties.activdd);
+    const categoryText = normalizeText(feature.properties.ctgr_ct);
+    const mergedText = [nameText, activityText, categoryText].filter(Boolean).join(" ");
 
-    if (!text || denueExcludePattern.test(text)) return [];
+    const dedupeKey = buildDenueDedupeKey(feature);
+    if (seen.has(dedupeKey)) return [];
+    seen.add(dedupeKey);
 
-    const subtypeMatch = denueSubtypeConfig.find((item) => item.match(text));
-    if (!subtypeMatch) return [];
+    const scianCode = extractDenueScianCode(feature.properties);
+    const scianRecord = scianCode
+      ? normalizeDenueRecord({
+        id: `denue-${index + 1}`,
+        nombre: name,
+        alcaldia: feature.properties.alcaldi,
+        scianCode
+      })
+      : null;
+    const subtypeFromScian = scianCode ? getDashboardCategoryFromScian(scianCode) : null;
+    const inferredSubtype = inferDenueSubtypeFromText(nameText, activityText, categoryText);
+    const subtype = (subtypeFromScian ?? inferredSubtype) as PrivateInfrastructureSubtype | null;
+    if (!mergedText || !subtype) return [];
 
     const normalized = normalizeAlcaldia(feature.properties.alcaldi);
     const coordinates = feature.geometry?.coordinates;
@@ -198,18 +268,15 @@ const buildDenueDetails = (): InfrastructureDetailRecord[] => {
       feature.properties.activdd,
       feature.properties.ctgr_ct
     );
+    const labels = mapSubtypeLabels(subtype);
+    const isScianVerified = Boolean(scianRecord && subtypeFromScian);
 
     return [
       {
         id: `denue-${index + 1}`,
         spaceName: name,
-        tipo_espacio:
-          subtypeMatch.subtype === "Gimnasio privado"
-            ? "gimnasio / acondicionamiento"
-            : subtypeMatch.subtype === "Club deportivo privado"
-              ? "club deportivo"
-            : "academia / escuela de deporte",
-        infrastructureType: subtypeMatch.subtype,
+        tipo_espacio: labels.tipo_espacio,
+        infrastructureType: subtype,
         alcaldia: normalized.alcaldia,
         originalAlcaldia: normalized.original,
         needsAlcaldiaNormalization: !normalized.matched,
@@ -218,38 +285,25 @@ const buildDenueDetails = (): InfrastructureDetailRecord[] => {
         sportsAvailable: documentedSports,
         disciplineStatus: documentedSports.length > 0 ? "disponible" : "no_documentado",
         administrativeCount: 1,
-        administrativeLabel:
-          subtypeMatch.subtype === "Gimnasio privado"
-            ? "Gimnasios privados"
-            : subtypeMatch.subtype === "Club deportivo privado"
-              ? "Clubes deportivos privados"
-              : "Academias deportivas privadas",
-        operationalUnits:
-          subtypeMatch.subtype === "Gimnasio privado"
-            ? operationalUnitFactors.privateGym
-            : subtypeMatch.subtype === "Club deportivo privado"
-              ? operationalUnitFactors.privateClub
-              : operationalUnitFactors.privateSchool,
-        operationalLabel:
-          subtypeMatch.subtype === "Gimnasio privado"
-            ? "Espacios operativos privados estimados"
-            : subtypeMatch.subtype === "Club deportivo privado"
-              ? "Unidades operativas de club estimadas"
-              : "Unidades operativas de academia estimadas",
-        capacity: subtypeMatch.subtype === "Gimnasio privado" ? 55 : subtypeMatch.subtype === "Club deportivo privado" ? 80 : 35,
+        administrativeLabel: labels.administrativeLabel,
+        operationalUnits: labels.operationalUnits,
+        operationalLabel: labels.operationalLabel,
+        capacity: labels.capacity,
         capacityType: "estimada" as const,
         units: 1,
         latitude: Array.isArray(coordinates) ? coordinates[1] : null,
         longitude: Array.isArray(coordinates) ? coordinates[0] : null,
         status: "Fuente económica sin estatus operativo",
         sourceDataset: officialSourceConfig.denue.dataset,
-        subtype: subtypeMatch.subtype,
-        dataType: "preparado" as const,
+        subtype,
+        dataType: isScianVerified ? "real" : "preparado",
         source: officialSourceConfig.denue.url,
         methodologicalNote:
-          documentedSports.length > 0
-            ? "Registro descargado de DENUE CDMX y clasificado por nombre/actividad observable. Las disciplinas visibles provienen solo de texto explícito del registro; no se infieren amenidades internas."
-            : "Registro descargado de DENUE CDMX y clasificado por nombre/actividad observable porque este export no expone el código SCIAN objetivo de forma usable. Se integra como capa privada preparada y las disciplinas quedan no documentadas cuando la fuente no las explicita."
+          isScianVerified
+            ? `Registro DENUE clasificado con SCIAN ${scianCode}. Las disciplinas visibles provienen solo de texto explícito del registro; no se infieren amenidades internas.`
+            : documentedSports.length > 0
+              ? "Registro descargado de DENUE CDMX y clasificado por nombre/actividad observable. Las disciplinas visibles provienen solo de texto explícito del registro; no se infieren amenidades internas."
+              : "Registro descargado de DENUE CDMX y clasificado por nombre/actividad observable porque este export no expone el código SCIAN objetivo de forma usable. Se integra como capa privada preparada y las disciplinas quedan no documentadas cuando la fuente no las explicita."
       }
     ];
   });
@@ -326,18 +380,18 @@ export const buildOfficialInfrastructureLayer = (): OfficialInfrastructureLayer 
     };
   });
 
-  const utopiasDetails: InfrastructureDetailRecord[] = utopias.map((row) => {
-    const normalized = normalizeAlcaldia(row.alcaldia);
-    const hasTerritorialKey = normalized.matched && row.alcaldia !== "Sin alcaldía documentada";
+  const utopiasDetails: InfrastructureDetailRecord[] = (utopias as UtopiaSeedRecord[]).map((row) => {
+    const normalized = row.alcaldia ? normalizeAlcaldia(row.alcaldia) : null;
+    const hasTerritorialKey = Boolean(row.alcaldia && normalized?.matched);
     return {
       id: row.id,
       spaceName: row.nombre,
       tipo_espacio: "utopia",
       infrastructureType: "UTOPÍAs",
-      alcaldia: hasTerritorialKey ? normalized.alcaldia : "Sin alcaldía documentada",
-      originalAlcaldia: row.alcaldia,
+      alcaldia: hasTerritorialKey && normalized ? normalized.alcaldia : "Sin alcaldía documentada",
+      originalAlcaldia: row.alcaldia ?? null,
       needsAlcaldiaNormalization: !hasTerritorialKey,
-      geoKey: hasTerritorialKey ? normalized.geoKey : undefined,
+      geoKey: hasTerritorialKey && normalized ? normalized.geoKey : undefined,
       year: 2025,
       sportsAvailable: [],
       disciplineStatus: "no_documentado",
@@ -354,10 +408,10 @@ export const buildOfficialInfrastructureLayer = (): OfficialInfrastructureLayer 
       sourceDataset: "Inventario institucional UTOPÍAs",
       dataType: "real",
       source: row.fuente,
-      methodologicalNote:
-        row.alcaldia === "Sin alcaldía documentada"
-          ? "UTOPÍA documentada en la investigación actual, pero aún sin alcaldía verificable dentro del proyecto. Se integra como capa real institucional sin territorializar."
-          : "UTOPÍA integrada como capa institucional real desde la investigación actual. No se infieren amenidades ni disciplinas por sede."
+      methodologicalNote: row.nota ??
+        (row.alcaldia
+          ? "UTOPÍA integrada como capa institucional real desde la investigación actual. No se infieren amenidades ni disciplinas por sede."
+          : "UTOPÍA documentada en la investigación actual, pero aún sin alcaldía verificable dentro del proyecto. Se integra como capa real institucional sin territorializar.")
     };
   });
 
@@ -427,7 +481,7 @@ export const buildOfficialInfrastructureLayer = (): OfficialInfrastructureLayer 
           localPath: officialSourceConfig.denue.localPath,
           integrated: denueDetails.length > 0,
           recordCount: denueDetails.length,
-          note: "Capa privada preparada desde DENUE. Queda etiquetada como preparado hasta contar con SCIAN verificable."
+          note: "Capa privada cargada desde DENUE. Si el extracto trae SCIAN verificable se normaliza como real; con el corte local actual se conserva preparada y clasificada por texto explícito."
         },
         {
           key: "geometry",

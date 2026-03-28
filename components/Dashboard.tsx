@@ -359,6 +359,13 @@ export default function Dashboard() {
     () => (selectedMapArea ? infrastructureDetails.filter((item) => item.alcaldia === selectedMapArea.alcaldia && item.year === mapYear) : []),
     [infrastructureDetails, mapYear, selectedMapArea]
   );
+  const mapScopedInfrastructureDetails = useMemo(
+    () =>
+      infrastructureDetails.filter((item) => item.year === mapYear).filter((item) => (
+        filters.alcaldias.length > 0 ? filters.alcaldias.includes(item.alcaldia) : item.alcaldia !== "Sin alcaldía documentada"
+      )),
+    [filters.alcaldias, infrastructureDetails, mapYear]
+  );
   const privateMapUnits = useMemo(
     () => selectedMapInfrastructure.filter((item) => item.sourceDataset === "Directorio Estadístico de Unidades Económicas CDMX").reduce((sum, item) => sum + item.administrativeCount, 0),
     [selectedMapInfrastructure]
@@ -382,6 +389,20 @@ export default function Dashboard() {
   const utopiasMapSites = useMemo(
     () => selectedMapInfrastructure.filter((item) => item.infrastructureType === "UTOPÍAs").reduce((sum, item) => sum + item.administrativeCount, 0),
     [selectedMapInfrastructure]
+  );
+  const selectedMapCanchas = useMemo(
+    () => (selectedMapArea ? canchasRecords.filter((item) => item.alcaldia === selectedMapArea.alcaldia).length : 0),
+    [canchasRecords, selectedMapArea]
+  );
+  const mapLayerTotals = useMemo(
+    () => ({
+      pilares: mapScopedInfrastructureDetails.filter((item) => item.infrastructureType === "PILARES").reduce((sum, item) => sum + item.administrativeCount, 0),
+      utopias: mapScopedInfrastructureDetails.filter((item) => item.infrastructureType === "UTOPÍAs").reduce((sum, item) => sum + item.administrativeCount, 0),
+      publicSports: mapScopedInfrastructureDetails.filter((item) => item.infrastructureType === "Deportivos públicos").reduce((sum, item) => sum + item.administrativeCount, 0),
+      privateFacilities: mapScopedInfrastructureDetails.filter((item) => item.sourceDataset === "Directorio Estadístico de Unidades Económicas CDMX").reduce((sum, item) => sum + item.administrativeCount, 0),
+      canchas: canchasRecords.length
+    }),
+    [canchasRecords.length, mapScopedInfrastructureDetails]
   );
   const mapRows = useMemo(
     () =>
@@ -811,7 +832,11 @@ export default function Dashboard() {
                   <div className="flex items-center justify-between gap-3">
                     <div>
                       <div className="text-sm font-semibold text-ink-900">Infraestructura privada</div>
-                      <div className="mt-1 text-xs text-ink-600">DENUE CDMX descargado y normalizado por alcaldía; mientras no entre un corte con SCIAN verificable se reporta como preparado.</div>
+                      <div className="mt-1 text-xs text-ink-600">
+                        {visiblePrivateUnits > 0
+                          ? "DENUE CDMX descargado y normalizado por alcaldía; mientras no entre un corte con SCIAN verificable se reporta como preparado."
+                          : "El extracto local de DENUE no expone SCIAN ni suficientes establecimientos deportivos defendibles; la capa queda lista para cargarse en cuanto entre un corte verificable."}
+                      </div>
                     </div>
                     <div className="text-right">
                       <div className="text-2xl font-semibold text-ink-900">{formatNumber(visiblePrivateUnits)}</div>
@@ -851,8 +876,8 @@ export default function Dashboard() {
                     {selectedMapMetricMeta.dataType.replace("_", " ")}
                   </div>
                 </div>
-                <div className="flex flex-wrap gap-2">
-                  {[
+              <div className="flex flex-wrap gap-2">
+                {[
                     { key: "activity" as const, label: "Actividad" },
                     { key: "risk" as const, label: "Riesgo" },
                     { key: "publicInfrastructure" as const, label: "Infra pública" },
@@ -871,6 +896,48 @@ export default function Dashboard() {
                       {item.label}
                     </button>
                   ))}
+                </div>
+              </div>
+              <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-5">
+                <div className="rounded-2xl border border-mist-200 bg-white px-4 py-4">
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="text-[11px] font-semibold uppercase tracking-wide text-ink-600">PILARES</div>
+                    <LayerBadge layer="real" />
+                  </div>
+                  <div className="mt-2 text-2xl font-semibold text-ink-900">{formatNumber(mapLayerTotals.pilares)}</div>
+                  <div className="mt-2 text-xs text-ink-600">Sedes visibles en la lectura territorial</div>
+                </div>
+                <div className="rounded-2xl border border-mist-200 bg-white px-4 py-4">
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="text-[11px] font-semibold uppercase tracking-wide text-ink-600">UTOPÍAs</div>
+                    <LayerBadge layer="real" />
+                  </div>
+                  <div className="mt-2 text-2xl font-semibold text-ink-900">{formatNumber(mapLayerTotals.utopias)}</div>
+                  <div className="mt-2 text-xs text-ink-600">Sedes territorializadas en el mapa</div>
+                </div>
+                <div className="rounded-2xl border border-mist-200 bg-white px-4 py-4">
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="text-[11px] font-semibold uppercase tracking-wide text-ink-600">Deportivos públicos</div>
+                    <LayerBadge layer="real" />
+                  </div>
+                  <div className="mt-2 text-2xl font-semibold text-ink-900">{formatNumber(mapLayerTotals.publicSports)}</div>
+                  <div className="mt-2 text-xs text-ink-600">Instalaciones visibles por alcaldía</div>
+                </div>
+                <div className="rounded-2xl border border-mist-200 bg-white px-4 py-4">
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="text-[11px] font-semibold uppercase tracking-wide text-ink-600">Privados</div>
+                    <LayerBadge layer="preparado" />
+                  </div>
+                  <div className="mt-2 text-2xl font-semibold text-ink-900">{formatNumber(mapLayerTotals.privateFacilities)}</div>
+                  <div className="mt-2 text-xs text-ink-600">Unidades económicas del corte DENUE disponible</div>
+                </div>
+                <div className="rounded-2xl border border-mist-200 bg-white px-4 py-4">
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="text-[11px] font-semibold uppercase tracking-wide text-ink-600">Canchas</div>
+                    <LayerBadge layer="real" />
+                  </div>
+                  <div className="mt-2 text-2xl font-semibold text-ink-900">{formatNumber(mapLayerTotals.canchas)}</div>
+                  <div className="mt-2 text-xs text-ink-600">Registros operativos visibles en el filtro actual</div>
                 </div>
               </div>
               <TerritorialMap
@@ -969,6 +1036,11 @@ export default function Dashboard() {
                           <div className="text-[11px] font-semibold uppercase tracking-wide text-ink-600">Infraestructura privada</div>
                           <div className="mt-2 text-2xl font-semibold text-ink-900">{formatNumber(privateMapUnits)}</div>
                           <div className="mt-2 text-xs text-ink-600">Corte DENUE disponible</div>
+                        </div>
+                        <div className="rounded-2xl border border-mist-200 bg-white px-4 py-4">
+                          <div className="text-[11px] font-semibold uppercase tracking-wide text-ink-600">Canchas</div>
+                          <div className="mt-2 text-2xl font-semibold text-ink-900">{formatNumber(selectedMapCanchas)}</div>
+                          <div className="mt-2 text-xs text-ink-600">Registros operativos del módulo Canchas</div>
                         </div>
                       </div>
                     </div>
