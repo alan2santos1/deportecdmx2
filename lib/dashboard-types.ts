@@ -2,6 +2,7 @@ export type DataLayer = "real" | "base_oficial" | "estimado" | "preparado" | "pr
 
 export type InfrastructureType =
   | "PILARES"
+  | "UTOPÍAs"
   | "Deportivos públicos"
   | "Gimnasio privado"
   | "Club deportivo privado"
@@ -32,6 +33,9 @@ export type TerritorialRecord = {
   pilares: number;
   publicSportsCenters: number;
   privateGyms: number;
+  privateClubs: number;
+  privateSchools: number;
+  utopias: number;
   parks: number;
   totalInfrastructure: number;
   infraPer100k: number;
@@ -55,6 +59,7 @@ export type InfrastructureDetailRecord = {
   alcaldia: string;
   year: number;
   sportsAvailable: string[];
+  disciplineStatus: "disponible" | "no_documentado";
   administrativeCount: number;
   administrativeLabel: string;
   operationalUnits: number;
@@ -249,6 +254,7 @@ export type MapAreaRecord = {
   publicInfrastructureCount: number;
   privateInfrastructureCount: number;
   totalInfrastructureCount: number;
+  utopiasCount: number;
   infraPer100k: number;
   dataType: DataLayer;
   source: string;

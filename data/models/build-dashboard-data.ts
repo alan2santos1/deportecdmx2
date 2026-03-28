@@ -22,13 +22,17 @@ const weightedCoveragePer100k = (record: {
   publicSportsCenters: number;
   pilares: number;
   privateGyms: number;
+  privateClubs?: number;
+  privateSchools?: number;
+  utopias?: number;
   parks: number;
   privateAccessPenalty: number;
 }) => {
   const weighted =
     record.publicSportsCenters * 1 +
+    (record.utopias ?? 0) * 1 +
     record.pilares * 0.45 +
-    record.privateGyms * (0.55 / record.privateAccessPenalty) +
+    (record.privateGyms + (record.privateClubs ?? 0) + (record.privateSchools ?? 0)) * (0.55 / record.privateAccessPenalty) +
     record.parks * 0.65;
   return (weighted / record.population2020) * 100000;
 };
@@ -52,10 +56,19 @@ const buildTerritorialRecords = (): TerritorialRecord[] => {
     alcaldiasSeed.flatMap((alcaldia) => {
       const officialSummary = officialInfrastructure.summaryByAlcaldia[alcaldia.name];
       const projectedPopulation = projectPopulation(alcaldia.population2020, yearSeed.year);
+      const privateGyms = yearSeed.year === 2025 ? (officialSummary?.privateGyms ?? alcaldia.privateGyms) : alcaldia.privateGyms;
+      const privateClubs = yearSeed.year === 2025 ? (officialSummary?.privateClubs ?? Math.round(alcaldia.privateGyms * 0.18)) : Math.round(alcaldia.privateGyms * 0.18);
+      const privateSchools = yearSeed.year === 2025
+        ? (officialSummary?.privateSchools ?? Math.max(1, alcaldia.privateGyms - Math.round(alcaldia.privateGyms * 0.72) - Math.round(alcaldia.privateGyms * 0.18)))
+        : Math.max(1, alcaldia.privateGyms - Math.round(alcaldia.privateGyms * 0.72) - Math.round(alcaldia.privateGyms * 0.18));
+      const utopias = yearSeed.year === 2025 ? (officialSummary?.utopias ?? 0) : 0;
       const totalInfrastructure =
         (officialSummary?.publicSportsCenters ?? alcaldia.publicSportsCenters) +
         (officialSummary?.pilares ?? alcaldia.pilares) +
-        alcaldia.privateGyms +
+        utopias +
+        privateGyms +
+        privateClubs +
+        privateSchools +
         alcaldia.parks;
       const infraPer100k = (totalInfrastructure / projectedPopulation) * 100000;
       const normalizedCoverage =
@@ -117,8 +130,11 @@ const buildTerritorialRecords = (): TerritorialRecord[] => {
             combinedWeightRiskRate: clamp(obesityRate + overweightRate, 0.32, 0.82),
             diabetesRate,
             pilares: officialSummary?.pilares ?? alcaldia.pilares,
+            utopias,
             publicSportsCenters: officialSummary?.publicSportsCenters ?? alcaldia.publicSportsCenters,
-            privateGyms: alcaldia.privateGyms,
+            privateGyms,
+            privateClubs,
+            privateSchools,
             parks: alcaldia.parks,
             totalInfrastructure,
             infraPer100k,
@@ -133,7 +149,7 @@ const buildTerritorialRecords = (): TerritorialRecord[] => {
                   ? "Proyección 2026 basada en MOPRADEF 2024-2025"
                   : "MOPRADEF 2024-2025",
             healthSource: "ENSANUT Continua 2022",
-            infrastructureSource: "PILARES + Deportivos Públicos CDMX + DENUE + áreas verdes",
+            infrastructureSource: "PILARES histórico + UTOPÍAs + Deportivos Públicos CDMX + DENUE preparado + áreas verdes",
             populationSource:
               yearSeed.year === 2026
                 ? "Censo 2020 INEGI + proyección lineal de planeación"
@@ -191,18 +207,26 @@ const infrastructureTemplates = [
     tipo_espacio: "pilares",
     source: "Datos Abiertos CDMX / PILARES",
     note: "Cobertura comunitaria con potencial de activación física.",
-    sportsAvailable: ["Activación física", "Zumba", "Yoga", "Básquetbol recreativo"],
     capacityFactor: 42,
     operationalFactor: 7,
     administrativeLabel: "Sedes PILARES",
     operationalLabel: "Espacios operativos PILARES"
   },
   {
+    infrastructureType: "UTOPÍAs" as const,
+    tipo_espacio: "utopia",
+    source: "Investigación actual / bloque institucional UTOPÍAs",
+    note: "Capa institucional real por sede documentada. No se infieren disciplinas ni amenidades internas.",
+    capacityFactor: 160,
+    operationalFactor: 6,
+    administrativeLabel: "UTOPÍAs documentadas",
+    operationalLabel: "Espacios operativos UTOPÍA"
+  },
+  {
     infrastructureType: "Deportivos públicos" as const,
     tipo_espacio: "cancha / deportivo",
     source: "Datos Abiertos CDMX / Deportivos públicos",
     note: "Infraestructura pública estructurada para práctica deportiva formal.",
-    sportsAvailable: ["Fútbol", "Básquetbol", "Natación", "Atletismo"],
     capacityFactor: 180,
     operationalFactor: 4,
     administrativeLabel: "Instalaciones deportivas públicas",
@@ -213,7 +237,6 @@ const infrastructureTemplates = [
     tipo_espacio: "gimnasio",
     source: "DENUE / SCIAN",
     note: "Oferta privada con acceso condicionado por costo.",
-    sportsAvailable: ["Acondicionamiento", "Spinning", "Pesas", "Clases grupales"],
     capacityFactor: 55,
     operationalFactor: 2,
     administrativeLabel: "Gimnasios privados",
@@ -224,7 +247,6 @@ const infrastructureTemplates = [
     tipo_espacio: "club deportivo",
     source: "DENUE / SCIAN",
     note: "Oferta privada deportiva asociativa o de membresía.",
-    sportsAvailable: ["Fútbol", "Tenis", "Natación", "Pádel"],
     capacityFactor: 80,
     operationalFactor: 3,
     administrativeLabel: "Clubes deportivos privados",
@@ -235,7 +257,6 @@ const infrastructureTemplates = [
     tipo_espacio: "academia deportiva",
     source: "DENUE / SCIAN",
     note: "Oferta privada orientada a enseñanza, entrenamiento o iniciación deportiva.",
-    sportsAvailable: ["Box", "Taekwondo", "Natación", "Fútbol formativo"],
     capacityFactor: 35,
     operationalFactor: 2,
     administrativeLabel: "Academias deportivas privadas",
@@ -246,7 +267,6 @@ const infrastructureTemplates = [
     tipo_espacio: "parque",
     source: "Inventario de áreas verdes / espacio público CDMX",
     note: "Espacio abierto para caminata, running y activación de bajo costo.",
-    sportsAvailable: ["Running / caminata", "Ciclismo", "Calistenia", "Activación libre"],
     capacityFactor: 120,
     operationalFactor: 3,
     administrativeLabel: "Espacios públicos abiertos",
@@ -261,6 +281,7 @@ const buildInfrastructureDetails = (): InfrastructureDetailRecord[] => {
     alcaldiasSeed.flatMap((alcaldia) => {
       const counts = {
         "PILARES": alcaldia.pilares,
+        "UTOPÍAs": 0,
         "Deportivos públicos": alcaldia.publicSportsCenters,
         "Gimnasio privado": Math.round(alcaldia.privateGyms * 0.72),
         "Club deportivo privado": Math.round(alcaldia.privateGyms * 0.18),
@@ -275,6 +296,8 @@ const buildInfrastructureDetails = (): InfrastructureDetailRecord[] => {
         const units =
           template.infrastructureType === "PILARES"
             ? (officialInfrastructure.summaryByAlcaldia[alcaldia.name]?.pilares ?? counts[template.infrastructureType])
+            : template.infrastructureType === "UTOPÍAs"
+              ? (officialInfrastructure.summaryByAlcaldia[alcaldia.name]?.utopias ?? counts[template.infrastructureType])
             : template.infrastructureType === "Deportivos públicos"
               ? (officialInfrastructure.summaryByAlcaldia[alcaldia.name]?.publicSportsCenters ?? counts[template.infrastructureType])
               : counts[template.infrastructureType];
@@ -294,7 +317,8 @@ const buildInfrastructureDetails = (): InfrastructureDetailRecord[] => {
           infrastructureType: template.infrastructureType,
           alcaldia: alcaldia.name,
           year: yearSeed.year,
-          sportsAvailable: template.sportsAvailable,
+          sportsAvailable: [],
+          disciplineStatus: "no_documentado",
           administrativeCount: safeUnits,
           administrativeLabel: template.administrativeLabel,
           operationalUnits: safeUnits * template.operationalFactor,
@@ -355,8 +379,8 @@ const buildMapAreas = (territorialRecords: TerritorialRecord[]): MapAreaRecord[]
     const diabetesRate = items.reduce((sum, item) => sum + item.diabetesRate * item.population, 0) / population;
     const sedentaryRate = items.reduce((sum, item) => sum + item.sedentaryRate * item.population, 0) / population;
     const sample = items[0];
-    const publicInfrastructureCount = (sample?.pilares ?? 0) + (sample?.publicSportsCenters ?? 0) + (sample?.parks ?? 0);
-    const privateInfrastructureCount = sample?.privateGyms ?? 0;
+    const publicInfrastructureCount = (sample?.pilares ?? 0) + (sample?.utopias ?? 0) + (sample?.publicSportsCenters ?? 0) + (sample?.parks ?? 0);
+    const privateInfrastructureCount = (sample?.privateGyms ?? 0) + (sample?.privateClubs ?? 0) + (sample?.privateSchools ?? 0);
     const totalInfrastructureCount = publicInfrastructureCount + privateInfrastructureCount;
     const infraPer100k = items[0]?.infraPer100k ?? 0;
     const score = ((1 - activityRate) * 35) + (obesityRate * 30) + (sedentaryRate * 20) + ((1 / Math.max(infraPer100k, 1)) * 150);
@@ -375,10 +399,11 @@ const buildMapAreas = (territorialRecords: TerritorialRecord[]): MapAreaRecord[]
       publicInfrastructureCount,
       privateInfrastructureCount,
       totalInfrastructureCount,
+      utopiasCount: sample?.utopias ?? 0,
       infraPer100k,
       dataType: Number(yearString) === 2026 ? "proyectado" : "insight",
       source: "Modelo territorial Deporte CDMX listo para choropleth o heatmap",
-      methodologicalNote: "Registro territorial listo para mapa por alcaldía. La geometría es oficial; actividad y salud son modeladas; la infraestructura privada depende del corte DENUE disponible."
+      methodologicalNote: "Registro territorial listo para mapa por alcaldía. La geometría es oficial; actividad y salud son modeladas; UTOPÍAs se integran como capa real institucional; la infraestructura privada depende del corte DENUE disponible."
     };
   });
 };

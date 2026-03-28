@@ -16,6 +16,13 @@ export const sourceRegistry: SourceRegistryEntry[] = [
     note: "El registro administrativo se reporta por instalación; la capacidad o espacios operativos se estiman aparte."
   },
   {
+    metric: "UTOPÍAs",
+    layer: "real",
+    source: "docs/investigacion_actual.md",
+    coverage: "Bloque institucional real por sede documentada",
+    note: "Se integran como capa institucional real. No se infieren amenidades ni disciplinas por sede cuando la investigación vigente no las documenta."
+  },
+  {
     metric: "Gimnasios y centros privados",
     layer: "preparado",
     source: "DENUE CDMX descargado + clasificación textual compatible con SCIAN objetivo",
@@ -60,9 +67,9 @@ export const sourceRegistry: SourceRegistryEntry[] = [
   {
     metric: "Infraestructura detallada",
     layer: "insight",
-    source: "Consolidación por tipo desde PILARES, deportivos públicos, DENUE y espacios abiertos",
+    source: "Consolidación por tipo desde PILARES, UTOPÍAs, deportivos públicos, DENUE y espacios abiertos",
     coverage: "Detalle por alcaldía y tipo de espacio",
-    note: "Combina registros reales, preparados y capacidad estimada cuando no existe aforo oficial."
+    note: "Combina registros reales, preparados y capacidad estimada cuando no existe aforo oficial. Las disciplinas solo se muestran cuando están documentadas de forma explícita."
   },
   {
     metric: "Mapa territorial",
@@ -72,7 +79,7 @@ export const sourceRegistry: SourceRegistryEntry[] = [
     note: "La geometría ya está integrada; actividad y riesgo siguen dependiendo de capas estimadas o de insight."
   },
   {
-    metric: "500 Canchas / operación territorial",
+    metric: "Canchas / operación territorial",
     layer: "real",
     source: "Excel operativo 500 Canchas PILARES asignado",
     coverage: "Canchas nominales con capa administrativa multi-hoja",
@@ -93,7 +100,7 @@ export const methodologyEntries: MethodologyEntry[] = [
     module: "Infraestructura",
     metric: "Conteo de espacios por tipo",
     layer: "real",
-    source: "PILARES, deportivos públicos, DENUE e inventarios de áreas verdes",
+    source: "PILARES, UTOPÍAs, deportivos públicos, DENUE e inventarios de áreas verdes",
     logic: "La gráfica principal consolida conteos administrativos de sedes, instalaciones o establecimientos y los transforma en densidad por 100 mil habitantes.",
     limitation: "No debe mezclarse con espacios operativos o capacidad estimada. La infraestructura privada descargada desde DENUE sigue preparada hasta validar SCIAN y fecha de corte con un extracto más robusto."
   },
@@ -118,8 +125,8 @@ export const methodologyEntries: MethodologyEntry[] = [
     metric: "Espacios, deportes disponibles y capacidad",
     layer: "insight",
     source: "Capas de infraestructura pública y privada consolidadas",
-    logic: "Se distinguen conteo administrativo real, espacios operativos estimados y capacidad estimada cuando no hay aforo oficial.",
-    limitation: "La mezcla de capas reales y preparadas obliga a conservar visible el tipo de dato en cada lectura."
+    logic: "Se distinguen conteo administrativo real, espacios operativos estimados y capacidad estimada cuando no hay aforo oficial. Las disciplinas solo se marcan si la fuente las documenta explícitamente.",
+    limitation: "La mezcla de capas reales y preparadas obliga a conservar visible el tipo de dato en cada lectura. La ausencia de una disciplina no equivale a ausencia real de oferta."
   },
   {
     module: "Mapa",
@@ -130,7 +137,7 @@ export const methodologyEntries: MethodologyEntry[] = [
     limitation: "La geometría es oficial, pero la métrica visualizada depende de la capa seleccionada: real, preparada, estimada o insight."
   },
   {
-    module: "500 Canchas",
+    module: "Canchas",
     metric: "Operación territorial de canchas",
     layer: "real",
     source: "Excel operativo 500 Canchas (Base, Alc Dic, AlcFeb, Hoja 2, Hoja 1)",
@@ -185,13 +192,19 @@ export const qualityChecks: QualityEntry[] = [
     note: "La clasificación privada usa heurísticas textuales porque el export descargado no trae SCIAN verificable en la salida usada por este MVP."
   },
   {
+    check: "Disciplinas y amenidades",
+    scope: "Infraestructura pública, UTOPÍAs y DENUE",
+    status: "ATENCION",
+    note: "Las disciplinas siguen subrepresentadas cuando la fuente no las explicita. El dashboard ya evita inferencias automáticas y marca esos casos como no documentados o subrepresentados."
+  },
+  {
     check: "Separación sede vs espacio operativo",
     scope: "PILARES y capas con capacidad analítica",
     status: "OK",
     note: "El dashboard separa conteo administrativo real de espacios operativos estimados para evitar interpretaciones institucionales erróneas."
   },
   {
-    check: "Integración operativa 500 Canchas",
+    check: "Integración operativa Canchas",
     scope: "Base administrativa multi-hoja",
     status: "OK",
     note: "La sección operativa usa el Excel real como fuente principal y deja visible cuándo faltan coordenadas, figura educativa, horario o actividades."

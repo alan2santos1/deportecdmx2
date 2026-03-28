@@ -17,9 +17,12 @@ export const officialSourceConfig = {
     localPath: "data/raw/external/denue_cdmx.geojson",
     type: "real" as const,
     scianTargets: [
-      { code: "713943", label: "Gimnasios" },
-      { code: "713941", label: "Clubes deportivos" },
-      { code: "611621", label: "Escuelas de deporte" }
+      { code: "713941", label: "Clubes deportivos privados" },
+      { code: "713942", label: "Clubes deportivos públicos o mixtos" },
+      { code: "713943", label: "Gimnasios privados" },
+      { code: "713944", label: "Instalaciones acuáticas y balnearios" },
+      { code: "611621", label: "Escuelas deportivas privadas" },
+      { code: "611622", label: "Escuelas deportivas públicas o mixtas" }
     ]
   },
   geometry: {

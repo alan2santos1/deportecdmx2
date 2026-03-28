@@ -3,6 +3,7 @@ import path from "path";
 import type { DataLayer, InfrastructureDetailRecord } from "../../../lib/dashboard-types";
 import { officialSourceConfig } from "./official-source-config";
 import { normalizeAlcaldia } from "./normalize-alcaldia";
+import utopias from "../../processed/infrastructure/utopias.json";
 
 type DenueGeojson = {
   features: Array<{
@@ -28,6 +29,7 @@ export type OfficialInfrastructureLayer = {
     string,
     {
       pilares: number;
+      utopias: number;
       publicSportsCenters: number;
       privateFacilities: number;
       privateGyms: number;
@@ -109,21 +111,35 @@ const readJson = <T,>(filePath: string): T | null => {
   return JSON.parse(fs.readFileSync(absolutePath, "utf-8")) as T;
 };
 
-const defaultSportsByType: Record<string, string[]> = {
-  PILARES: ["Activación física", "Zumba", "Yoga"],
-  "Deportivos públicos": ["Fútbol", "Básquetbol", "Acondicionamiento"],
-  "Gimnasio privado": ["Acondicionamiento", "Pesas"],
-  "Club deportivo privado": ["Fútbol", "Tenis", "Natación"],
-  "Academia deportiva privada": ["Iniciación deportiva", "Entrenamiento"]
-};
-
 const operationalUnitFactors = {
   pilares: 7,
+  utopias: 6,
   publicSports: 4,
   privateGym: 2,
   privateClub: 3,
   privateSchool: 2
 } as const;
+
+const documentedDisciplineMatchers: Array<{ label: string; pattern: RegExp }> = [
+  { label: "Natación", pattern: /\b(natacion|natación|alberca|acuatic)/ },
+  { label: "Básquetbol", pattern: /\b(basquet|básquet|basket|basquetbol|básquetbol)\b/ },
+  { label: "Fútbol", pattern: /\b(futbol|fútbol)\b/ },
+  { label: "Atletismo", pattern: /\b(atletismo|pista)\b/ },
+  { label: "Box", pattern: /\b(box|boxing)\b/ },
+  { label: "Tenis", pattern: /\btenis\b/ },
+  { label: "Pádel", pattern: /\b(padel|pádel)\b/ },
+  { label: "Yoga", pattern: /\byoga\b/ },
+  { label: "Activación física", pattern: /\b(activacion|activación)\b/ },
+  { label: "Acondicionamiento / gimnasio", pattern: /\b(gimnasio|fitness|pesas|crossfit|spinning|acondicionamiento)\b/ }
+];
+
+const extractDocumentedSports = (...texts: Array<string | null | undefined>) => {
+  const normalizedText = normalizeText(texts.filter(Boolean).join(" "));
+  if (!normalizedText) return [];
+  return documentedDisciplineMatchers
+    .filter((item) => item.pattern.test(normalizedText))
+    .map((item) => item.label);
+};
 
 const denueSubtypeConfig = [
   {
@@ -132,23 +148,20 @@ const denueSubtypeConfig = [
       text.includes("club deportivo") ||
       /(club|centro)\s+(de\s+)?(tenis|natacion|futbol|golf|padel|deportivo|acuatico)/.test(text) ||
       /(deportivo chapultepec|sport city club|club campestre|club de golf)/.test(text),
-    sports: defaultSportsByType["Club deportivo privado"]
   },
   {
     subtype: "Academia deportiva privada",
     match: (text: string) =>
       ((text.includes("academia") || text.includes("escuela") || text.includes("studio")) &&
       /(futbol|natacion|box|boxing|taekwondo|karate|tenis|basquet|voleibol|deporte|fitness|gimnas|pilates|yoga|dance|ballet|artes marciales)/.test(text)) ||
-      /(boxing studio|martial arts|taekwondo|karate|jiu jitsu)/.test(text),
-    sports: defaultSportsByType["Academia deportiva privada"]
+      /(boxing studio|martial arts|taekwondo|karate|jiu jitsu)/.test(text)
   },
   {
     subtype: "Gimnasio privado",
     match: (text: string) =>
       /(gimnasio| gym |gym$|gymnasium|fitness|crossfit|pilates|spinning|box|boxing|yoga|calistenia|acondicionamiento)/.test(
         ` ${text} `
-      ),
-    sports: defaultSportsByType["Gimnasio privado"]
+      )
   }
 ] as const;
 
@@ -179,6 +192,12 @@ const buildDenueDetails = (): InfrastructureDetailRecord[] => {
 
     const normalized = normalizeAlcaldia(feature.properties.alcaldi);
     const coordinates = feature.geometry?.coordinates;
+    const documentedSports = extractDocumentedSports(
+      feature.properties.nmbr_st,
+      feature.properties.rzn_scl,
+      feature.properties.activdd,
+      feature.properties.ctgr_ct
+    );
 
     return [
       {
@@ -196,7 +215,8 @@ const buildDenueDetails = (): InfrastructureDetailRecord[] => {
         needsAlcaldiaNormalization: !normalized.matched,
         geoKey: normalized.geoKey,
         year: 2025,
-        sportsAvailable: subtypeMatch.sports,
+        sportsAvailable: documentedSports,
+        disciplineStatus: documentedSports.length > 0 ? "disponible" : "no_documentado",
         administrativeCount: 1,
         administrativeLabel:
           subtypeMatch.subtype === "Gimnasio privado"
@@ -227,7 +247,9 @@ const buildDenueDetails = (): InfrastructureDetailRecord[] => {
         dataType: "preparado" as const,
         source: officialSourceConfig.denue.url,
         methodologicalNote:
-          "Registro descargado de DENUE CDMX y clasificado por nombre/actividad observable porque este export no expone el código SCIAN objetivo de forma usable. Se integra como capa privada preparada, no como conteo oficial definitivo por SCIAN."
+          documentedSports.length > 0
+            ? "Registro descargado de DENUE CDMX y clasificado por nombre/actividad observable. Las disciplinas visibles provienen solo de texto explícito del registro; no se infieren amenidades internas."
+            : "Registro descargado de DENUE CDMX y clasificado por nombre/actividad observable porque este export no expone el código SCIAN objetivo de forma usable. Se integra como capa privada preparada y las disciplinas quedan no documentadas cuando la fuente no las explicita."
       }
     ];
   });
@@ -250,7 +272,8 @@ export const buildOfficialInfrastructureLayer = (): OfficialInfrastructureLayer 
       needsAlcaldiaNormalization: !normalized.matched,
       geoKey: normalized.geoKey,
       year: 2025,
-      sportsAvailable: defaultSportsByType.PILARES,
+      sportsAvailable: [],
+      disciplineStatus: "no_documentado",
       administrativeCount: 1,
       administrativeLabel: "Sedes PILARES",
       operationalUnits: operationalUnitFactors.pilares,
@@ -282,7 +305,8 @@ export const buildOfficialInfrastructureLayer = (): OfficialInfrastructureLayer 
       needsAlcaldiaNormalization: !normalized.matched,
       geoKey: normalized.geoKey,
       year: 2025,
-      sportsAvailable: defaultSportsByType["Deportivos públicos"],
+      sportsAvailable: extractDocumentedSports(row.Nombre, row["Nombre de clase de la actividad"]),
+      disciplineStatus: extractDocumentedSports(row.Nombre, row["Nombre de clase de la actividad"]).length > 0 ? "disponible" : "no_documentado",
       administrativeCount: 1,
       administrativeLabel: "Instalaciones deportivas públicas",
       operationalUnits: operationalUnitFactors.publicSports,
@@ -302,11 +326,48 @@ export const buildOfficialInfrastructureLayer = (): OfficialInfrastructureLayer 
     };
   });
 
-  const details = [...pilaresDetails, ...publicSportsDetails, ...denueDetails];
+  const utopiasDetails: InfrastructureDetailRecord[] = utopias.map((row) => {
+    const normalized = normalizeAlcaldia(row.alcaldia);
+    const hasTerritorialKey = normalized.matched && row.alcaldia !== "Sin alcaldía documentada";
+    return {
+      id: row.id,
+      spaceName: row.nombre,
+      tipo_espacio: "utopia",
+      infrastructureType: "UTOPÍAs",
+      alcaldia: hasTerritorialKey ? normalized.alcaldia : "Sin alcaldía documentada",
+      originalAlcaldia: row.alcaldia,
+      needsAlcaldiaNormalization: !hasTerritorialKey,
+      geoKey: hasTerritorialKey ? normalized.geoKey : undefined,
+      year: 2025,
+      sportsAvailable: [],
+      disciplineStatus: "no_documentado",
+      administrativeCount: 1,
+      administrativeLabel: "UTOPÍAs documentadas",
+      operationalUnits: operationalUnitFactors.utopias,
+      operationalLabel: "Espacios operativos UTOPÍA estimados",
+      capacity: 160,
+      capacityType: "estimada",
+      units: 1,
+      latitude: row.lat,
+      longitude: row.lon,
+      status: row.status,
+      sourceDataset: "Inventario institucional UTOPÍAs",
+      dataType: "real",
+      source: row.fuente,
+      methodologicalNote:
+        row.alcaldia === "Sin alcaldía documentada"
+          ? "UTOPÍA documentada en la investigación actual, pero aún sin alcaldía verificable dentro del proyecto. Se integra como capa real institucional sin territorializar."
+          : "UTOPÍA integrada como capa institucional real desde la investigación actual. No se infieren amenidades ni disciplinas por sede."
+    };
+  });
+
+  const details = [...pilaresDetails, ...utopiasDetails, ...publicSportsDetails, ...denueDetails];
   const summaryByAlcaldia = details.reduce<OfficialInfrastructureLayer["summaryByAlcaldia"]>((acc, item) => {
     const key = item.alcaldia;
+    if (key === "Sin alcaldía documentada") return acc;
     acc[key] = acc[key] ?? {
       pilares: 0,
+      utopias: 0,
       publicSportsCenters: 0,
       privateFacilities: 0,
       privateGyms: 0,
@@ -314,6 +375,7 @@ export const buildOfficialInfrastructureLayer = (): OfficialInfrastructureLayer 
       privateSchools: 0
     };
     if (item.infrastructureType === "PILARES") acc[key].pilares += 1;
+    if (item.infrastructureType === "UTOPÍAs") acc[key].utopias += 1;
     if (item.infrastructureType === "Deportivos públicos") acc[key].publicSportsCenters += 1;
     if (item.sourceDataset === officialSourceConfig.denue.dataset) {
       acc[key].privateFacilities += 1;
@@ -342,6 +404,14 @@ export const buildOfficialInfrastructureLayer = (): OfficialInfrastructureLayer 
           integrated: pilaresDetails.length > 0,
           recordCount: pilaresDetails.length,
           note: "Integración nominal real por sede."
+        },
+        {
+          key: "utopias",
+          dataset: "Inventario institucional UTOPÍAs",
+          localPath: "data/processed/infrastructure/utopias.json",
+          integrated: utopiasDetails.length > 0,
+          recordCount: utopiasDetails.length,
+          note: "Capa institucional real basada en la investigación vigente. No documenta amenidades por sede."
         },
         {
           key: "publicSports",

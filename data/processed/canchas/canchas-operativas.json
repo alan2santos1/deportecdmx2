@@ -1,6 +1,6 @@
 {
   "meta": {
-    "generatedAt": "2026-03-26T03:50:53.154Z",
+    "generatedAt": "2026-03-27T05:13:04.058Z",
     "workbookPath": "docs/13-03-2026-Proyecto_500_canchas_PILARES_ASIGNADO 315 mallas arquitecto.xlsx",
     "sourceSheets": [
       {
@@ -9557,7 +9557,7 @@
       "telefonoFiguraEducativa": "55 1343 3665",
       "inaugurationDateRaw": "46108",
       "inaugurationDateIso": "2026-03-27",
-      "inaugurationStatus": "proxima",
+      "inaugurationStatus": "inaugurada",
       "tienePromotorFutbol": "si",
       "mallaHorariaFutbol": "LUNES A VIERNES 10:00-12:00 hrs/04:00-08:00 PM",
       "schedule": "LUNES A VIERNES 10:00-12:00 hrs/04:00-08:00 PM",
@@ -9582,7 +9582,7 @@
       "dataType": "real",
       "methodologicalNote": "Base operativa real consolidada desde múltiples hojas del Excel. Base prioriza operación administrativa; Alc Dic, AlcFeb y Hoja 2 complementan atributos territoriales y geolocalización; Hoja 1 enriquece datos institucionales de PILARES cuando el match es posible. PILARES asignado se conserva separado del PILARES cercano territorial.",
       "statusDerivedNote": "Estatus lista para operar derivado por 4/5 señales presentes: fecha sí, figura educativa sí, teléfono sí, horario general sí, actividades no.",
-      "inaugurationDerivedNote": "Marcada como próxima por fecha futura o texto tentativo / por inaugurar.",
+      "inaugurationDerivedNote": "Marcada como inaugurada por fecha válida pasada o señal textual explícita de inauguración.",
       "dataQualityLabel": "media"
     },
     {
@@ -21453,8 +21453,8 @@
     {
       "alcaldia": "Cuauhtémoc",
       "total": 21,
-      "inauguradas": 2,
-      "proximas": 19,
+      "inauguradas": 3,
+      "proximas": 18,
       "pendientes": 0,
       "completas": 4,
       "conHorario": 7,

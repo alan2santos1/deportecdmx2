@@ -49,7 +49,7 @@ import DataTable from "./ui/DataTable";
 import MultiSelect from "./ui/MultiSelect";
 import Tabs from "./ui/Tabs";
 
-const sections = ["Panorama", "Actividad", "Infraestructura", "500 Canchas", "Salud", "Riesgo", "Metodología", "Datos"] as const;
+const sections = ["Panorama", "Actividad", "Infraestructura", "Canchas", "Salud", "Riesgo", "Metodología", "Datos"] as const;
 type SectionKey = (typeof sections)[number];
 
 const layerStyles: Record<DataLayer, string> = {
@@ -83,9 +83,9 @@ const chartMeta = {
     note: "Dato agregado nacional/urbano usado como referencia operativa."
   },
   infrastructure: {
-    source: "PILARES + Deportivos Públicos CDMX + DENUE + espacios abiertos",
+    source: "PILARES histórico + UTOPÍAs + Deportivos Públicos CDMX + DENUE + espacios abiertos",
     dataType: "insight",
-    note: "La lectura mezcla capas reales y preparadas: público/comunitario nominal por sede o instalación, privada desde DENUE como unidades económicas registradas."
+    note: "La lectura mezcla capas reales y preparadas: UTOPÍAs, PILARES, deportivos públicos y espacios abiertos como capas institucionales; DENUE privado sigue preparado. Las disciplinas solo se muestran cuando están documentadas de forma explícita."
   },
   canchas: {
     source: "Excel operativo 500 Canchas PILARES asignado (Base + Alc Dic + AlcFeb + Hoja 2 + Hoja 1)",
@@ -126,9 +126,9 @@ const mapMetricMeta: Record<TerritorialMetricKey, { label: string; source: strin
   },
   publicInfrastructure: {
     label: "Infraestructura pública",
-    source: "PILARES + deportivos públicos + parques",
+    source: "PILARES + UTOPÍAs + deportivos públicos + parques",
     dataType: "real",
-    note: "Conteo administrativo visible de sedes, instalaciones y espacios públicos abiertos.",
+    note: "Conteo administrativo visible de sedes, instalaciones y espacios públicos abiertos. No implica amenidades ni disciplinas por sede si la fuente no las documenta.",
     formatter: (value) => formatNumber(value)
   },
   privateInfrastructure: {
@@ -142,7 +142,7 @@ const mapMetricMeta: Record<TerritorialMetricKey, { label: string; source: strin
     label: "Infraestructura total",
     source: "Capas públicas + privadas del dashboard",
     dataType: "insight",
-    note: "Suma administrativa útil para lectura territorial; no debe confundirse con capacidad operativa.",
+    note: "Suma administrativa útil para lectura territorial. Combina capas reales y preparadas, y no debe confundirse con capacidad operativa ni con oferta disciplinaria completa.",
     formatter: (value) => formatNumber(value)
   },
   obesity: {
@@ -311,6 +311,8 @@ export default function Dashboard() {
               ? "Academias deportivas"
               : item.infrastructureType === "Deportivos públicos"
                 ? "Deportivos públicos"
+                : item.infrastructureType === "UTOPÍAs"
+                  ? "UTOPÍAs"
                 : item.infrastructureType === "Parques / áreas verdes"
                   ? "Parques"
                   : "PILARES";
@@ -375,6 +377,10 @@ export default function Dashboard() {
   );
   const publicSportsMapSites = useMemo(
     () => selectedMapInfrastructure.filter((item) => item.infrastructureType === "Deportivos públicos").reduce((sum, item) => sum + item.administrativeCount, 0),
+    [selectedMapInfrastructure]
+  );
+  const utopiasMapSites = useMemo(
+    () => selectedMapInfrastructure.filter((item) => item.infrastructureType === "UTOPÍAs").reduce((sum, item) => sum + item.administrativeCount, 0),
     [selectedMapInfrastructure]
   );
   const mapRows = useMemo(
@@ -657,7 +663,7 @@ export default function Dashboard() {
           <div>
             <div className="section-kicker">3. Infraestructura</div>
             <div className="section-heading">Infraestructura deportiva y comunitaria</div>
-            <div className="section-copy">Separa claramente espacios observables, tipos de espacio, deportes disponibles y capacidad estimada donde todavía no existe aforo operativo.</div>
+            <div className="section-copy">Separa espacios observables, capas institucionales reales y preparación privada. Las disciplinas solo se muestran cuando están documentadas; lo demás queda como no documentado o subrepresentado.</div>
           </div>
           <KpiGrid
             items={[
@@ -669,9 +675,9 @@ export default function Dashboard() {
           />
           <div className="grid gap-4 lg:grid-cols-2">
             <ChartCard title="Desglose por tipo" helper="Conteo administrativo separado entre infraestructura pública/comunitaria y privada" tooltip={chartMeta.infrastructure}>
-              <StackedBar data={infraStacked} categories={["PILARES", "Deportivos públicos", "Gimnasios privados", "Clubes deportivos", "Academias deportivas", "Parques"]} />
+              <StackedBar data={infraStacked} categories={["PILARES", "UTOPÍAs", "Deportivos públicos", "Gimnasios privados", "Clubes deportivos", "Academias deportivas", "Parques"]} />
             </ChartCard>
-            <ChartCard title="Deportes disponibles en infraestructura" helper="Lectura consolidada del detalle de espacios" tooltip={chartMeta.infrastructure}>
+            <ChartCard title="Disciplinas documentadas en infraestructura" helper="Solo se cuentan disciplinas explícitas en la fuente; el resto queda como no documentado o subrepresentado" tooltip={chartMeta.infrastructure}>
               <DistributionBar data={infrastructureSports.slice(0, 8)} />
             </ChartCard>
           </div>
@@ -686,7 +692,10 @@ export default function Dashboard() {
               Las sedes PILARES se contabilizan como registro real. Los espacios operativos son una aproximación analítica para estimar capacidad territorial y no equivalen al número oficial de sedes. El mismo criterio se aplica cuando una instalación real requiere una capa operativa o de capacidad para análisis.
             </div>
             <div className="text-sm leading-6 text-ink-700">
-              DENUE representa unidades económicas registradas, no capacidad ni uso real del espacio. Mientras el extracto oficial disponible no exponga SCIAN verificable, gimnasios, clubes y academias privadas se mantienen como capa preparada.
+              UTOPÍAs se integran como capa institucional real por sede documentada. DENUE representa unidades económicas registradas, no capacidad ni uso real del espacio; mientras el extracto disponible no exponga SCIAN verificable en este proyecto, la capa privada se mantiene como preparada.
+            </div>
+            <div className="text-sm leading-6 text-ink-700">
+              Si una disciplina aparece baja o ausente, no debe leerse como inexistencia automática: puede estar no documentada o subrepresentada en la fuente actual.
             </div>
           </Card>
           <div className="grid gap-4 xl:grid-cols-[1.1fr_0.9fr]">
@@ -790,7 +799,7 @@ export default function Dashboard() {
                   <div className="flex items-center justify-between gap-3">
                     <div>
                       <div className="text-sm font-semibold text-ink-900">Infraestructura pública y comunitaria</div>
-                      <div className="mt-1 text-xs text-ink-600">PILARES y deportivos públicos se reportan como sedes/instalaciones reales; las capas operativas se presentan aparte.</div>
+                      <div className="mt-1 text-xs text-ink-600">PILARES, UTOPÍAs y deportivos públicos se reportan como sedes o instalaciones reales; las capas operativas se presentan aparte.</div>
                     </div>
                     <div className="text-right">
                       <div className="text-2xl font-semibold text-ink-900">{formatNumber(visiblePublicUnits)}</div>
@@ -942,6 +951,11 @@ export default function Dashboard() {
                           <div className="mt-2 text-xs text-ink-600">Conteo real por sede</div>
                         </div>
                         <div className="rounded-2xl border border-mist-200 bg-white px-4 py-4">
+                          <div className="text-[11px] font-semibold uppercase tracking-wide text-ink-600">UTOPÍAs</div>
+                          <div className="mt-2 text-2xl font-semibold text-ink-900">{formatNumber(utopiasMapSites)}</div>
+                          <div className="mt-2 text-xs text-ink-600">Capa institucional real documentada</div>
+                        </div>
+                        <div className="rounded-2xl border border-mist-200 bg-white px-4 py-4">
                           <div className="text-[11px] font-semibold uppercase tracking-wide text-ink-600">Espacios PILARES</div>
                           <div className="mt-2 text-2xl font-semibold text-ink-900">{formatNumber(pilaresMapOperational)}</div>
                           <div className="mt-2 text-xs text-ink-600">Estimación operativa para lectura territorial</div>
@@ -1062,12 +1076,12 @@ export default function Dashboard() {
         </section>
       ) : null}
 
-      {activeSection === "500 Canchas" ? (
+      {activeSection === "Canchas" ? (
         <section className="section-block">
           <div>
-            <div className="section-kicker">4. 500 Canchas</div>
+            <div className="section-kicker">4. Canchas</div>
             <div className="section-heading">Operación territorial de canchas</div>
-            <div className="section-copy">Módulo administrativo basado en el Excel real de 500 Canchas. Integra operación, atributos territoriales, PILARES asociados y estatus derivados sin depender del color visual del archivo.</div>
+            <div className="section-copy">Módulo administrativo basado en el Excel real del programa de canchas. Integra operación, atributos territoriales, PILARES asociados y estatus derivados sin depender del color visual del archivo.</div>
           </div>
           <Card className={`space-y-4 p-5 ${presentationMode ? "hidden" : ""}`}>
             <div className="flex flex-wrap items-center justify-between gap-3">
