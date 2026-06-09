@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
+import AccessGate from "../../components/AccessGate";
 import Badge from "../../components/ui/Badge";
 import Dashboard from "../../components/Dashboard";
 import LoadingState from "../../components/LoadingState";
@@ -8,7 +9,7 @@ import Toggle from "../../components/ui/Toggle";
 import useDashboardDataLoader from "../../lib/useDashboardDataLoader";
 import { useDashboardStore } from "../../store/useDashboardStore";
 
-export default function DashboardPage() {
+function DashboardContent() {
   const { ready } = useDashboardDataLoader();
   const { dataset, loading, error, presentationMode, setPresentationMode } = useDashboardStore();
 
@@ -57,5 +58,13 @@ export default function DashboardPage() {
         ) : null}
       </div>
     </main>
+  );
+}
+
+export default function DashboardPage() {
+  return (
+    <AccessGate>
+      <DashboardContent />
+    </AccessGate>
   );
 }

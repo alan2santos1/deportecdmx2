@@ -6,6 +6,7 @@
     "data:build": "node --import tsx scripts/convert-xlsx-to-json.ts",
     "dev": "npm run data:build && next dev",
     "build": "npm run data:build && next build",
+    "build:deport": "DEPLOY_BASE_PATH=/deport npm run build",
     "build:deporte": "DEPLOY_BASE_PATH=/deporte npm run build",
     "start": "next start",
     "lint": "next lint"

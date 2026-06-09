@@ -1,6 +1,6 @@
 {
   "meta": {
-    "generatedAt": "2026-03-28T05:39:38.308Z",
+    "generatedAt": "2026-05-24T17:07:07.345Z",
     "supportedYears": [
       2020,
       2021,
@@ -69588,7 +69588,7 @@
       "telefonoFiguraEducativa": "5543226222",
       "inaugurationDateRaw": "46123",
       "inaugurationDateIso": "2026-04-11",
-      "inaugurationStatus": "proxima",
+      "inaugurationStatus": "inaugurada",
       "tienePromotorFutbol": "si",
       "mallaHorariaFutbol": "MARTES A VIERNE 10:00-11:00 MARTES A VIERNES 16:00 A 18:00. SABADOS DE 07:30 A 10:30",
       "schedule": "MARTES A VIERNE 10:00-11:00 MARTES A VIERNES 16:00 A 18:00. SABADOS DE 07:30 A 10:30",
@@ -69614,7 +69614,7 @@
       "dataType": "real",
       "methodologicalNote": "Base operativa real consolidada desde múltiples hojas del Excel. Base prioriza operación administrativa; Alc Dic, AlcFeb y Hoja 2 complementan atributos territoriales y geolocalización; Hoja 1 enriquece datos institucionales de PILARES cuando el match es posible. PILARES asignado se conserva separado del PILARES cercano territorial.",
       "statusDerivedNote": "Estatus completa derivado por 5/5 señales presentes: fecha sí, figura educativa sí, teléfono sí, horario general sí, actividades sí.",
-      "inaugurationDerivedNote": "Marcada como próxima por fecha futura o texto tentativo / por inaugurar.",
+      "inaugurationDerivedNote": "Marcada como inaugurada por fecha válida pasada o señal textual explícita de inauguración.",
       "dataQualityLabel": "media"
     },
     {
@@ -79359,7 +79359,7 @@
       "telefonoFiguraEducativa": "55 2702 4433",
       "inaugurationDateRaw": "46111",
       "inaugurationDateIso": "2026-03-30",
-      "inaugurationStatus": "proxima",
+      "inaugurationStatus": "inaugurada",
       "tienePromotorFutbol": "si",
       "mallaHorariaFutbol": "FUTBOL: MARTES Y JUEVES 04:00 A 08:00 PM Y SABADOS 11:00 A 13:00 HRS",
       "schedule": "BALONCESTO: LUNES, MIERCOLES 04:00 A 08:00 PM Y SABADOS 09:00 A 11:00 AM/FUTBOL: MARTES Y JUEVES 04:00 A 08:00 PM Y SABADOS 11:00 A 13:00 HRS",
@@ -79388,7 +79388,7 @@
       "dataType": "real",
       "methodologicalNote": "Base operativa real consolidada desde múltiples hojas del Excel. Base prioriza operación administrativa; Alc Dic, AlcFeb y Hoja 2 complementan atributos territoriales y geolocalización; Hoja 1 enriquece datos institucionales de PILARES cuando el match es posible. PILARES asignado se conserva separado del PILARES cercano territorial.",
       "statusDerivedNote": "Estatus completa derivado por 5/5 señales presentes: fecha sí, figura educativa sí, teléfono sí, horario general sí, actividades sí.",
-      "inaugurationDerivedNote": "Marcada como próxima por fecha futura o texto tentativo / por inaugurar.",
+      "inaugurationDerivedNote": "Marcada como inaugurada por fecha válida pasada o señal textual explícita de inauguración.",
       "dataQualityLabel": "media"
     },
     {
@@ -86587,7 +86587,7 @@
       "telefonoFiguraEducativa": "5540429338",
       "inaugurationDateRaw": "46130",
       "inaugurationDateIso": "2026-04-18",
-      "inaugurationStatus": "proxima",
+      "inaugurationStatus": "inaugurada",
       "tienePromotorFutbol": "si",
       "mallaHorariaFutbol": "LUNES A VIERNES DE 14:30 A 15:30. LUNES DE 14:30 A 17:30.",
       "schedule": "LUNES A VIERNES DE 14:30 A 15:30. LUNES DE 14:30 A 17:30.",
@@ -86611,7 +86611,7 @@
       "dataType": "real",
       "methodologicalNote": "Base operativa real consolidada desde múltiples hojas del Excel. Base prioriza operación administrativa; Alc Dic, AlcFeb y Hoja 2 complementan atributos territoriales y geolocalización; Hoja 1 enriquece datos institucionales de PILARES cuando el match es posible. PILARES asignado se conserva separado del PILARES cercano territorial.",
       "statusDerivedNote": "Estatus lista para operar derivado por 4/5 señales presentes: fecha sí, figura educativa sí, teléfono sí, horario general sí, actividades no.",
-      "inaugurationDerivedNote": "Marcada como próxima por fecha futura o texto tentativo / por inaugurar.",
+      "inaugurationDerivedNote": "Marcada como inaugurada por fecha válida pasada o señal textual explícita de inauguración.",
       "dataQualityLabel": "alta"
     },
     {
@@ -86654,7 +86654,7 @@
       "telefonoFiguraEducativa": "5658934878",
       "inaugurationDateRaw": "46137",
       "inaugurationDateIso": "2026-04-25",
-      "inaugurationStatus": "proxima",
+      "inaugurationStatus": "inaugurada",
       "tienePromotorFutbol": "si",
       "mallaHorariaFutbol": "LUNES A JUEVES DE 16:00 A 19:00 HRS. VIERNES DE 16:00 A 18:00 HRS.",
       "schedule": "LUNES A JUEVES DE 16:00 A 19:00 HRS. VIERNES DE 16:00 A 18:00 HRS.",
@@ -86678,7 +86678,7 @@
       "dataType": "real",
       "methodologicalNote": "Base operativa real consolidada desde múltiples hojas del Excel. Base prioriza operación administrativa; Alc Dic, AlcFeb y Hoja 2 complementan atributos territoriales y geolocalización; Hoja 1 enriquece datos institucionales de PILARES cuando el match es posible. PILARES asignado se conserva separado del PILARES cercano territorial.",
       "statusDerivedNote": "Estatus lista para operar derivado por 4/5 señales presentes: fecha sí, figura educativa sí, teléfono sí, horario general sí, actividades no.",
-      "inaugurationDerivedNote": "Marcada como próxima por fecha futura o texto tentativo / por inaugurar.",
+      "inaugurationDerivedNote": "Marcada como inaugurada por fecha válida pasada o señal textual explícita de inauguración.",
       "dataQualityLabel": "alta"
     },
     {
@@ -90699,8 +90699,8 @@
     {
       "alcaldia": "Cuauhtémoc",
       "total": 21,
-      "inauguradas": 3,
-      "proximas": 18,
+      "inauguradas": 4,
+      "proximas": 17,
       "pendientes": 0,
       "completas": 4,
       "conHorario": 7,
@@ -90849,8 +90849,8 @@
     {
       "alcaldia": "Coyoacán",
       "total": 7,
-      "inauguradas": 0,
-      "proximas": 7,
+      "inauguradas": 3,
+      "proximas": 4,
       "pendientes": 0,
       "completas": 2,
       "conHorario": 4,
