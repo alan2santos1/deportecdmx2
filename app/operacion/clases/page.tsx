@@ -2,14 +2,18 @@
 
 import Link from "next/link";
 import { useMemo, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import operationalDataset from "../../../data/processed/operacion/operacion-asistencia.json";
+import SearchSelect from "../../../components/ui/SearchSelect";
 import type { OperationalModuleDataset } from "../../../lib/operations-types";
 
 export default function OperacionClasesPage() {
   const dataset = operationalDataset as OperationalModuleDataset;
+  const searchParams = useSearchParams();
   const [channel, setChannel] = useState("todos");
   const [discipline, setDiscipline] = useState("todas");
   const [search, setSearch] = useState("");
+  const highlightedClassId = searchParams.get("classId");
 
   const venuesById = useMemo(() => new Map(dataset.venues.map((item) => [item.id, item])), [dataset.venues]);
 
@@ -33,10 +37,7 @@ export default function OperacionClasesPage() {
       if (channel !== "todos" && classGroup.channel !== channel) return false;
       if (discipline !== "todas" && disciplineName !== discipline) return false;
       if (!normalizedSearch) return true;
-      return [classGroup.staffName, classGroup.venueName, disciplineName, venue?.alcaldia ?? ""]
-        .join(" ")
-        .toLowerCase()
-        .includes(normalizedSearch);
+      return [classGroup.staffName, classGroup.venueName, disciplineName, venue?.alcaldia ?? ""].join(" ").toLowerCase().includes(normalizedSearch);
     });
   }, [channel, dataset.classGroups, discipline, search, venuesById]);
 
@@ -47,34 +48,47 @@ export default function OperacionClasesPage() {
           <div className="section-kicker">Catálogo operativo</div>
           <h2 className="section-heading">Clases y horarios</h2>
           <p className="section-copy">
-            Vista transversal de grupos reales consolidados desde Ponte Pila y PILARES. Sirve para localizar rápidamente sede,
-            responsable, disciplina y horario.
+            Vista transversal de grupos reales consolidados desde Ponte Pila y PILARES. La lectura está optimizada para consulta
+            rápida desde móvil o escritorio.
           </p>
         </div>
 
-        <div className="grid gap-4 md:grid-cols-3">
+        <div className="grid gap-4 md:grid-cols-[minmax(0,1.2fr)_220px_280px]">
           <label className="block space-y-2">
             <span className="text-sm font-semibold text-ink-800">Buscar</span>
             <input className="input" value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Profesor, sede o disciplina" />
           </label>
-          <label className="block space-y-2">
+
+          <div className="space-y-2">
             <span className="text-sm font-semibold text-ink-800">Canal</span>
-            <select className="input" value={channel} onChange={(event) => setChannel(event.target.value)}>
-              <option value="todos">Todos</option>
-              <option value="ponte_pila">Ponte Pila</option>
-              <option value="pilares">PILARES</option>
-            </select>
-          </label>
+            <div className="flex flex-wrap gap-2">
+              {[
+                { value: "todos", label: "Todos" },
+                { value: "ponte_pila", label: "Ponte Pila" },
+                { value: "pilares", label: "PILARES" }
+              ].map((item) => (
+                <button
+                  key={item.value}
+                  type="button"
+                  className={channel === item.value ? "tab tab-active" : "tab tab-inactive border border-mist-200"}
+                  onClick={() => setChannel(item.value)}
+                >
+                  {item.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
           <label className="block space-y-2">
             <span className="text-sm font-semibold text-ink-800">Disciplina</span>
-            <select className="input" value={discipline} onChange={(event) => setDiscipline(event.target.value)}>
-              <option value="todas">Todas</option>
-              {disciplineOptions.map((item) => (
-                <option key={item} value={item}>
-                  {item}
-                </option>
-              ))}
-            </select>
+            <SearchSelect
+              value={discipline}
+              options={[
+                { value: "todas", label: "Todas las disciplinas" },
+                ...disciplineOptions.map((item) => ({ value: item, label: item }))
+              ]}
+              onChange={setDiscipline}
+            />
           </label>
         </div>
       </section>
@@ -90,8 +104,9 @@ export default function OperacionClasesPage() {
         <div className="grid gap-4 xl:grid-cols-2">
           {filteredClasses.slice(0, 60).map((classGroup) => {
             const venue = venuesById.get(classGroup.venueId);
+            const highlighted = highlightedClassId === classGroup.id;
             return (
-              <article key={classGroup.id} className="card p-5">
+              <article key={classGroup.id} className={`card p-4 ${highlighted ? "border-accent-600 bg-accent-600/5 shadow-lg" : ""}`}>
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <div className="space-y-1">
                     <div className="text-base font-semibold text-ink-900">
@@ -128,7 +143,7 @@ export default function OperacionClasesPage() {
                   </div>
                 </div>
                 <div className="mt-5">
-                  <Link className="btn-primary" href={`/operacion/asistencia?classId=${encodeURIComponent(classGroup.id)}`}>
+                  <Link className="btn-primary" href={`/operacion/asistencia?classId=${encodeURIComponent(classGroup.id)}&staffId=${encodeURIComponent(classGroup.staffId)}`}>
                     Pasar lista
                   </Link>
                 </div>

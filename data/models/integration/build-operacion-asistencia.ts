@@ -4,11 +4,13 @@ import type {
   AttendanceCaptureRule,
   OperationChannel,
   OperationClassGroupRecord,
+  OperationPersonName,
   OperationRolePermission,
   OperationRouteProposal,
   OperationScheduleSlot,
   OperationStaffRecord,
   OperationStudentRecord,
+  OperationUserRecord,
   OperationVenueRecord,
   OperationalModuleDataset,
   StaffFigure
@@ -53,6 +55,49 @@ const normalizeText = (value: string | number | null | undefined) =>
 const sanitizeText = (value: string | number | null | undefined) => {
   const text = String(value ?? "").replace(/\s+/g, " ").trim();
   return text.length > 0 ? text : null;
+};
+
+const toTitleCase = (value: string) =>
+  value
+    .toLowerCase()
+    .split(" ")
+    .filter(Boolean)
+    .map((chunk) => chunk.charAt(0).toUpperCase() + chunk.slice(1))
+    .join(" ");
+
+const parseOperationalPersonName = (value: string): OperationPersonName => {
+  const rawFullName = value.replace(/\s+/g, " ").trim();
+  const fallback = toTitleCase(rawFullName.toLowerCase());
+  const tokens = rawFullName
+    .split(" ")
+    .map((token) => token.trim())
+    .filter(Boolean);
+
+  if (tokens.length < 3) {
+    return {
+      rawFullName,
+      firstName: null,
+      paternalLastName: null,
+      maternalLastName: null,
+      displayName: fallback,
+      sortableName: fallback
+    };
+  }
+
+  const paternalLastName = toTitleCase(tokens[0].toLowerCase());
+  const maternalLastName = toTitleCase(tokens[1].toLowerCase());
+  const firstName = toTitleCase(tokens.slice(2).join(" ").toLowerCase());
+  const displayName = [firstName, paternalLastName, maternalLastName].filter(Boolean).join(" ").trim();
+  const sortableName = [paternalLastName, maternalLastName, firstName].filter(Boolean).join(" ").trim();
+
+  return {
+    rawFullName,
+    firstName,
+    paternalLastName,
+    maternalLastName,
+    displayName: displayName || fallback,
+    sortableName: sortableName || fallback
+  };
 };
 
 const alcaldiaCodeMap: Record<string, string> = {
@@ -218,47 +263,52 @@ const buildVenueId = (channel: OperationChannel, code: string | null, name: stri
 const buildClassGroupId = (channel: OperationChannel, venueId: string, staffId: string, activityKey: string, rowIndex: number) =>
   `${channel}-class-${slugify(venueId)}-${slugify(staffId)}-${slugify(activityKey)}-${rowIndex + 1}`;
 
+const buildUsername = (displayName: string, suffix?: string) => {
+  const base = normalizeText(displayName).replace(/\s+/g, ".");
+  return suffix ? `${base}.${suffix}` : base;
+};
+
 const buildRouteProposals = (): OperationRouteProposal[] => [
   {
     path: "/operacion",
     title: "Panorama operativo",
     purpose: "Monitorear personal, sedes, grupos activos y brechas de captura.",
-    audience: ["direccion", "admin", "rh"],
+    audience: ["direccion", "rh", "superadmin"],
     dataType: "preparado"
   },
   {
     path: "/operacion/clases",
     title: "Clases y horarios",
     purpose: "Consultar grupos por sede, disciplina, profesor y día.",
-    audience: ["profesor_promotor", "subcoordinacion", "admin"],
+    audience: ["profesor_promotor", "coordinador", "superadmin"],
     dataType: "preparado"
   },
   {
     path: "/operacion/asistencia",
     title: "Pase de lista diario",
     purpose: "Registrar asistencia únicamente el día de la clase con sello de fecha, hora, usuario y evidencia.",
-    audience: ["profesor_promotor", "subcoordinacion"],
+    audience: ["profesor_promotor", "coordinador"],
     dataType: "preparado"
   },
   {
     path: "/operacion/alumnos",
     title: "Altas, bajas e historial",
     purpose: "Gestionar matrícula por grupo sin perder trazabilidad histórica.",
-    audience: ["profesor_promotor", "subcoordinacion", "admin"],
+    audience: ["profesor_promotor", "coordinador", "superadmin"],
     dataType: "preparado"
   },
   {
     path: "/operacion/evidencia",
     title: "Evidencia fotográfica",
     purpose: "Resguardar evidencia ligada a asistencia y sesión operativa.",
-    audience: ["profesor_promotor", "subcoordinacion", "direccion"],
+    audience: ["profesor_promotor", "coordinador", "direccion"],
     dataType: "preparado"
   },
   {
     path: "/operacion/admin",
     title: "Auditoría y tiempo real",
     purpose: "Revisión transversal por dirección, RH y administración con histórico completo.",
-    audience: ["direccion", "rh", "admin"],
+    audience: ["direccion", "rh", "superadmin"],
     dataType: "preparado"
   }
 ];
@@ -294,7 +344,7 @@ const buildRolePermissions = (): OperationRolePermission[] => [
     dataType: "preparado"
   },
   {
-    role: "subcoordinacion",
+    role: "coordinador",
     scope: "Clases y asistencia de su zona o sede asignada.",
     canView: ["clases_de_zona", "historico_de_zona", "evidencia_de_zona"],
     canEdit: ["correcciones_del_dia", "movimientos_de_matricula"],
@@ -318,7 +368,7 @@ const buildRolePermissions = (): OperationRolePermission[] => [
     dataType: "preparado"
   },
   {
-    role: "admin",
+    role: "superadmin",
     scope: "Administración funcional y monitoreo en tiempo real.",
     canView: ["todo", "tiempo_real", "historico"],
     canEdit: ["catalogos", "correcciones_controladas"],
@@ -355,10 +405,12 @@ export const buildOperacionAsistenciaLayer = (): OperationalModuleDataset => {
     sourceHeader: string;
   }) => {
     const id = buildStaffId(input.channel, input.fullName);
+    const personName = parseOperationalPersonName(input.fullName);
     const current = staffMap.get(id);
     const next: OperationStaffRecord = current ?? {
       id,
-      fullName: input.fullName,
+      fullName: personName.displayName,
+      ...personName,
       sex: input.sex,
       figures: [],
       channels: [],
@@ -551,6 +603,72 @@ export const buildOperacionAsistenciaLayer = (): OperationalModuleDataset => {
   const attendanceCaptureRules = buildAttendanceRules();
   const rolePermissions = buildRolePermissions();
   const students: OperationStudentRecord[] = [];
+  const usersMap = new Map<string, OperationUserRecord>();
+
+  staffMap.forEach((staff) => {
+    const userId = `user-${staff.id}`;
+    usersMap.set(userId, {
+      userId,
+      staffId: staff.id,
+      role: "profesor_promotor",
+      username: buildUsername(staff.displayName, "prof"),
+      displayName: staff.displayName,
+      assignedScope: staff.channels.map((channel) => (channel === "ponte_pila" ? "Ponte Pila" : "PILARES")).join(" / "),
+      active: true,
+      sourceType: "derivado_mock",
+      dataType: "preparado",
+      methodologicalNote:
+        "Usuario mock derivado del personal operativo para simular acceso interno. Debe sustituirse por control de identidad real."
+    });
+  });
+
+  const coordinatorSeeds = Array.from(venueMap.values()).flatMap((venue) => {
+    const results: Array<{ name: string; role: OperationUserRecord["role"]; scope: string }> = [];
+    if (venue.coordinatorName) results.push({ name: venue.coordinatorName, role: "coordinador", scope: venue.region ?? venue.name });
+    if (venue.subcoordinatorName) results.push({ name: venue.subcoordinatorName, role: "coordinador", scope: venue.zone ?? venue.name });
+    if (venue.lcpoName) results.push({ name: venue.lcpoName, role: "lcpo", scope: venue.name });
+    return results;
+  });
+
+  coordinatorSeeds.forEach((seed, index) => {
+    const parsedName = parseOperationalPersonName(seed.name);
+    const userId = `user-internal-${seed.role}-${slugify(seed.name)}-${index + 1}`;
+    if (usersMap.has(userId)) return;
+    usersMap.set(userId, {
+      userId,
+      staffId: null,
+      role: seed.role,
+      username: buildUsername(parsedName.displayName, seed.role),
+      displayName: parsedName.displayName,
+      assignedScope: seed.scope,
+      active: true,
+      sourceType: "derivado_mock",
+      dataType: "preparado",
+      methodologicalNote:
+        "Usuario interno mock derivado de referencias operativas de sede. Sirve para preparar roles, no para autenticar en producción."
+    });
+  });
+
+  [
+    { role: "rh" as const, displayName: "Mesa RH Operación", username: "rh.operacion", assignedScope: "Transversal" },
+    { role: "direccion" as const, displayName: "Dirección Operativa", username: "direccion.operacion", assignedScope: "Global" },
+    { role: "superadmin" as const, displayName: "Superadmin Operación", username: "superadmin.operacion", assignedScope: "Global" }
+  ].forEach((seed) => {
+    const userId = `user-${seed.role}`;
+    usersMap.set(userId, {
+      userId,
+      staffId: null,
+      role: seed.role,
+      username: seed.username,
+      displayName: seed.displayName,
+      assignedScope: seed.assignedScope,
+      active: true,
+      sourceType: "derivado_mock",
+      dataType: "preparado",
+      methodologicalNote:
+        "Usuario interno mock agregado para probar alcance de dirección y administración sin desplegar autenticación real."
+    });
+  });
 
   return {
     meta: {
@@ -574,10 +692,12 @@ export const buildOperacionAsistenciaLayer = (): OperationalModuleDataset => {
       notes: [
         "Las fuentes actuales sí permiten construir personal, sedes y grupos operativos.",
         "Las fuentes actuales no contienen asistencia diaria transaccional, evidencia fotográfica ni padrón nominal de alumnos por clase.",
-        "La captura de asistencia, los alumnos y la evidencia se dejan listos como estructura preparada para una siguiente fase."
+        "La captura de asistencia, los alumnos y la evidencia se dejan listos como estructura preparada para una siguiente fase.",
+        "La normalización de nombres asume formato APELLIDO PATERNO APELLIDO MATERNO NOMBRES cuando hay al menos tres tokens; en casos ambiguos conserva fallback limpio y el nombre original."
       ]
     },
     summary: {
+      userCount: usersMap.size,
       staffCount: staffMap.size,
       venueCount: venueMap.size,
       classGroupCount: classGroups.length,
@@ -587,8 +707,11 @@ export const buildOperacionAsistenciaLayer = (): OperationalModuleDataset => {
       enrollmentCount: 0,
       attendanceRecordCount: 0,
       evidenceRecordCount: 0,
+      studentChangeCount: 0,
+      auditLogCount: 0,
       routeProposalCount: routeProposals.length
     },
+    users: Array.from(usersMap.values()).sort((a, b) => a.displayName.localeCompare(b.displayName, "es")),
     staff: Array.from(staffMap.values()).sort((a, b) => a.fullName.localeCompare(b.fullName, "es")),
     venues: Array.from(venueMap.values()).sort((a, b) => a.name.localeCompare(b.name, "es")),
     classGroups,
@@ -596,6 +719,8 @@ export const buildOperacionAsistenciaLayer = (): OperationalModuleDataset => {
     enrollments: [],
     attendanceRecords: [],
     evidenceRecords: [],
+    studentChanges: [],
+    auditLog: [],
     attendanceCaptureRules,
     rolePermissions,
     routeProposals

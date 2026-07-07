@@ -12,11 +12,20 @@ export type StaffFigure =
 
 export type AttendancePermissionRole =
   | "profesor_promotor"
-  | "subcoordinacion"
+  | "coordinador"
   | "lcpo"
   | "rh"
-  | "admin"
-  | "direccion";
+  | "direccion"
+  | "superadmin";
+
+export type OperationPersonName = {
+  rawFullName: string;
+  firstName: string | null;
+  paternalLastName: string | null;
+  maternalLastName: string | null;
+  displayName: string;
+  sortableName: string;
+};
 
 export type OperationScheduleSlot = {
   day:
@@ -32,7 +41,7 @@ export type OperationScheduleSlot = {
   rawLabel: string;
 };
 
-export type OperationStaffRecord = {
+export type OperationStaffRecord = OperationPersonName & {
   id: string;
   fullName: string;
   sex: "H" | "M" | "No documentado";
@@ -94,10 +103,11 @@ export type OperationClassGroupRecord = {
   methodologicalNote: string;
 };
 
-export type OperationStudentRecord = {
+export type OperationStudentRecord = OperationPersonName & {
   id: string;
   fullName: string;
   sex: "H" | "M" | "No documentado";
+  age: number | null;
   sourceFiles: string[];
   sourceType: "nominal_alumno" | "captura_manual";
   dataType: "real" | "preparado";
@@ -132,7 +142,7 @@ export type OperationAttendanceRecord = {
   attendanceTime: string;
   recordedByUserId: string;
   evidenceAssetId: string | null;
-  status: "presente" | "retardo" | "falta";
+  status: "presente" | "retardo" | "falta" | "justificado";
   dataType: "real" | "preparado";
   methodologicalNote: string;
 };
@@ -144,11 +154,35 @@ export type OperationEvidenceRecord = {
   uploadedByUserId: string;
   capturedAt: string;
   assetUrl: string | null;
+  localPreviewUrl?: string | null;
   fileName?: string | null;
   mimeType?: string | null;
   sourceType: "fotografia";
   dataType: "real" | "preparado";
   methodologicalNote: string;
+};
+
+export type OperationStudentChangeRecord = {
+  id: string;
+  classGroupId: string;
+  enrollmentId: string | null;
+  studentId: string;
+  changeType: "alta" | "baja" | "reactivacion" | "edicion";
+  timestamp: string;
+  changedByUserId: string;
+  notes: string;
+  dataType: "preparado";
+};
+
+export type OperationAuditRecord = {
+  id: string;
+  action: string;
+  timestamp: string;
+  userId: string;
+  entityType: "attendance" | "evidence" | "student" | "enrollment" | "session";
+  entityId: string;
+  notes: string;
+  dataType: "preparado";
 };
 
 export type AttendanceCaptureRule = {
@@ -168,10 +202,25 @@ export type OperationRolePermission = {
 };
 
 export type OperationUserSession = {
+  userId: string | null;
+  username: string | null;
   role: AttendancePermissionRole;
   staffId: string | null;
   displayName: string;
   dataType: "preparado";
+};
+
+export type OperationUserRecord = {
+  userId: string;
+  staffId: string | null;
+  role: AttendancePermissionRole;
+  username: string;
+  displayName: string;
+  assignedScope: string;
+  active: boolean;
+  sourceType: "derivado_mock";
+  dataType: "preparado";
+  methodologicalNote: string;
 };
 
 export type OperationClassRosterEntry = {
@@ -201,6 +250,7 @@ export type OperationalModuleDataset = {
     notes: string[];
   };
   summary: {
+    userCount: number;
     staffCount: number;
     venueCount: number;
     classGroupCount: number;
@@ -210,8 +260,11 @@ export type OperationalModuleDataset = {
     enrollmentCount: number;
     attendanceRecordCount: number;
     evidenceRecordCount: number;
+    studentChangeCount: number;
+    auditLogCount: number;
     routeProposalCount: number;
   };
+  users: OperationUserRecord[];
   staff: OperationStaffRecord[];
   venues: OperationVenueRecord[];
   classGroups: OperationClassGroupRecord[];
@@ -219,6 +272,8 @@ export type OperationalModuleDataset = {
   enrollments: OperationEnrollmentRecord[];
   attendanceRecords: OperationAttendanceRecord[];
   evidenceRecords: OperationEvidenceRecord[];
+  studentChanges: OperationStudentChangeRecord[];
+  auditLog: OperationAuditRecord[];
   attendanceCaptureRules: AttendanceCaptureRule[];
   rolePermissions: OperationRolePermission[];
   routeProposals: OperationRouteProposal[];
@@ -230,4 +285,6 @@ export type OperationLocalState = {
   enrollments: OperationEnrollmentRecord[];
   attendanceRecords: OperationAttendanceRecord[];
   evidenceRecords: OperationEvidenceRecord[];
+  studentChanges: OperationStudentChangeRecord[];
+  auditLog: OperationAuditRecord[];
 };

@@ -3,8 +3,9 @@
 import { ChangeEvent, useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import operationalDataset from "../../../data/processed/operacion/operacion-asistencia.json";
+import SearchSelect from "../../../components/ui/SearchSelect";
 import useOperationMockState from "../../../lib/useOperationMockState";
-import type { OperationalModuleDataset } from "../../../lib/operations-types";
+import type { OperationAttendanceRecord, OperationalModuleDataset } from "../../../lib/operations-types";
 
 const getTodayIso = () => {
   const today = new Date();
@@ -12,13 +13,24 @@ const getTodayIso = () => {
   return new Date(today.getTime() - offset).toISOString().slice(0, 10);
 };
 
+const attendanceOptions: Array<{
+  value: OperationAttendanceRecord["status"];
+  label: string;
+  tone: string;
+}> = [
+  { value: "presente", label: "Presente", tone: "bg-emerald-600 text-white" },
+  { value: "retardo", label: "Retardo", tone: "bg-amber-500 text-white" },
+  { value: "falta", label: "Falta", tone: "bg-rose-600 text-white" },
+  { value: "justificado", label: "Justificado", tone: "bg-slate-700 text-white" }
+];
+
 export default function OperacionAsistenciaPage() {
   const dataset = operationalDataset as OperationalModuleDataset;
   const searchParams = useSearchParams();
   const {
     state,
     effectiveStaff,
-    classesByRole,
+    effectiveUser,
     setStaff,
     addManualStudent,
     updateEnrollmentStatus,
@@ -29,11 +41,15 @@ export default function OperacionAsistenciaPage() {
 
   const queryStaffId = searchParams.get("staffId");
   const queryClassId = searchParams.get("classId");
+
   const [selectedStaffId, setSelectedStaffId] = useState(queryStaffId ?? state.userSession.staffId ?? dataset.staff[0]?.id ?? "");
   const [selectedClassId, setSelectedClassId] = useState(queryClassId ?? "");
   const [selectedDate, setSelectedDate] = useState("");
-  const [studentName, setStudentName] = useState("");
+  const [firstName, setFirstName] = useState("");
+  const [paternalLastName, setPaternalLastName] = useState("");
+  const [maternalLastName, setMaternalLastName] = useState("");
   const [studentSex, setStudentSex] = useState<"H" | "M" | "No documentado">("No documentado");
+  const [studentAge, setStudentAge] = useState("");
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [previewFileName, setPreviewFileName] = useState<string | null>(null);
   const [previewMimeType, setPreviewMimeType] = useState<string | null>(null);
@@ -45,8 +61,25 @@ export default function OperacionAsistenciaPage() {
 
   useEffect(() => {
     const nextStaff = dataset.staff.find((item) => item.id === selectedStaffId) ?? null;
-    setStaff(nextStaff);
+    if (nextStaff) setStaff(nextStaff);
   }, [dataset.staff, selectedStaffId]);
+
+  const staffOptions = useMemo(
+    () =>
+      dataset.staff.map((staff) => ({
+        value: staff.id,
+        label: staff.displayName,
+        hint:
+          [
+            staff.channels.map((channel) => (channel === "ponte_pila" ? "Ponte Pila" : "PILARES")).join(" / "),
+            staff.disciplines.slice(0, 2).join(" · ")
+          ]
+            .filter(Boolean)
+            .join(" · ") || "Sin disciplina documentada",
+        badge: `${staff.classGroupIds.length} clases`
+      })),
+    [dataset.staff]
+  );
 
   const classesForSelectedStaff = useMemo(
     () => dataset.classGroups.filter((item) => item.staffId === selectedStaffId),
@@ -70,9 +103,27 @@ export default function OperacionAsistenciaPage() {
     [dataset.staff, effectiveStaff, selectedStaffId]
   );
 
-  const roster = useMemo(() => (selectedClass ? getRosterForClass(selectedClass.id) : []), [getRosterForClass, selectedClass]);
+  const classOptions = useMemo(
+    () =>
+      classesForSelectedStaff.map((classGroup) => ({
+        value: classGroup.id,
+        label: classGroup.activityDetail ?? classGroup.activityName ?? classGroup.disciplineCatalog2026 ?? "Clase",
+        hint: `${classGroup.venueName} · ${classGroup.weeklySchedule.map((slot) => `${slot.day}: ${slot.rawLabel}`).join(" · ") || "Sin horario"}`,
+        badge: classGroup.channel === "ponte_pila" ? "Ponte Pila" : "PILARES"
+      })),
+    [classesForSelectedStaff]
+  );
 
+  const roster = useMemo(() => (selectedClass ? getRosterForClass(selectedClass.id) : []), [getRosterForClass, selectedClass]);
   const invalidDate = selectedDate !== "" && selectedDate !== getTodayIso();
+  const classesTodayCount = classesForSelectedStaff.filter((item) =>
+    item.weeklySchedule.some(
+      (slot) =>
+        slot.day ===
+        new Intl.DateTimeFormat("es-MX", { weekday: "long" }).format(new Date()).normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase()
+    )
+  ).length;
+  const attendanceCapturedCount = roster.filter((item) => item.attendanceToday).length;
 
   const handleEvidencePreview = (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -92,7 +143,7 @@ export default function OperacionAsistenciaPage() {
     const evidence = addEvidence({
       classGroupId: selectedClass.id,
       attendanceDate: selectedDate,
-      uploadedByUserId: selectedStaff?.id ?? state.userSession.staffId ?? "usuario-local",
+      uploadedByUserId: effectiveUser?.userId ?? selectedStaff?.id ?? state.userSession.userId ?? "usuario-local",
       assetUrl: previewUrl,
       fileName: previewFileName,
       mimeType: previewMimeType
@@ -101,105 +152,144 @@ export default function OperacionAsistenciaPage() {
   };
 
   const handleCreateStudent = () => {
-    if (!selectedClass || !studentName.trim()) return;
+    if (!selectedClass || !firstName.trim() || !paternalLastName.trim()) return;
     addManualStudent({
       classGroupId: selectedClass.id,
-      fullName: studentName.trim(),
-      sex: studentSex
+      firstName,
+      paternalLastName,
+      maternalLastName,
+      sex: studentSex,
+      age: studentAge ? Number(studentAge) : null
     });
-    setStudentName("");
+    setFirstName("");
+    setPaternalLastName("");
+    setMaternalLastName("");
     setStudentSex("No documentado");
+    setStudentAge("");
   };
 
-  const classesTodayCount = classesForSelectedStaff.filter((item) =>
-    item.weeklySchedule.some((slot) => slot.day === new Intl.DateTimeFormat("es-MX", { weekday: "long" }).format(new Date()).normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase())
-  ).length;
-
   return (
-    <div className="grid gap-6 xl:grid-cols-[1.15fr_0.85fr]">
+    <div className="grid gap-6 xl:grid-cols-[minmax(0,1.18fr)_360px]">
       <section className="section-block">
         <div className="space-y-2">
-          <div className="section-kicker">Flujo operativo</div>
-          <h2 className="section-heading">Pase de lista funcional</h2>
+          <div className="section-kicker">Captura diaria</div>
+          <h2 className="section-heading">Pase de lista del día</h2>
           <p className="section-copy">
-            La captura opera en tres pasos: profesor, clase y fecha del día. La persistencia sigue siendo local, pero el flujo
-            ya guarda timestamp, clase, profesor, usuario y estado de asistencia.
+            La captura está bloqueada al día actual. Guarda usuario simulado, profesor, clase, timestamp y evidencia local.
           </p>
         </div>
 
-        <div className="grid gap-5">
-          <div className="rounded-3xl border border-mist-200 bg-mist-100/70 p-5">
+        <div className="space-y-5">
+          <div className="rounded-[28px] border border-mist-200 bg-mist-100/70 p-4 md:p-5">
             <div className="section-kicker">Paso 1</div>
             <div className="mt-3 grid gap-4 lg:grid-cols-3">
               <label className="block space-y-2">
                 <span className="text-sm font-semibold text-ink-800">Profesor / promotor</span>
-                <select
-                  className="input"
+                <SearchSelect
                   value={selectedStaffId}
-                  onChange={(event) => {
-                    const nextId = event.target.value;
-                    setSelectedStaffId(nextId);
-                    const nextStaff = dataset.staff.find((item) => item.id === nextId) ?? null;
+                  options={staffOptions}
+                  onChange={(value) => {
+                    setSelectedStaffId(value);
+                    const nextStaff = dataset.staff.find((item) => item.id === value) ?? null;
                     setStaff(nextStaff);
                   }}
-                >
-                  {dataset.staff.map((staff) => (
-                    <option key={staff.id} value={staff.id}>
-                      {staff.fullName}
-                    </option>
-                  ))}
-                </select>
+                  placeholder="Seleccionar personal"
+                  searchPlaceholder="Buscar profesor o promotor"
+                />
               </label>
+
               <label className="block space-y-2">
                 <span className="text-sm font-semibold text-ink-800">Clase</span>
-                <select className="input" value={selectedClass?.id ?? ""} onChange={(event) => setSelectedClassId(event.target.value)}>
-                  {classesForSelectedStaff.map((classGroup) => (
-                    <option key={classGroup.id} value={classGroup.id}>
-                      {classGroup.activityDetail ?? classGroup.activityName ?? classGroup.disciplineCatalog2026 ?? "Clase"} · {classGroup.venueName}
-                    </option>
-                  ))}
-                </select>
+                <SearchSelect
+                  value={selectedClass?.id ?? ""}
+                  options={classOptions}
+                  onChange={setSelectedClassId}
+                  placeholder="Seleccionar clase"
+                  searchPlaceholder="Buscar clase o sede"
+                  emptyText="Este profesor todavía no tiene clases visibles."
+                />
               </label>
+
               <label className="block space-y-2">
-                <span className="text-sm font-semibold text-ink-800">Fecha</span>
+                <span className="text-sm font-semibold text-ink-800">Fecha habilitada</span>
                 <input className="input" type="date" value={selectedDate} onChange={(event) => setSelectedDate(event.target.value)} />
               </label>
             </div>
-            {invalidDate ? (
-              <div className="mt-4 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm leading-6 text-red-700">
-                La asistencia solo puede capturarse el día actual. No se permiten fechas pasadas ni futuras.
-              </div>
-            ) : (
-              <div className="mt-4 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm leading-6 text-amber-900">
-                La fecha habilitada es únicamente {getTodayIso()}. La captura retroactiva y anticipada queda bloqueada.
-              </div>
-            )}
+
+            <div className="mt-4 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm leading-6 text-amber-900">
+              {invalidDate
+                ? "La asistencia solo puede capturarse el día actual. No se permiten fechas pasadas ni futuras."
+                : `Captura habilitada únicamente para ${getTodayIso()}. Las fechas fuera de hoy quedan bloqueadas.`}
+            </div>
           </div>
 
-          <div className="rounded-3xl border border-mist-200 bg-white p-5">
+          <div className="rounded-[28px] border border-mist-200 bg-white p-4 md:p-5">
             <div className="section-kicker">Paso 2</div>
-            <div className="mt-2 text-lg font-semibold text-ink-900">Alumnos y estado de asistencia</div>
-            <p className="mt-2 text-sm leading-6 text-ink-600">
-              Los alumnos base se generan de forma mock coherente desde cada clase. Las altas manuales y las bajas se conservan
-              en historial local.
-            </p>
+            <div className="mt-2 flex flex-wrap items-end justify-between gap-3">
+              <div>
+                <div className="text-lg font-semibold text-ink-900">Alumnos por clase</div>
+                <p className="mt-2 text-sm leading-6 text-ink-600">
+                  La matrícula sigue siendo mock/local, pero ya permite altas, bajas y registro diario con estado de asistencia.
+                </p>
+              </div>
+              <div className="badge">{attendanceCapturedCount} capturas hoy</div>
+            </div>
 
-            <div className="mt-5 grid gap-4 rounded-3xl border border-mist-200 bg-mist-100/60 p-5 lg:grid-cols-[1fr_180px_160px]">
+            <div className="mt-5 grid gap-4 rounded-[24px] border border-mist-200 bg-mist-100/60 p-4 lg:grid-cols-2 xl:grid-cols-5">
+              <label className="block space-y-2 xl:col-span-2">
+                <span className="text-sm font-semibold text-ink-800">Nombre</span>
+                <input className="input" value={firstName} onChange={(event) => setFirstName(event.target.value)} placeholder="Nombre" />
+              </label>
               <label className="block space-y-2">
-                <span className="text-sm font-semibold text-ink-800">Agregar alumno manualmente</span>
-                <input className="input" value={studentName} onChange={(event) => setStudentName(event.target.value)} placeholder="Nombre completo" />
+                <span className="text-sm font-semibold text-ink-800">Apellido paterno</span>
+                <input
+                  className="input"
+                  value={paternalLastName}
+                  onChange={(event) => setPaternalLastName(event.target.value)}
+                  placeholder="Apellido paterno"
+                />
+              </label>
+              <label className="block space-y-2">
+                <span className="text-sm font-semibold text-ink-800">Apellido materno</span>
+                <input
+                  className="input"
+                  value={maternalLastName}
+                  onChange={(event) => setMaternalLastName(event.target.value)}
+                  placeholder="Apellido materno"
+                />
               </label>
               <label className="block space-y-2">
                 <span className="text-sm font-semibold text-ink-800">Sexo</span>
-                <select className="input" value={studentSex} onChange={(event) => setStudentSex(event.target.value as typeof studentSex)}>
-                  <option value="No documentado">No documentado</option>
-                  <option value="H">H</option>
-                  <option value="M">M</option>
-                </select>
+                <SearchSelect
+                  value={studentSex}
+                  options={[
+                    { value: "No documentado", label: "Sin dato" },
+                    { value: "H", label: "Hombre" },
+                    { value: "M", label: "Mujer" }
+                  ]}
+                  onChange={(value) => setStudentSex(value as typeof studentSex)}
+                />
               </label>
-              <div className="flex items-end">
-                <button className="btn-primary w-full" type="button" onClick={handleCreateStudent} disabled={!selectedClass || !studentName.trim()}>
-                  Agregar
+              <label className="block space-y-2">
+                <span className="text-sm font-semibold text-ink-800">Edad</span>
+                <input
+                  className="input"
+                  type="number"
+                  min="1"
+                  max="99"
+                  value={studentAge}
+                  onChange={(event) => setStudentAge(event.target.value)}
+                  placeholder="Opcional"
+                />
+              </label>
+              <div className="flex items-end xl:col-span-5">
+                <button
+                  className="btn-primary w-full"
+                  type="button"
+                  onClick={handleCreateStudent}
+                  disabled={!selectedClass || !firstName.trim() || !paternalLastName.trim()}
+                >
+                  Agregar alumno a la clase
                 </button>
               </div>
             </div>
@@ -211,67 +301,72 @@ export default function OperacionAsistenciaPage() {
                 </div>
               ) : null}
 
-              {roster.map(({ student, enrollment, attendanceToday }) => {
-                if (!student) return null;
-                return (
-                  <article key={enrollment.id} className="meta-panel">
-                    <div className="flex flex-wrap items-start justify-between gap-3">
-                      <div>
-                        <div className="text-sm font-semibold text-ink-900">{student.fullName}</div>
-                        <p className="mt-1 text-sm text-ink-700">
-                          Inscripción: {enrollment.status} · Fuente: {student.sourceType === "captura_manual" ? "Manual" : "Mock"}
-                        </p>
-                      </div>
+              {roster.map(({ student, enrollment, attendanceToday }) => (
+                <article key={enrollment.id} className="meta-panel">
+                  <div className="flex flex-wrap items-start justify-between gap-3">
+                    <div className="space-y-1">
+                      <div className="text-sm font-semibold text-ink-900">{student.displayName}</div>
+                      <p className="text-sm text-ink-700">
+                        {student.age ? `${student.age} años · ` : ""}
+                        {student.sex === "No documentado" ? "Sexo sin dato" : student.sex}
+                        {" · "}
+                        {student.sourceType === "captura_manual" ? "Captura manual" : "Fuente nominal"}
+                      </p>
+                      <p className="text-xs leading-5 text-ink-600">
+                        Inscripción {enrollment.status} · Calidad de dato {student.dataType} · Origen {student.rawFullName}
+                      </p>
+                    </div>
+                    <button
+                      className="btn-ghost"
+                      type="button"
+                      onClick={() =>
+                        updateEnrollmentStatus({
+                          enrollmentId: enrollment.id,
+                          status: enrollment.status === "activa" ? "baja" : "activa",
+                          changedByUserId: effectiveUser?.userId ?? selectedStaff?.id ?? "usuario-local",
+                          note: enrollment.status === "activa" ? "Baja manual desde operación" : "Reactivación manual desde operación"
+                        })
+                      }
+                    >
+                      {enrollment.status === "activa" ? "Dar de baja" : "Reactivar"}
+                    </button>
+                  </div>
+
+                  <div className="mt-4 flex flex-wrap gap-2">
+                    {attendanceOptions.map((statusOption) => (
                       <button
-                        className="btn-ghost"
+                        key={statusOption.value}
+                        className={
+                          attendanceToday?.status === statusOption.value ? `btn ${statusOption.tone}` : "btn-ghost"
+                        }
                         type="button"
+                        disabled={invalidDate || enrollment.status !== "activa" || !selectedClass || !selectedStaff}
                         onClick={() =>
-                          updateEnrollmentStatus({
-                            enrollmentId: enrollment.id,
-                            status: enrollment.status === "activa" ? "baja" : "activa",
-                            changedByUserId: selectedStaff?.id ?? "usuario-local",
-                            note: enrollment.status === "activa" ? "Baja manual desde operación" : "Reactivación manual desde operación"
+                          selectedClass &&
+                          selectedStaff &&
+                          markAttendance({
+                            classGroupId: selectedClass.id,
+                            studentId: student.id,
+                            status: statusOption.value,
+                            recordedByUserId: effectiveUser?.userId ?? state.userSession.userId ?? selectedStaff.id,
+                            staffId: selectedStaff.id,
+                            staffName: selectedStaff.displayName,
+                            evidenceAssetId: savedEvidenceId
                           })
                         }
                       >
-                        {enrollment.status === "activa" ? "Dar de baja" : "Reactivar"}
+                        {statusOption.label}
                       </button>
-                    </div>
+                    ))}
+                  </div>
 
-                    <div className="mt-4 flex flex-wrap gap-2">
-                      {(["presente", "retardo", "falta"] as const).map((status) => (
-                        <button
-                          key={status}
-                          className={attendanceToday?.status === status ? "btn-primary" : "btn-ghost"}
-                          type="button"
-                          disabled={invalidDate || enrollment.status !== "activa" || !selectedClass || !selectedStaff}
-                          onClick={() =>
-                            selectedClass &&
-                            selectedStaff &&
-                            markAttendance({
-                              classGroupId: selectedClass.id,
-                              studentId: student.id,
-                              status,
-                              recordedByUserId: state.userSession.staffId ?? selectedStaff.id,
-                              staffId: selectedStaff.id,
-                              staffName: selectedStaff.fullName,
-                              evidenceAssetId: savedEvidenceId
-                            })
-                          }
-                        >
-                          {status === "retardo" ? "retardó" : status}
-                        </button>
-                      ))}
-                    </div>
-
-                    {attendanceToday ? (
-                      <p className="mt-3 text-sm text-ink-600">
-                        Capturado a las {attendanceToday.attendanceTime} por {attendanceToday.staffName}.
-                      </p>
-                    ) : null}
-                  </article>
-                );
-              })}
+                  {attendanceToday ? (
+                    <p className="mt-3 text-sm text-ink-600">
+                      Capturado a las {attendanceToday.attendanceTime} por {attendanceToday.staffName}. Estado: {attendanceToday.status}.
+                    </p>
+                  ) : null}
+                </article>
+              ))}
             </div>
           </div>
         </div>
@@ -280,25 +375,28 @@ export default function OperacionAsistenciaPage() {
       <section className="section-block">
         <div className="space-y-2">
           <div className="section-kicker">Paso 3</div>
-          <h2 className="section-heading">Evidencia y resumen del día</h2>
+          <h2 className="section-heading">Evidencia y control del día</h2>
         </div>
 
         <div className="space-y-4">
-          <div className="meta-panel">
-            <div className="meta-label">Profesor visible</div>
-            <div className="meta-value">{selectedStaff?.fullName ?? "Sin selección"}</div>
+          <div className="stat-card">
+            <div className="meta-label">Usuario activo</div>
+            <div className="mt-2 text-base font-semibold text-ink-900">{effectiveUser?.displayName ?? state.userSession.displayName}</div>
+            <p className="mt-2 text-sm text-ink-600">{effectiveUser?.username ?? "usuario-local"} · {state.userSession.role}</p>
           </div>
-          <div className="meta-panel">
+          <div className="stat-card">
             <div className="meta-label">Clase seleccionada</div>
-            <div className="meta-value">
+            <div className="mt-2 text-base font-semibold text-ink-900">
               {selectedClass
-                ? `${selectedClass.activityDetail ?? selectedClass.activityName ?? selectedClass.disciplineCatalog2026 ?? "Clase"} · ${selectedClass.venueName}`
+                ? `${selectedClass.activityDetail ?? selectedClass.activityName ?? selectedClass.disciplineCatalog2026 ?? "Clase"}`
                 : "Sin clase seleccionada"}
             </div>
+            <p className="mt-2 text-sm text-ink-600">{selectedClass?.venueName ?? "Sin sede"} · {classesTodayCount} clases hoy</p>
           </div>
-          <div className="meta-panel">
-            <div className="meta-label">Clases del día para este profesor</div>
-            <div className="meta-value">{classesTodayCount.toLocaleString("es-MX")}</div>
+          <div className="stat-card">
+            <div className="meta-label">Último guardado</div>
+            <div className="mt-2 text-base font-semibold text-ink-900">{savedEvidenceId ? "Evidencia asociada" : "Sin evidencia guardada"}</div>
+            <p className="mt-2 text-sm text-ink-600">{savedEvidenceId ?? "Aún no se genera metadata local."}</p>
           </div>
 
           <label className="block space-y-2">
@@ -312,7 +410,7 @@ export default function OperacionAsistenciaPage() {
             </div>
           ) : (
             <div className="rounded-3xl border border-dashed border-mist-300 bg-white/80 p-6 text-sm text-ink-600">
-              La evidencia queda preparada para asociarse a la asistencia del día. Aún no se envía a storage real.
+              La evidencia se asocia a la lista del día y se conserva solo en el navegador en esta fase.
             </div>
           )}
 
@@ -321,12 +419,8 @@ export default function OperacionAsistenciaPage() {
           </button>
 
           <div className="meta-panel">
-            <div className="meta-label">Estado de guardado</div>
-            <div className="meta-value">
-              {savedEvidenceId
-                ? `Evidencia asociada localmente con id ${savedEvidenceId}`
-                : "Sin evidencia guardada todavía"}
-            </div>
+            <div className="meta-label">Regla activa</div>
+            <div className="meta-value">No se permite captura retroactiva ni futura. La bitácora y evidencia siguen en `localStorage`.</div>
           </div>
         </div>
       </section>

@@ -1,9 +1,17 @@
 # Operación y Asistencia
 
 ## Objetivo
-Preparar una capa operativa separada del dashboard territorial para controlar clases, personal operativo, sedes, horarios y futura captura de asistencia con trazabilidad.
+Mantener una capa operativa separada del dashboard territorial para control interno de:
 
-Esta capa **no se mezcla** con los módulos institucionales de actividad física, infraestructura o riesgo. Vive como módulo independiente de operación.
+- personal operativo
+- sedes
+- clases y mallas horarias
+- matrícula mock/local
+- asistencia diaria
+- evidencia fotográfica
+- supervisión administrativa
+
+Esta capa no se mezcla con infraestructura, riesgo, mapas institucionales ni módulos territoriales.
 
 ## Fuentes integradas
 1. `docs/MALLA HORARIA PUNTOS PONTE PILA 2026.xlsx`
@@ -12,30 +20,20 @@ Esta capa **no se mezcla** con los módulos institucionales de actividad física
 
 2. `docs/ACUMULADA PILARES ABRIL 26 GDE.xlsx`
    - Hoja: `abril`
-   - Cobertura real: sede PILARES, figura, persona asignada, tipo de promotor, actividad, actividad desagregada, horario por día, coordinador, subcoordinación, LCPO.
+   - Cobertura real: sede PILARES, figura, persona asignada, tipo de promotor, actividad, actividad desagregada, horario por día, coordinador y LCPO.
+
+3. `public/data/operacion-asistencia.json`
+   - Dataset procesado generado desde ambas fuentes.
 
 ## Hallazgos semánticos clave
-### 1. El archivo acumulado no es asistencia diaria
-La hoja `abril` **no contiene pase de lista transaccional**. Contiene carga operativa acumulada por persona, sede y horario.
+### 1. La acumulada no es asistencia diaria
+La hoja `abril` describe carga operativa y asignación de personal. No contiene pase de lista transaccional.
 
-### 2. El campo `NOMBRE COMPLETO DEL BENEFICIARIO` no se usa como alumno
-Aunque el encabezado dice “beneficiario”, por el contexto operativo de la fila:
-- `FIGURA`
-- `TIPO DE PROMOTOR`
-- `ACTIVIDAD`
-- `ACTIVIDAD DESAGREGADA`
-- `TOTAL DE HORAS SEMANA`
+### 2. `NOMBRE COMPLETO DEL BENEFICIARIO` se usa como personal operativo
+Por el contexto de figura, actividad y carga horaria, ese campo se interpreta como persona asignada a la operación y no como alumno nominal.
 
-se interpreta como **personal operativo asignado** y no como alumno nominal.
-
-### 3. No existe todavía padrón nominal de alumnos por clase
-Por eso:
-- `students`
-- `enrollments`
-- `attendanceRecords`
-- `evidenceRecords`
-
-quedan estructurados pero vacíos en esta primera iteración.
+### 3. No existe padrón nominal de alumnos por clase en las fuentes base
+Por eso la matrícula actual sigue como mock/local y vive en navegador.
 
 ## Dataset procesado
 Se genera en:
@@ -43,7 +41,7 @@ Se genera en:
 - `data/processed/operacion/operacion-asistencia.json`
 - `public/data/operacion-asistencia.json`
 
-## Qué ya quedó funcional
+## Qué ya funciona
 ### Rutas activas
 - `/operacion`
 - `/operacion/profesor`
@@ -51,61 +49,89 @@ Se genera en:
 - `/operacion/clases`
 - `/operacion/admin`
 
-### Funcionalidad ya operativa
-- selección local de profesor/promotor desde dataset procesado
-- búsqueda por nombre, disciplina o actividad
-- navegación visible entre Resumen, Profesor, Asistencia, Clases y Admin
-- visualización de clases asignadas por persona
-- resumen de sedes, disciplinas, horarios semanales y total de horas por profesor
-- catálogo navegable de clases con filtros básicos
-- selección de clase para pase de lista
-- roster mock determinístico por clase para simular matrícula inicial
-- alta manual de alumno en cliente
+### Flujo funcional actual
+- navegación operativa visible entre Resumen, Profesor, Asistencia, Clases y Admin
+- UI mobile-first con selectores buscables en lugar de selects nativos grandes
+- nombres de personal normalizados con:
+  - `rawFullName`
+  - `firstName`
+  - `paternalLastName`
+  - `maternalLastName`
+  - `displayName`
+  - `sortableName`
+- usuarios internos mock preparados por rol
+- simulación de acceso por profesor/promotor
+- lectura de clases propias, sedes, disciplinas y horarios
+- catálogo de clases con filtros rápidos
+- pase de lista del día con estados:
+  - `presente`
+  - `retardo`
+  - `falta`
+  - `justificado`
+- alta manual de alumno por clase con nombre y apellidos separados
 - baja y reactivación de inscripción con historial local
-- marcación de asistencia del día con estados `presente`, `retardo` y `falta`
-- guardado local de timestamp, clase, profesor/promotor y usuario visible
-- bloqueo visual de captura retroactiva
-- carga y vista previa de evidencia fotográfica
-- asociación local de evidencia a clase y fecha
-- filtros administrativos por canal, alcaldía, sede y disciplina
-- indicadores admin de clases del día, listas capturadas, pendientes, disciplinas e incidencias
+- carga de evidencia fotográfica con preview y metadata local
+- panel admin con:
+  - clases del día
+  - listas capturadas
+  - pendientes
+  - incidencias
+  - alumnos activos mock/local
+  - evidencias
+  - últimas listas guardadas
+- bitácora local preparada:
+  - `attendanceRecords`
+  - `evidenceRecords`
+  - `studentChanges`
+  - `auditLog`
 
-## Qué sigue mock o preparado
-- alumnos mock y manuales viven en `localStorage`, no en base de datos
-- inscripciones mock y manuales viven en `localStorage`, no en base de datos
-- asistencias capturadas viven en `localStorage`, no en base de datos
-- evidencia fotográfica se conserva localmente en navegador para la primera versión funcional
-- la selección de rol existe como contrato y UI, pero todavía no es autenticación real
+## Qué sigue mock/local
+- alumnos e inscripciones viven en `localStorage`
+- asistencias viven en `localStorage`
+- evidencia vive en `localStorage`
+- usuarios y roles son mock derivados del dataset
+- el control de permisos aún no se aplica del lado servidor
 
-## Qué necesita base de datos
-- padrón nominal real de alumnos por grupo
-- movimientos de alta y baja con auditoría institucional
+## Qué necesita base de datos para producción
+- usuarios reales y autenticación
+- relación usuario ↔ personal ↔ sede ↔ alcance
+- padrón nominal de alumnos por clase
+- altas y bajas persistentes
 - asistencia diaria con sello de servidor
-- almacenamiento real de evidencia fotográfica
-- usuarios, sesiones y permisos por rol
-- bitácora de modificaciones y correcciones
+- almacenamiento real de evidencia
+- bitácora institucional no editable por cliente
 
 ## Estructura del dataset
 ### `meta`
-Describe archivos fuente, hojas, número de filas y notas metodológicas.
+Archivos, hojas, filas, notas y limitaciones metodológicas.
 
 ### `summary`
-Resume:
-- personal operativo
-- sedes
-- grupos/clases
-- grupos Ponte Pila
-- grupos PILARES
-- número de entidades preparadas para asistencia
+Incluye:
+- `userCount`
+- `staffCount`
+- `venueCount`
+- `classGroupCount`
+- `attendanceRecordCount`
+- `studentChangeCount`
+- `auditLogCount`
+
+### `users`
+Usuarios internos mock preparados:
+- `userId`
+- `staffId`
+- `role`
+- `username`
+- `displayName`
+- `assignedScope`
+- `active`
 
 ### `staff`
-Personal operativo consolidado desde ambas fuentes:
-- promotores
-- entrenadores
-- animadores
+Personal operativo consolidado con nombre original y nombre normalizado para UI.
 
 Campos clave:
-- `fullName`
+- `rawFullName`
+- `displayName`
+- `sortableName`
 - `figures`
 - `channels`
 - `disciplines`
@@ -113,141 +139,114 @@ Campos clave:
 - `classGroupIds`
 
 ### `venues`
-Sedes operativas:
-- puntos Ponte Pila
-- sedes PILARES
-
-Campos clave:
-- `channel`
-- `name`
-- `alcaldia`
-- `address`
-- `georeferenceLink`
-- `latitude`
-- `longitude`
-- `reportingPilaresName`
-- `coordinatorName`
-- `subcoordinatorName`
-- `lcpoName`
+Sedes Ponte Pila y PILARES.
 
 ### `classGroups`
-Grupo operativo semanal derivado de una fila real de malla.
-
-Campos clave:
-- `channel`
-- `venueId`
-- `staffId`
-- `figure`
-- `disciplineCatalog2026`
-- `activityName`
-- `activityDetail`
-- `modality`
-- `weeklySchedule`
-- `weeklyHours`
+Grupos operativos reales derivados de las mallas.
 
 ### `students`
-Vacío en esta fase por falta de fuente nominal confiable de alumnos.
+Sigue vacío en fuente base. La app completa matrícula mock/local en cliente.
 
 ### `enrollments`
-Vacío en esta fase. Queda listo para futuras altas y bajas con historial.
+Sigue vacío en fuente base. La app crea altas y bajas locales.
 
 ### `attendanceRecords`
-Vacío en esta fase. Queda listo para registrar:
+Contrato listo para guardar:
+- clase
+- alumno
+- profesor
 - fecha
 - hora
-- usuario
-- evidencia
-- estado de asistencia
+- estado
+- evidencia asociada
 
 ### `evidenceRecords`
-Vacío en esta fase. Queda listo para evidencia fotográfica asociada a sesión y asistencia.
+Metadata local de evidencia fotográfica:
+- `evidenceId`
+- `classGroupId`
+- `attendanceDate`
+- `uploadedByUserId`
+- `capturedAt`
+- `fileName`
+- `localPreviewUrl`
 
-### `attendanceCaptureRules`
-Reglas funcionales preparadas:
-- solo el día de la clase
-- trazabilidad obligatoria
-- altas y bajas con historial
+### `studentChanges`
+Bitácora local de:
+- alta
+- baja
+- reactivación
+- edición
 
-### `rolePermissions`
-Roles preparados:
+### `auditLog`
+Bitácora local de acciones relevantes:
+- usuario
+- timestamp
+- entidad
+- acción
+- nota
+
+## Modelo de roles preparado
 - `profesor_promotor`
-- `subcoordinacion`
+  - solo sus clases y grupos
+- `coordinador`
+  - seguimiento de zona o sede asignada
 - `lcpo`
+  - operación de la sede
 - `rh`
-- `admin`
+  - lectura transversal administrativa
 - `direccion`
+  - lectura ejecutiva completa
+- `superadmin`
+  - corrección, reasignación y administración operativa
 
-### `routeProposals`
-Propuesta inicial de rutas UI:
-- `/operacion`
-- `/operacion/clases`
-- `/operacion/asistencia`
-- `/operacion/alumnos`
-- `/operacion/evidencia`
-- `/operacion/admin`
-
-## Reglas de negocio preparadas
+## Reglas de negocio activas
 ### Asistencia
-- solo se puede pasar lista el día de la clase
-- cada captura debe guardar fecha y hora
-- cada captura debe guardar usuario responsable
-- la evidencia queda asociada a sesión o lista
-
-### Permisos
-- el profesor/promotor solo ve sus clases
-- subcoordinación y LCPO ven su ámbito operativo
-- RH, administración y dirección ven histórico y tiempo real
+- solo se puede capturar el día actual
+- no se permite fecha pasada
+- no se permite fecha futura
+- cada registro guarda timestamp y usuario simulado
 
 ### Matrícula
-- las altas y bajas no deben borrar historial
-- una baja debe conservar fecha y responsable
+- no se borra historial
+- una baja conserva traza local
+- la reactivación queda registrada
 
-## Qué es real hoy
-- personal operativo
-- sedes
-- grupos/clases
-- horarios por día
-- coordinadores, subcoordinación y LCPO cuando la fuente lo trae
+### Evidencia
+- se asocia a clase y fecha
+- aún no sube a storage real
 
-## Qué queda solo preparado
-- alumnos nominales por clase
-- asistencia diaria transaccional
-- evidencia fotográfica
-- auditoría completa por usuario
-- permisos activos en aplicación
+## Flujo actual por vista
+### `/operacion/profesor`
+- selecciona profesor/promotor
+- muestra únicamente su carga operativa
+- usa nombre normalizado
+- resume horas, sedes, disciplinas y horarios
 
-## Cómo funciona hoy la simulación diaria
-### Profesor
-- selecciona un profesor/promotor desde el dataset procesado
-- consulta sus clases, sedes, disciplinas, horarios y horas semanales
-
-### Asistencia
+### `/operacion/asistencia`
 - selecciona profesor
 - selecciona clase
-- solo puede usar la fecha del día
-- ve roster mock coherente por clase
-- agrega alumnos manualmente cuando hace falta
-- marca `presente`, `retardo` o `falta`
-- asocia evidencia fotográfica local
+- fecha bloqueada al día actual
+- muestra alumnos mock/local
+- permite alta manual
+- permite `presente`, `retardo`, `falta`, `justificado`
+- guarda asistencia y evidencia local
 
-### Admin
-- consulta todas las clases sin depender del rol mock del profesor
-- filtra por canal, alcaldía, sede y disciplina
-- revisa clases del día, listas capturadas, pendientes e incidencias
+### `/operacion/admin`
+- filtra por canal, alcaldía, sede, disciplina y profesor/promotor
+- muestra pendientes y últimas capturas
+- concentra trazabilidad mock/local de la sesión
 
-## Propuesta de implementación siguiente
-1. Conectar captura diaria de asistencia por clase.
-2. Incorporar padrón nominal de alumnos por grupo.
-3. Agregar storage de evidencia.
-4. Implementar control de acceso por rol.
-5. Crear vistas separadas por profesor, sede y dirección.
+## Limitaciones actuales
+- la normalización de nombres asume formato `APELLIDO PATERNO APELLIDO MATERNO NOMBRES` cuando hay al menos tres tokens
+- si un nombre no se puede separar con suficiente claridad, se conserva fallback limpio y el valor original
+- la captura local depende del navegador y no sincroniza entre dispositivos
 
-## Propuesta de tablas reales futuras
+## Tablas sugeridas para producción
 ### `operation_users`
 - `id`
-- `full_name`
+- `staff_id`
 - `role`
-- `staff_reference_id`
+- `username`
 - `email`
 - `status`
 
@@ -258,31 +257,22 @@ Propuesta inicial de rutas UI:
 - `alcaldia`
 - `geo_key`
 - `address`
-- `latitude`
-- `longitude`
 
 ### `operation_class_groups`
 - `id`
 - `venue_id`
-- `staff_user_id`
+- `staff_id`
 - `discipline`
 - `activity`
-- `modality`
 - `weekly_hours`
-- `status`
-
-### `operation_class_schedule_slots`
-- `id`
-- `class_group_id`
-- `day_of_week`
-- `start_time`
-- `end_time`
 
 ### `operation_students`
 - `id`
-- `full_name`
+- `first_name`
+- `paternal_last_name`
+- `maternal_last_name`
 - `sex`
-- `birth_date`
+- `age`
 - `status`
 
 ### `operation_enrollments`
@@ -294,13 +284,14 @@ Propuesta inicial de rutas UI:
 - `end_date`
 - `created_by_user_id`
 
-### `operation_enrollment_history`
+### `operation_student_changes`
 - `id`
 - `enrollment_id`
-- `status`
-- `changed_at`
+- `student_id`
+- `change_type`
+- `timestamp`
 - `changed_by_user_id`
-- `note`
+- `notes`
 
 ### `operation_attendance_records`
 - `id`
@@ -318,6 +309,13 @@ Propuesta inicial de rutas UI:
 - `attendance_date`
 - `uploaded_by_user_id`
 - `captured_at`
-- `storage_url`
-- `mime_type`
-- `file_name`
+- `storage_path`
+
+### `operation_audit_log`
+- `id`
+- `user_id`
+- `action`
+- `entity_type`
+- `entity_id`
+- `notes`
+- `created_at`

@@ -17,21 +17,22 @@ export default function OperacionShell({ children }: { children: ReactNode }) {
   const pathname = usePathname();
 
   return (
-    <main className="min-h-screen bg-atmosphere px-6 py-10">
+    <main className="min-h-screen bg-atmosphere px-4 py-8 md:px-6 md:py-10">
       <div className="mx-auto flex w-full max-w-7xl flex-col gap-8">
-        <header className="space-y-4">
+        <header className="space-y-5">
           <div className="flex flex-wrap items-center gap-3">
             <Badge>Operación y asistencia</Badge>
             <Badge>Separado del dashboard territorial</Badge>
+            <Badge>Primera versión interna</Badge>
           </div>
           <div className="space-y-3">
             <h1 className="text-3xl font-semibold text-ink-900 md:text-4xl">Operación</h1>
             <p className="max-w-4xl text-sm leading-7 text-ink-600">
-              Módulo operativo para personal, clases, matrícula, asistencia y trazabilidad diaria. Esta capa no altera la
-              lógica territorial ni los indicadores institucionales del dashboard principal.
+              Módulo operativo para personal, clases, matrícula, asistencia y trazabilidad diaria. Esta capa no altera la lógica
+              territorial ni los indicadores institucionales del dashboard principal.
             </p>
           </div>
-          <nav className="flex flex-wrap gap-3">
+          <nav className="flex flex-wrap gap-2 md:gap-3">
             {navigationItems.map((item) => {
               const active = pathname === item.href;
               return (
