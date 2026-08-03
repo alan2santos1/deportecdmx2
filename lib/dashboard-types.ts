@@ -1,4 +1,5 @@
 export type DataLayer = "real" | "base_oficial" | "estimado" | "preparado" | "proyectado" | "insight";
+export type QualityGrade = "A" | "B" | "C" | "D";
 
 export type InfrastructureType =
   | "PILARES"
@@ -10,8 +11,13 @@ export type InfrastructureType =
   | "Parques / áreas verdes";
 
 export type MetricMetadata = {
+  sourceId?: string;
   source: string;
+  sourceDate?: string;
+  asOfDate?: string;
   dataType: DataLayer;
+  qualityGrade?: QualityGrade;
+  calculationVersion?: string;
   note: string;
 };
 
@@ -93,6 +99,37 @@ export type SportsRecord = {
   note: string;
 };
 
+export type ProgrammedOfferRecord = {
+  id: string;
+  year: number;
+  cutLabel: string;
+  sourceFile: string;
+  sourceSheet: string;
+  channel: "PILARES" | "Ponte Pila";
+  alcaldia: string;
+  geoKey: string | null;
+  disciplineOriginal: string | null;
+  disciplineNormalized: string | null;
+  disciplineCategory: string | null;
+  activityOriginal: string | null;
+  modality: string | null;
+  staffSex: "H" | "M" | "No documentado";
+  dayOfWeek: "lunes" | "martes" | "miercoles" | "jueves" | "viernes" | "sabado" | "domingo";
+  daypart: "matutina" | "vespertina" | "mixta";
+  isWeekend: boolean;
+  classGroupId: string;
+  sessionCount: number;
+  scheduledHours: number;
+  sourceRowCount: number;
+  dataType: "real";
+  sourceName: string;
+  sourceDate: string;
+  asOfDate: string;
+  qualityGrade: "A" | "B";
+  calculationVersion: string;
+  methodologicalNote: string;
+};
+
 export type HealthProfileRecord = {
   year: number;
   sex: "Hombres" | "Mujeres";
@@ -145,6 +182,16 @@ export type DashboardMeta = {
   methodologyBreaks: string[];
   projectedYears: number[];
   timelineNotes: string[];
+  catalogs: {
+    alcaldias: Array<{ id: string; label: string; geoKey: string }>;
+    channels: Array<{ id: string; label: string }>;
+    dataTypes: Array<{ id: DataLayer; label: string }>;
+    qualityGrades: Array<{ id: QualityGrade; label: string }>;
+    verificationStates: Array<{ id: string; label: string }>;
+    sexes: Array<{ id: string; label: string }>;
+    ageGroups: Array<{ id: string; label: string }>;
+    disciplineDictionaryVersion: string;
+  };
 };
 
 export type CanchaOperationalStatus = "completa" | "lista_para_operar" | "parcial" | "pendiente";
@@ -270,6 +317,7 @@ export type MapGeometryFeature = {
 export type DashboardDataset = {
   meta: DashboardMeta;
   territorialRecords: TerritorialRecord[];
+  programmedOfferRecords: ProgrammedOfferRecord[];
   infrastructureDetails: InfrastructureDetailRecord[];
   canchasRecords: CanchaOperationalRecord[];
   canchasSummary: CanchasSummaryRecord[];

@@ -7,6 +7,7 @@ import type {
   HealthProfileRecord,
   InfrastructureDetailRecord,
   MapAreaRecord,
+  ProgrammedOfferRecord,
   SportsRecord,
   TerritorialRecord
 } from "./dashboard-types";
@@ -60,6 +61,41 @@ export type CanchasExecutiveInsight = {
   body: string;
 };
 
+export type ProgrammedOfferDatum = {
+  name: string;
+  value: number;
+  percent: number;
+  denominator: number;
+};
+
+export type PanoramaAlcaldiaDatum = {
+  alcaldia: string;
+  poblacion: number;
+  mujeresPercent: number;
+  hombresPercent: number;
+  sedesProgramadas: number;
+  clasesProgramadas: number;
+  sesionesProgramadas: number;
+  horasProgramadas: number;
+  diversidadDisciplinaria: number;
+  principalesDisciplinas: string[];
+  infraestructuraPublica: number;
+  infraestructuraComunitaria: number;
+  infraestructuraPrivadaFormal: number;
+  utopias: number;
+  canchas: number;
+  coberturaProgramatica10k: number;
+  horasProgramadas10k: number;
+  qualityLabel: string;
+  cutLabel: string;
+};
+
+export type FilterApplicabilityNote = {
+  key: string;
+  scope: "aplica" | "parcial" | "no_aplica";
+  message: string;
+};
+
 export const emptyFilters: DashboardFilterState = {
   alcaldias: [],
   years: [],
@@ -85,14 +121,17 @@ const uniq = (items: string[]) => Array.from(new Set(items)).sort((a, b) => a.lo
 
 export const buildFilterConfig = (dataset: DashboardDataset) => {
   const records = dataset.territorialRecords;
-  const sports = dataset.sportsRecords;
+  const sports = uniq([
+    ...dataset.programmedOfferRecords.map((item) => item.disciplineNormalized).filter(Boolean) as string[],
+    ...dataset.infrastructureDetails.flatMap((item) => item.sportsAvailable)
+  ]);
   const infrastructureDetails = dataset.infrastructureDetails;
   return [
     { title: "Alcaldía", key: "alcaldias" as const, options: uniq(records.map((item) => item.alcaldia)).map((value) => ({ label: value, value })) },
     { title: "Año", key: "years" as const, options: uniq(records.map((item) => String(item.year))).map((value) => ({ label: value, value })) },
     { title: "Sexo", key: "sexes" as const, options: uniq(records.map((item) => item.sex)).map((value) => ({ label: value, value })) },
     { title: "Grupo de edad", key: "ageGroups" as const, options: uniq(records.map((item) => item.ageGroup)).map((value) => ({ label: value, value })) },
-    { title: "Deporte", key: "sports" as const, options: uniq(sports.map((item) => item.sport)).map((value) => ({ label: value, value })) },
+    { title: "Disciplina / oferta programada", key: "sports" as const, options: sports.map((value) => ({ label: value, value })) },
     {
       title: "Tipo de infraestructura",
       key: "infrastructureTypes" as const,
@@ -121,8 +160,6 @@ export const filterTerritorialRecords = (records: TerritorialRecord[], filters: 
     if (filters.years.length > 0 && !filters.years.includes(String(record.year))) return false;
     if (filters.sexes.length > 0 && !filters.sexes.includes(record.sex)) return false;
     if (filters.ageGroups.length > 0 && !filters.ageGroups.includes(record.ageGroup)) return false;
-    if (filters.sports.length > 0 && !filters.sports.includes(record.sportFocus)) return false;
-    if (!recordHasSelectedInfrastructure(record, filters.infrastructureTypes)) return false;
     return true;
   });
 };
@@ -155,6 +192,56 @@ export const filterInfrastructureDetails = (records: InfrastructureDetailRecord[
     if (filters.sports.length > 0 && !record.sportsAvailable.some((sport) => filters.sports.includes(sport))) return false;
     return true;
   });
+};
+
+const mapStaffSexSelection = (sexes: string[]) => sexes.flatMap((sex) => {
+  if (sex === "Hombres") return ["H"];
+  if (sex === "Mujeres") return ["M"];
+  return [];
+});
+
+export const filterProgrammedOfferRecords = (records: ProgrammedOfferRecord[], filters: DashboardFilterState) => {
+  const staffSexSelections = mapStaffSexSelection(filters.sexes);
+  return records.filter((record) => {
+    if (filters.alcaldias.length > 0 && !filters.alcaldias.includes(record.alcaldia)) return false;
+    if (filters.years.length > 0 && !filters.years.includes(String(record.year))) return false;
+    if (staffSexSelections.length > 0 && !staffSexSelections.includes(record.staffSex)) return false;
+    if (filters.sports.length > 0 && !filters.sports.includes(record.disciplineNormalized ?? "")) return false;
+    return true;
+  });
+};
+
+export const buildFilterApplicabilityNotes = (filters: DashboardFilterState): FilterApplicabilityNote[] => {
+  const notes: FilterApplicabilityNote[] = [];
+  if (filters.sports.length > 0) {
+    notes.push({
+      key: "sports",
+      scope: "parcial",
+      message: "La disciplina solo afecta oferta programada, infraestructura con disciplina documentada y lecturas operativas relacionadas. No modifica salud, demografía ni riesgo base."
+    });
+  }
+  if (filters.infrastructureTypes.length > 0) {
+    notes.push({
+      key: "infrastructureTypes",
+      scope: "parcial",
+      message: "El tipo de infraestructura afecta módulos de infraestructura y comparativas territoriales relacionadas. No vacía actividad, salud ni oferta programada."
+    });
+  }
+  if (filters.ageGroups.length > 0) {
+    notes.push({
+      key: "ageGroups",
+      scope: "parcial",
+      message: "El grupo de edad aplica a demografía, actividad y salud. No aplica a infraestructura, Canchas ni oferta programada porque las mallas no documentan población objetivo por clase."
+    });
+  }
+  if (filters.sexes.length > 0) {
+    notes.push({
+      key: "sexes",
+      scope: "parcial",
+      message: "El filtro de sexo aplica a actividad, salud y demografía. En oferta programada se usa solo cuando la fuente documenta sexo del personal asignado."
+    });
+  }
+  return notes;
 };
 
 const sum = (items: number[]) => items.reduce((acc, value) => acc + value, 0);
@@ -368,6 +455,155 @@ export const buildYearTrend = (records: TerritorialRecord[]) => {
   }).sort((a, b) => Number(a.name) - Number(b.name));
 };
 
+export const buildProgrammedOfferTop = (records: ProgrammedOfferRecord[], limit: 5 | 10): ProgrammedOfferDatum[] => {
+  const grouped = Array.from(groupBy(records, (record) => record.disciplineNormalized ?? "No documentada")).map(([name, items]) => ({
+    name,
+    value: sum(items.map((item) => item.sessionCount)),
+    denominator: sum(records.map((item) => item.sessionCount)) || 1
+  })).map((item) => ({
+    ...item,
+    percent: item.value / item.denominator
+  })).sort((a, b) => b.value - a.value);
+
+  const top = grouped.slice(0, limit);
+  const remaining = grouped.slice(limit);
+  const remainingValue = sum(remaining.map((item) => item.value));
+  if (remainingValue > 0) {
+    top.push({
+      name: "Otros",
+      value: remainingValue,
+      percent: remainingValue / (grouped[0]?.denominator ?? 1),
+      denominator: grouped[0]?.denominator ?? 1
+    });
+  }
+  return top;
+};
+
+export const buildProgrammedOfferDistribution = (
+  records: ProgrammedOfferRecord[],
+  getKey: (record: ProgrammedOfferRecord) => string
+): ProgrammedOfferDatum[] => {
+  const denominator = sum(records.map((record) => record.sessionCount)) || 1;
+  return Array.from(groupBy(records, getKey)).map(([name, items]) => ({
+    name,
+    value: sum(items.map((item) => item.sessionCount)),
+    percent: sum(items.map((item) => item.sessionCount)) / denominator,
+    denominator
+  })).sort((a, b) => b.value - a.value);
+};
+
+export const buildPanoramaDeportivoAlcaldia = (
+  territorialRecords: TerritorialRecord[],
+  programmedOfferRecords: ProgrammedOfferRecord[],
+  infrastructureDetails: InfrastructureDetailRecord[],
+  canchasRecords: CanchaOperationalRecord[]
+): PanoramaAlcaldiaDatum[] => {
+  const populationsByAlcaldia = new Map<string, { total: number; men: number; women: number }>();
+  Array.from(groupBy(territorialRecords, (record) => `${record.alcaldia}-${record.year}`)).forEach(([, items]) => {
+    const alcaldia = items[0]?.alcaldia;
+    if (!alcaldia || populationsByAlcaldia.has(alcaldia)) return;
+    const total = sum(items.map((item) => item.population));
+    const men = sum(items.filter((item) => item.sex === "Hombres").map((item) => item.population));
+    const women = sum(items.filter((item) => item.sex === "Mujeres").map((item) => item.population));
+    populationsByAlcaldia.set(alcaldia, { total, men, women });
+  });
+
+  const classGroupsByAlcaldia = new Map<string, Set<string>>();
+  const venuesByAlcaldia = new Map<string, Set<string>>();
+  const disciplinesByAlcaldia = new Map<string, Set<string>>();
+  const hoursByAlcaldia = new Map<string, number>();
+  const sessionsByAlcaldia = new Map<string, number>();
+
+  programmedOfferRecords.forEach((record) => {
+    classGroupsByAlcaldia.set(record.alcaldia, new Set([...(classGroupsByAlcaldia.get(record.alcaldia) ?? new Set()), record.classGroupId]));
+    venuesByAlcaldia.set(record.alcaldia, new Set([...(venuesByAlcaldia.get(record.alcaldia) ?? new Set()), `${record.channel}-${record.classGroupId.split("|")[2] ?? record.classGroupId}`]));
+    if (record.disciplineNormalized) {
+      disciplinesByAlcaldia.set(record.alcaldia, new Set([...(disciplinesByAlcaldia.get(record.alcaldia) ?? new Set()), record.disciplineNormalized]));
+    }
+    hoursByAlcaldia.set(record.alcaldia, (hoursByAlcaldia.get(record.alcaldia) ?? 0) + record.scheduledHours);
+    sessionsByAlcaldia.set(record.alcaldia, (sessionsByAlcaldia.get(record.alcaldia) ?? 0) + record.sessionCount);
+  });
+
+  const topDisciplinesByAlcaldia = new Map<string, string[]>();
+  Array.from(groupBy(programmedOfferRecords, (record) => record.alcaldia)).forEach(([alcaldia, items]) => {
+    const grouped = Array.from(groupBy(items, (item) => item.disciplineNormalized ?? "No documentada"))
+      .map(([name, disciplineItems]) => ({ name, value: sum(disciplineItems.map((item) => item.sessionCount)) }))
+      .sort((a, b) => b.value - a.value)
+      .slice(0, 3)
+      .map((item) => item.name);
+    topDisciplinesByAlcaldia.set(alcaldia, grouped);
+  });
+
+  return Array.from(populationsByAlcaldia.entries()).map(([alcaldia, population]) => {
+    const infra = infrastructureDetails.filter((item) => item.alcaldia === alcaldia);
+    const programVenues = venuesByAlcaldia.get(alcaldia)?.size ?? 0;
+    const programmedClasses = classGroupsByAlcaldia.get(alcaldia)?.size ?? 0;
+    const sessions = sessionsByAlcaldia.get(alcaldia) ?? 0;
+    const hours = hoursByAlcaldia.get(alcaldia) ?? 0;
+    return {
+      alcaldia,
+      poblacion: population.total,
+      mujeresPercent: population.total > 0 ? population.women / population.total : 0,
+      hombresPercent: population.total > 0 ? population.men / population.total : 0,
+      sedesProgramadas: programVenues,
+      clasesProgramadas: programmedClasses,
+      sesionesProgramadas: sessions,
+      horasProgramadas: Number(hours.toFixed(1)),
+      diversidadDisciplinaria: disciplinesByAlcaldia.get(alcaldia)?.size ?? 0,
+      principalesDisciplinas: topDisciplinesByAlcaldia.get(alcaldia) ?? [],
+      infraestructuraPublica: infra.filter((item) => item.infrastructureType === "Deportivos públicos").reduce((acc, item) => acc + item.administrativeCount, 0),
+      infraestructuraComunitaria:
+        infra.filter((item) => item.infrastructureType === "PILARES" || item.infrastructureType === "UTOPÍAs").reduce((acc, item) => acc + item.administrativeCount, 0),
+      infraestructuraPrivadaFormal: infra.filter((item) => item.sourceDataset === "Directorio Estadístico de Unidades Económicas CDMX").reduce((acc, item) => acc + item.administrativeCount, 0),
+      utopias: infra.filter((item) => item.infrastructureType === "UTOPÍAs").reduce((acc, item) => acc + item.administrativeCount, 0),
+      canchas: canchasRecords.filter((item) => item.alcaldia === alcaldia).length,
+      coberturaProgramatica10k: population.total > 0 ? (programVenues / population.total) * 10000 : 0,
+      horasProgramadas10k: population.total > 0 ? (hours / population.total) * 10000 : 0,
+      qualityLabel: sessions > 0 ? "A · oferta programada vigente" : "D · no disponible",
+      cutLabel: sessions > 0 ? "2026-07 Ponte Pila / 2026-04 PILARES" : "Aún no disponible"
+    };
+  }).sort((a, b) => b.sesionesProgramadas - a.sesionesProgramadas);
+};
+
+export const buildProgrammedOfferKpis = (records: ProgrammedOfferRecord[]) => {
+  const uniqueClasses = new Set(records.map((record) => record.classGroupId)).size;
+  const uniqueVenues = new Set(records.map((record) => `${record.channel}-${record.alcaldia}-${record.classGroupId.split("|")[2] ?? record.classGroupId}`)).size;
+  const uniqueDisciplines = new Set(records.map((record) => record.disciplineNormalized).filter(Boolean)).size;
+  const totalHours = sum(records.map((record) => record.scheduledHours));
+  const weekendSessions = records.filter((record) => record.isWeekend).length;
+  return [
+    { label: "Sedes con programación", value: formatNumber(uniqueVenues), helper: "Sedes o puntos con al menos una sesión programada en el corte visible" },
+    { label: "Clases programadas", value: formatNumber(uniqueClasses), helper: "Conteo único de grupos o clases programadas" },
+    { label: "Sesiones semanales", value: formatNumber(records.length), helper: "Slots de horario visibles en el corte operativo" },
+    { label: "Horas semanales", value: totalHours.toFixed(1), helper: "Horas programadas, no asistencia observada" },
+    { label: "Disciplinas ofertadas", value: formatNumber(uniqueDisciplines), helper: "Disciplinas distintas documentadas y normalizadas" },
+    { label: "Oferta en fin de semana", value: formatNumber(weekendSessions), helper: "Sesiones programadas sábado o domingo" }
+  ];
+};
+
+export const buildProgrammedOfferTableRows = (rows: PanoramaAlcaldiaDatum[]) =>
+  rows.map((row) => ({
+    Alcaldía: row.alcaldia,
+    Población: formatNumber(row.poblacion),
+    "% mujeres": `${(row.mujeresPercent * 100).toFixed(1)}%`,
+    "% hombres": `${(row.hombresPercent * 100).toFixed(1)}%`,
+    "Sedes programadas": formatNumber(row.sedesProgramadas),
+    "Clases programadas": formatNumber(row.clasesProgramadas),
+    "Sesiones programadas": formatNumber(row.sesionesProgramadas),
+    "Horas programadas": row.horasProgramadas.toFixed(1),
+    "Diversidad disciplinaria": formatNumber(row.diversidadDisciplinaria),
+    "Principales disciplinas": row.principalesDisciplinas.join(", ") || "Aún no disponible",
+    "Infraestructura pública": formatNumber(row.infraestructuraPublica),
+    "Infraestructura comunitaria": formatNumber(row.infraestructuraComunitaria),
+    "Infraestructura privada formal": formatNumber(row.infraestructuraPrivadaFormal),
+    UTOPÍAs: formatNumber(row.utopias),
+    Canchas: formatNumber(row.canchas),
+    "Cobertura programática x10k": row.coberturaProgramatica10k.toFixed(2),
+    "Horas programadas x10k": row.horasProgramadas10k.toFixed(2),
+    "Corte": row.cutLabel,
+    "Calidad": row.qualityLabel
+  }));
+
 export const buildInfrastructureDetailRows = (records: InfrastructureDetailRecord[]) => {
   return records.map((record) => ({
     "Año": String(record.year),
@@ -455,15 +691,24 @@ export const buildInfrastructureAlcaldiaExtremes = (records: InfrastructureDetai
   };
 };
 
-export const buildDataLayerSummary = (records: TerritorialRecord[]) => {
+export const buildDataLayerSummary = (
+  records: TerritorialRecord[],
+  infrastructureDetails: InfrastructureDetailRecord[],
+  programmedOfferRecords: ProgrammedOfferRecord[]
+) => {
   const counts = new Map<DataLayer, number>();
   records.forEach((record) => {
-    counts.set(record.infrastructureDataType, (counts.get(record.infrastructureDataType) ?? 0) + 1);
     counts.set(record.healthDataType, (counts.get(record.healthDataType) ?? 0) + 1);
     counts.set(record.activityDataType, (counts.get(record.activityDataType) ?? 0) + 1);
   });
+  infrastructureDetails.forEach((record) => {
+    counts.set(record.dataType, (counts.get(record.dataType) ?? 0) + 1);
+  });
+  programmedOfferRecords.forEach((record) => {
+    counts.set(record.dataType, (counts.get(record.dataType) ?? 0) + 1);
+  });
   return [
-    { label: "Dato real", value: String(counts.get("real") ?? 0), helper: "Infraestructura contable y observable" },
+    { label: "Dato real", value: String(counts.get("real") ?? 0), helper: "Infraestructura nominal y oferta programada vigente" },
     { label: "Base oficial", value: String(counts.get("base_oficial") ?? 0), helper: "Población base censal" },
     { label: "Estimado", value: String(counts.get("estimado") ?? 0), helper: "Actividad y salud territorializadas" },
     { label: "Proyectado / preparado", value: String((counts.get("proyectado") ?? 0) + (counts.get("preparado") ?? 0)), helper: "Escenarios y capas de planeación" }

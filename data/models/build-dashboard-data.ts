@@ -3,15 +3,16 @@ import type {
   HealthProfileRecord,
   InfrastructureDetailRecord,
   MapAreaRecord,
-  SportsRecord,
   TerritorialRecord
 } from "../../lib/dashboard-types";
 import { alcaldiasSeed } from "../raw/alcaldias";
-import { ageSeeds, methodologyBreaks, sexSeeds, sportSeeds, timelineNotes, yearSeeds } from "../raw/official-benchmarks";
+import { ageSeeds, methodologyBreaks, sexSeeds, timelineNotes, yearSeeds } from "../raw/official-benchmarks";
 import { executiveInsights, methodologyEntries, qualityChecks, sourceRegistry } from "../insights/notes";
 import { buildCanchasOperativasLayer } from "./integration/build-canchas-operativas";
 import { buildOfficialInfrastructureLayer } from "./integration/build-official-infrastructure";
+import { buildProgrammedOfferRecords } from "./integration/build-programmed-offer";
 import { buildMapGeometry } from "./integration/build-map-geometry";
+import { canonicalCatalogs } from "./integration/canonical-catalogs";
 import { projectPopulation } from "../processed/population";
 
 const round = (value: number) => Math.round(value);
@@ -166,39 +167,6 @@ const buildTerritorialRecords = (): TerritorialRecord[] => {
       );
     })
   );
-};
-
-const buildSportsRecords = (territorialRecords: TerritorialRecord[]): SportsRecord[] => {
-  return territorialRecords.flatMap((record) => {
-    const participantsBase = record.activePopulation;
-    const weighted = sportSeeds.map((seed) => {
-      const sexBoost = record.sex === "Hombres" ? seed.menBoost : seed.womenBoost;
-      const ageBoost = seed.ageBoost[record.ageGroup];
-      const localBoost =
-        seed.sport === record.sportFocus ? 1.2 : 1;
-      return {
-        seed,
-        weight: seed.weight * sexBoost * ageBoost * localBoost
-      };
-    });
-    const totalWeight = weighted.reduce((sum, item) => sum + item.weight, 0) || 1;
-
-    return weighted.map(({ seed, weight }) => {
-      const share = weight / totalWeight;
-      return {
-        alcaldia: record.alcaldia,
-        year: record.year,
-        sex: record.sex,
-        ageGroup: record.ageGroup,
-        sport: seed.sport,
-        participants: round(participantsBase * share),
-        share,
-        dataType: "preparado",
-        source: "Preparación analítica basada en hallazgos operativos y mezcla disciplinaria del MVP",
-        note: "No es un tabulado oficial por alcaldía; sirve para priorización visual de top deportes."
-      };
-    });
-  });
 };
 
 const infrastructureTemplates = [
@@ -411,13 +379,14 @@ const buildMapAreas = (territorialRecords: TerritorialRecord[]): MapAreaRecord[]
 export const buildDashboardData = (): DashboardDataset => {
   const officialInfrastructure = buildOfficialInfrastructureLayer();
   const canchasLayer = buildCanchasOperativasLayer();
+  const programmedOfferRecords = buildProgrammedOfferRecords();
   const territorialRecords = buildTerritorialRecords();
   const infrastructureDetails = [
     ...officialInfrastructure.details,
     ...buildInfrastructureDetails()
       .filter((item) => item.year !== 2025 || item.infrastructureType === "Parques / áreas verdes")
   ];
-  const sportsRecords = buildSportsRecords(territorialRecords);
+  const sportsRecords: DashboardDataset["sportsRecords"] = [];
   const healthProfiles = buildHealthProfiles(territorialRecords);
   const mapAreas = buildMapAreas(territorialRecords);
   const mapGeometry = buildMapGeometry();
@@ -431,9 +400,20 @@ export const buildDashboardData = (): DashboardDataset => {
       projectionYear: 2026,
       methodologyBreaks,
       projectedYears: [2026],
-      timelineNotes
+      timelineNotes,
+      catalogs: {
+        alcaldias: [...canonicalCatalogs.alcaldias],
+        channels: [...canonicalCatalogs.channels],
+        dataTypes: [...canonicalCatalogs.dataTypes],
+        qualityGrades: [...canonicalCatalogs.qualityGrades],
+        verificationStates: [...canonicalCatalogs.verificationStates],
+        sexes: [...canonicalCatalogs.sexes],
+        ageGroups: [...canonicalCatalogs.ageGroups],
+        disciplineDictionaryVersion: "2026-08-03"
+      }
     },
     territorialRecords,
+    programmedOfferRecords,
     infrastructureDetails,
     canchasRecords: canchasLayer.records,
     canchasSummary: canchasLayer.summaryByAlcaldia,

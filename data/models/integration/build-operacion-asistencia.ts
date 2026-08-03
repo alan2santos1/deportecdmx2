@@ -1,3 +1,4 @@
+import fs from "fs";
 import path from "path";
 import xlsx from "xlsx";
 import type {
@@ -19,11 +20,31 @@ import { normalizeAlcaldia } from "./normalize-alcaldia";
 
 type WorkbookRow = Record<string, string | number | null | undefined>;
 
-const pontePilaRelativePath = "docs/MALLA HORARIA PUNTOS PONTE PILA 2026.xlsx";
-const acumuladaRelativePath = "docs/ACUMULADA PILARES ABRIL 26 GDE.xlsx";
+const pontePilaPathCandidates = [
+  "docs/fuentes-operativas/MALLA HORARIA PUNTOS PONTE PILA 2026.xlsx",
+  "docs/MALLA HORARIA PUNTOS PONTE PILA 2026.xlsx"
+];
+const acumuladaPathCandidates = [
+  "docs/fuentes-operativas/ACUMULADA PILARES ABRIL 26 GDE.xlsx",
+  "docs/ACUMULADA PILARES ABRIL 26 GDE.xlsx"
+];
 
-const pontePilaPath = path.join(process.cwd(), pontePilaRelativePath);
-const acumuladaPath = path.join(process.cwd(), acumuladaRelativePath);
+const resolveSourcePath = (candidates: string[]) => {
+  for (const relativePath of candidates) {
+    const absolutePath = path.join(process.cwd(), relativePath);
+    if (fs.existsSync(absolutePath)) {
+      return { relativePath, absolutePath };
+    }
+  }
+  throw new Error(`No se encontró ninguna fuente operativa: ${candidates.join(" | ")}`);
+};
+
+const pontePilaSource = resolveSourcePath(pontePilaPathCandidates);
+const acumuladaSource = resolveSourcePath(acumuladaPathCandidates);
+const pontePilaRelativePath = pontePilaSource.relativePath;
+const acumuladaRelativePath = acumuladaSource.relativePath;
+const pontePilaPath = pontePilaSource.absolutePath;
+const acumuladaPath = acumuladaSource.absolutePath;
 
 const pontePilaSheet = "MALLA MAY 2026";
 const acumuladaSheet = "abril";

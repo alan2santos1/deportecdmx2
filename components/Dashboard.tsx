@@ -13,6 +13,7 @@ import {
   buildCanchasSummaryRows,
   buildCanchasTableRows,
   buildDataLayerSummary,
+  buildFilterApplicabilityNotes,
   buildFilterConfig,
   buildFlattenedTableRows,
   buildHealthDistribution,
@@ -25,16 +26,20 @@ import {
   buildMapAreaLookup,
   buildMetricByAlcaldia,
   buildOverviewKpis,
+  buildPanoramaDeportivoAlcaldia,
+  buildProgrammedOfferDistribution,
+  buildProgrammedOfferKpis,
+  buildProgrammedOfferTableRows,
+  buildProgrammedOfferTop,
   buildRateDistribution,
   buildRiskIndex,
-  buildSportsTop,
   buildYearTrend,
   emptyCanchasFilters,
   emptyFilters,
   filterCanchasRecords,
   filterHealthProfiles,
   filterInfrastructureDetails,
-  filterSportsRecords,
+  filterProgrammedOfferRecords,
   filterTerritorialRecords
 } from "../lib/dashboard-selectors";
 import type { CanchasFilterState, DashboardFilterState, DataLayer, MetricMetadata } from "../lib/dashboard-types";
@@ -73,9 +78,9 @@ const chartMeta = {
     note: "2026 es planeación; 2020-2023 no son observaciones territoriales directas."
   },
   sports: {
-    source: "Mezcla disciplinaria preparada para el MVP institucional",
-    dataType: "preparado",
-    note: "No sustituye una fuente oficial única por deporte y alcaldía."
+    source: "Mallas operativas PILARES abril 2026 + Ponte Pila julio 2026",
+    dataType: "real",
+    note: "La visualización muestra disciplinas con mayor oferta programada, no deportes más practicados ni demanda observada."
   },
   barriers: {
     source: "MOPRADEF 2024",
@@ -258,7 +263,10 @@ export default function Dashboard() {
 
   const filterConfig = useMemo(() => (dataset ? buildFilterConfig(dataset) : []), [dataset]);
   const territorialRecords = useMemo(() => (dataset ? filterTerritorialRecords(dataset.territorialRecords, filters) : []), [dataset, filters]);
-  const sportsRecords = useMemo(() => (dataset ? filterSportsRecords(dataset.sportsRecords, filters) : []), [dataset, filters]);
+  const programmedOfferRecords = useMemo(
+    () => (dataset ? filterProgrammedOfferRecords(dataset.programmedOfferRecords, filters) : []),
+    [dataset, filters]
+  );
   const healthProfiles = useMemo(() => (dataset ? filterHealthProfiles(dataset.healthProfiles, filters) : []), [dataset, filters]);
   const infrastructureDetails = useMemo(
     () => (dataset ? filterInfrastructureDetails(dataset.infrastructureDetails, filters) : []),
@@ -271,11 +279,21 @@ export default function Dashboard() {
   );
 
   const overviewKpis = useMemo(() => buildOverviewKpis(territorialRecords), [territorialRecords]);
+  const filterApplicabilityNotes = useMemo(() => buildFilterApplicabilityNotes(filters), [filters]);
   const activityBySex = useMemo(() => buildRateDistribution(territorialRecords, (record) => record.sex), [territorialRecords]);
   const activityByAge = useMemo(() => buildRateDistribution(territorialRecords, (record) => record.ageGroup), [territorialRecords]);
   const activityByAlcaldia = useMemo(() => buildRateDistribution(territorialRecords, (record) => record.alcaldia), [territorialRecords]);
   const activityTimeline = useMemo(() => buildYearTrend(territorialRecords), [territorialRecords]);
-  const sportsTop = useMemo(() => buildSportsTop(sportsRecords, sportsLimit), [sportsRecords, sportsLimit]);
+  const programmedOfferKpis = useMemo(() => buildProgrammedOfferKpis(programmedOfferRecords), [programmedOfferRecords]);
+  const offerByChannel = useMemo(() => buildProgrammedOfferDistribution(programmedOfferRecords, (record) => record.channel), [programmedOfferRecords]);
+  const offerByDaypart = useMemo(
+    () =>
+      buildProgrammedOfferDistribution(programmedOfferRecords, (record) =>
+        record.isWeekend ? "Fin de semana" : record.daypart === "matutina" ? "Matutina" : record.daypart === "vespertina" ? "Vespertina" : "Mixta"
+      ),
+    [programmedOfferRecords]
+  );
+  const sportsTop = useMemo(() => buildProgrammedOfferTop(programmedOfferRecords, sportsLimit), [programmedOfferRecords, sportsLimit]);
   const barriers = useMemo(() => buildBarrierDistribution(), []);
   const infrastructure = useMemo(() => buildInfrastructureByAlcaldia(territorialRecords, filters), [territorialRecords, filters]);
   const infrastructureYear = useMemo(() => {
@@ -296,8 +314,16 @@ export default function Dashboard() {
   const obesityByAge = useMemo(() => buildHealthDistribution(healthProfiles, "ageGroup", "obesityRate"), [healthProfiles]);
   const diabetesByAge = useMemo(() => buildHealthDistribution(healthProfiles, "ageGroup", "diabetesRate"), [healthProfiles]);
   const riskIndex = useMemo(() => buildRiskIndex(territorialRecords, filters), [territorialRecords, filters]);
-  const layerSummary = useMemo(() => buildDataLayerSummary(territorialRecords), [territorialRecords]);
+  const layerSummary = useMemo(
+    () => buildDataLayerSummary(territorialRecords, infrastructureDetails, programmedOfferRecords),
+    [territorialRecords, infrastructureDetails, programmedOfferRecords]
+  );
   const territorialTable = useMemo(() => buildFlattenedTableRows(territorialRecords), [territorialRecords]);
+  const panoramaAlcaldiaRows = useMemo(
+    () => buildPanoramaDeportivoAlcaldia(territorialRecords, programmedOfferRecords, infrastructureDisplayDetails, canchasRecords),
+    [territorialRecords, programmedOfferRecords, infrastructureDisplayDetails, canchasRecords]
+  );
+  const panoramaAlcaldiaTable = useMemo(() => buildProgrammedOfferTableRows(panoramaAlcaldiaRows), [panoramaAlcaldiaRows]);
   const infrastructureExecutive = useMemo(() => buildInfrastructureExecutiveSummary(infrastructureDisplayDetails), [infrastructureDisplayDetails]);
   const infraStacked = useMemo(() => buildInfrastructureStackedByAlcaldia(infrastructureDisplayDetails), [infrastructureDisplayDetails]);
   const scopedInfrastructureDetails = useMemo(
@@ -484,6 +510,10 @@ export default function Dashboard() {
     () => (territorialTable[0] ? Object.keys(territorialTable[0]).map((key) => ({ header: key, accessorKey: key })) : []),
     [territorialTable]
   );
+  const panoramaColumns = useMemo<ColumnDef<Record<string, string>, string>[]>(
+    () => (panoramaAlcaldiaTable[0] ? Object.keys(panoramaAlcaldiaTable[0]).map((key) => ({ header: key, accessorKey: key })) : []),
+    [panoramaAlcaldiaTable]
+  );
   const infrastructureColumns = useMemo<ColumnDef<Record<string, string>, string>[]>(
     () => (infrastructureTable[0] ? Object.keys(infrastructureTable[0]).map((key) => ({ header: key, accessorKey: key })) : []),
     [infrastructureTable]
@@ -571,7 +601,7 @@ export default function Dashboard() {
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
             <div className="text-base font-semibold text-ink-900">Filtros globales</div>
-            <div className="text-xs text-ink-600">Sexo, edad, deporte, tipo de infraestructura y año actualizan la lectura institucional cuando la lógica del indicador lo permite.</div>
+            <div className="text-xs text-ink-600">Alcaldía, año, sexo, grupo de edad, disciplina y tipo de infraestructura se aplican solo en los módulos compatibles para evitar ceros falsos.</div>
           </div>
           <button className="btn-ghost" type="button" onClick={() => setFilters(emptyFilters)}>
             Limpiar filtros
@@ -588,6 +618,29 @@ export default function Dashboard() {
             />
           ))}
         </div>
+        {(Object.values(filters).some((values) => values.length > 0) || filterApplicabilityNotes.length > 0) ? (
+          <div className="space-y-3 rounded-2xl border border-mist-200 bg-mist-100/70 p-4">
+            <div className="text-xs font-semibold uppercase tracking-[0.16em] text-ink-600">Lectura de filtros activos</div>
+            <div className="flex flex-wrap gap-2">
+              {Object.entries(filters).flatMap(([key, values]) =>
+                values.map((value) => (
+                  <span key={`${key}-${value}`} className="rounded-full border border-mist-200 bg-white px-3 py-1 text-xs font-medium text-ink-700">
+                    {value}
+                  </span>
+                ))
+              )}
+            </div>
+            {filterApplicabilityNotes.length > 0 ? (
+              <div className="space-y-2">
+                {filterApplicabilityNotes.map((item) => (
+                  <div key={item.key} className="text-xs leading-5 text-ink-700">
+                    <span className="font-semibold text-ink-900">{item.scope === "parcial" ? "Aplicación parcial:" : "Aplicación:"}</span> {item.message}
+                  </div>
+                ))}
+              </div>
+            ) : null}
+          </div>
+        ) : null}
       </Card>
 
       <div className="flex flex-wrap items-center justify-between gap-3">
@@ -599,8 +652,8 @@ export default function Dashboard() {
         <section className="section-block">
           <div>
             <div className="section-kicker">1. Panorama</div>
-            <div className="section-heading">Lectura ejecutiva del sistema</div>
-            <div className="section-copy">Resumen institucional de actividad física, población analizada, brechas y composición de capas de dato.</div>
+            <div className="section-heading">Panorama deportivo por alcaldía</div>
+            <div className="section-copy">Integra contexto demográfico, oferta programada, infraestructura documentada y cobertura territorial. Participación observada, demanda revelada y preferencias declaradas quedan preparadas, pero no se inventan.</div>
           </div>
           <KpiGrid items={overviewKpis} />
           <div className="grid gap-4 lg:grid-cols-2">
@@ -617,6 +670,39 @@ export default function Dashboard() {
               </div>
             </Card>
           </div>
+          <div className="grid gap-4 xl:grid-cols-[0.9fr_1.1fr]">
+            <Card className="space-y-4 p-5">
+              <div className="text-base font-semibold text-ink-900">Oferta programada vigente</div>
+              <div className="text-sm leading-6 text-ink-600">
+                Corte más reciente integrado: PILARES abril 2026 y Ponte Pila julio 2026. Las mallas representan programación, no asistencia ni demanda.
+              </div>
+              <KpiGrid items={programmedOfferKpis} />
+              <div className="grid gap-4 lg:grid-cols-2">
+                <ChartCard title="Oferta por canal" helper="Sesiones semanales programadas" tooltip={chartMeta.sports}>
+                  <DistributionPie data={offerByChannel} />
+                </ChartCard>
+                <ChartCard title="Franja horaria" helper="Sesiones matutinas, vespertinas y de fin de semana" tooltip={chartMeta.sports}>
+                  <DistributionBar data={offerByDaypart} />
+                </ChartCard>
+              </div>
+            </Card>
+            <Card className="space-y-4 p-5">
+              <div className="text-base font-semibold text-ink-900">Lectura institucional preparada</div>
+              <div className="space-y-3">
+                <NoteBlock title="Participación observada" body="Aún no disponible. Se requiere padrón nominal o registros de asistencia productiva por clase y fecha." />
+                <NoteBlock title="Demanda revelada" body="Aún no disponible. Harían falta solicitudes, listas de espera o intentos de inscripción sin cupo." />
+                <NoteBlock title="Preferencias declaradas" body="Aún no disponible. Requiere encuesta o instrumento explícito de preferencia, no mallas operativas." />
+              </div>
+            </Card>
+          </div>
+          <ExportableTable
+            title="Panorama deportivo por alcaldía"
+            columns={panoramaColumns}
+            data={panoramaAlcaldiaTable}
+            fileName="panorama_deportivo_por_alcaldia.csv"
+            presentationMode={presentationMode}
+            pageSize={8}
+          />
         </section>
       ) : null}
 
@@ -624,8 +710,8 @@ export default function Dashboard() {
         <section className="section-block">
           <div>
             <div className="section-kicker">2. Actividad</div>
-            <div className="section-heading">Actividad física y práctica deportiva</div>
-            <div className="section-copy">Comparativos por sexo, edad, alcaldía y serie temporal con visibilidad explícita de la base metodológica.</div>
+            <div className="section-heading">Actividad física y oferta programada</div>
+            <div className="section-copy">Se separa actividad física estimada de la oferta programada real. La segunda describe clases, horarios y horas asignadas; no preferencia, demanda ni participación observada.</div>
           </div>
           <div className="grid gap-4 lg:grid-cols-2">
             <ChartCard title="Actividad por sexo" helper="Estimación territorial anclada a MOPRADEF" tooltip={chartMeta.activity}>
@@ -643,8 +729,8 @@ export default function Dashboard() {
             <Card className="space-y-4 p-5">
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div>
-                  <div className="text-base font-semibold text-ink-900">Deportes más practicados</div>
-                  <div className="text-xs text-ink-600">Top {sportsLimit} visible; el resto se agrupa como Otros.</div>
+                  <div className="text-base font-semibold text-ink-900">Disciplinas con mayor oferta programada</div>
+                  <div className="text-xs text-ink-600">Top {sportsLimit} visible por sesiones programadas; el resto se agrupa como Otros.</div>
                 </div>
                 <div className="flex gap-2">
                   <button className={`btn-ghost ${sportsLimit === 5 ? "border-ink-900" : ""}`} onClick={() => setSportsLimit(5)} type="button">Top 5</button>
@@ -654,7 +740,7 @@ export default function Dashboard() {
               <div className="h-64">
                 <DistributionBar data={sportsTop} />
               </div>
-              <div className="text-xs text-ink-600">La capa de deportes sigue marcada como preparada mientras se conecta una fuente oficial por disciplina.</div>
+              <div className="text-xs text-ink-600">La lectura usa mallas operativas reales y debe interpretarse como oferta programada. No describe participación efectiva ni “deportes favoritos”.</div>
               <div className="meta-panel">
                 <div className="meta-grid">
                   <div>

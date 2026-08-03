@@ -52,8 +52,22 @@ type PilaresCatalogMatch = {
   alcaldia: string | null;
 };
 
-const workbookRelativePath = "docs/13-03-2026-Proyecto_500_canchas_PILARES_ASIGNADO 315 mallas arquitecto.xlsx";
-const workbookPath = path.join(process.cwd(), workbookRelativePath);
+const workbookCandidates = [
+  "docs/fuentes-operativas/13-03-2026-Proyecto_500_canchas_PILARES_ASIGNADO 315 mallas arquitecto.xlsx",
+  "docs/13-03-2026-Proyecto_500_canchas_PILARES_ASIGNADO 315 mallas arquitecto.xlsx"
+];
+const resolveWorkbookPath = () => {
+  for (const relativePath of workbookCandidates) {
+    const absolutePath = path.join(process.cwd(), relativePath);
+    if (fs.existsSync(absolutePath)) {
+      return { relativePath, absolutePath };
+    }
+  }
+  throw new Error(`No se encontró el Excel operativo de Canchas en: ${workbookCandidates.join(" | ")}`);
+};
+const workbookSource = resolveWorkbookPath();
+const workbookRelativePath = workbookSource.relativePath;
+const workbookPath = workbookSource.absolutePath;
 const mapGeometryPath = path.join(process.cwd(), "data", "raw", "external", "alcaldias.geojson");
 const mapWidth = 900;
 const mapHeight = 660;
