@@ -42,9 +42,8 @@ const meanCoverage =
   alcaldiasSeed.reduce((sum, item) => sum + weightedCoveragePer100k(item), 0) / alcaldiasSeed.length;
 
 const inferDominantInfraType = (item: typeof alcaldiasSeed[number]): TerritorialRecord["dominantInfraType"] => {
-  const maxValue = Math.max(item.publicSportsCenters, item.pilares, item.privateGyms, item.parks);
+  const maxValue = Math.max(item.publicSportsCenters, item.pilares, item.parks);
   if (item.publicSportsCenters === maxValue) return "Deportivos públicos";
-  if (item.privateGyms === maxValue) return "Gimnasio privado";
   if (item.parks === maxValue) return "Parques / áreas verdes";
   return "PILARES";
 };
@@ -57,19 +56,14 @@ const buildTerritorialRecords = (): TerritorialRecord[] => {
     alcaldiasSeed.flatMap((alcaldia) => {
       const officialSummary = officialInfrastructure.summaryByAlcaldia[alcaldia.name];
       const projectedPopulation = projectPopulation(alcaldia.population2020, yearSeed.year);
-      const privateGyms = yearSeed.year === 2025 ? (officialSummary?.privateGyms ?? alcaldia.privateGyms) : alcaldia.privateGyms;
-      const privateClubs = yearSeed.year === 2025 ? (officialSummary?.privateClubs ?? Math.round(alcaldia.privateGyms * 0.18)) : Math.round(alcaldia.privateGyms * 0.18);
-      const privateSchools = yearSeed.year === 2025
-        ? (officialSummary?.privateSchools ?? Math.max(1, alcaldia.privateGyms - Math.round(alcaldia.privateGyms * 0.72) - Math.round(alcaldia.privateGyms * 0.18)))
-        : Math.max(1, alcaldia.privateGyms - Math.round(alcaldia.privateGyms * 0.72) - Math.round(alcaldia.privateGyms * 0.18));
+      const privateGyms = yearSeed.year === 2025 ? (officialSummary?.privateGyms ?? 0) : 0;
+      const privateClubs = yearSeed.year === 2025 ? (officialSummary?.privateClubs ?? 0) : 0;
+      const privateSchools = yearSeed.year === 2025 ? (officialSummary?.privateSchools ?? 0) : 0;
       const utopias = yearSeed.year === 2025 ? (officialSummary?.utopias ?? 0) : 0;
       const totalInfrastructure =
         (officialSummary?.publicSportsCenters ?? alcaldia.publicSportsCenters) +
         (officialSummary?.pilares ?? alcaldia.pilares) +
         utopias +
-        privateGyms +
-        privateClubs +
-        privateSchools +
         alcaldia.parks;
       const infraPer100k = (totalInfrastructure / projectedPopulation) * 100000;
       const normalizedCoverage =
@@ -243,40 +237,30 @@ const infrastructureTemplates = [
 ];
 
 const buildInfrastructureDetails = (): InfrastructureDetailRecord[] => {
-  const officialInfrastructure = buildOfficialInfrastructureLayer();
-
   return yearSeeds.flatMap((yearSeed) =>
     alcaldiasSeed.flatMap((alcaldia) => {
       const counts = {
         "PILARES": alcaldia.pilares,
         "UTOPÍAs": 0,
         "Deportivos públicos": alcaldia.publicSportsCenters,
-        "Gimnasio privado": Math.round(alcaldia.privateGyms * 0.72),
-        "Club deportivo privado": Math.round(alcaldia.privateGyms * 0.18),
-        "Academia deportiva privada": Math.max(1, alcaldia.privateGyms - Math.round(alcaldia.privateGyms * 0.72) - Math.round(alcaldia.privateGyms * 0.18)),
+        "Gimnasio privado": 0,
+        "Club deportivo privado": 0,
+        "Academia deportiva privada": 0,
         "Parques / áreas verdes": alcaldia.parks
       } as const;
 
       return infrastructureTemplates.map((template) => {
+        if (
+          template.infrastructureType === "Gimnasio privado" ||
+          template.infrastructureType === "Club deportivo privado" ||
+          template.infrastructureType === "Academia deportiva privada"
+        ) {
+          return null;
+        }
         if (yearSeed.year === 2025 && template.infrastructureType !== "Parques / áreas verdes") {
           return null;
         }
-        const units =
-          template.infrastructureType === "PILARES"
-            ? (officialInfrastructure.summaryByAlcaldia[alcaldia.name]?.pilares ?? counts[template.infrastructureType])
-            : template.infrastructureType === "UTOPÍAs"
-              ? (officialInfrastructure.summaryByAlcaldia[alcaldia.name]?.utopias ?? counts[template.infrastructureType])
-            : template.infrastructureType === "Deportivos públicos"
-              ? (officialInfrastructure.summaryByAlcaldia[alcaldia.name]?.publicSportsCenters ?? counts[template.infrastructureType])
-              : counts[template.infrastructureType];
-        const safeUnits =
-          template.infrastructureType === "Gimnasio privado" && yearSeed.year === 2025
-            ? officialInfrastructure.summaryByAlcaldia[alcaldia.name]?.privateGyms ?? counts[template.infrastructureType]
-            : template.infrastructureType === "Club deportivo privado" && yearSeed.year === 2025
-              ? officialInfrastructure.summaryByAlcaldia[alcaldia.name]?.privateClubs ?? counts[template.infrastructureType]
-              : template.infrastructureType === "Academia deportiva privada" && yearSeed.year === 2025
-                ? officialInfrastructure.summaryByAlcaldia[alcaldia.name]?.privateSchools ?? counts[template.infrastructureType]
-                : counts[template.infrastructureType] ?? units;
+        const safeUnits = counts[template.infrastructureType];
         const capacity = round(safeUnits * template.capacityFactor);
         return {
           id: `${yearSeed.year}-${alcaldia.name}-${template.infrastructureType}`,

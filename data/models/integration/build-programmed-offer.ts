@@ -155,7 +155,16 @@ const buildActivityOriginal = (row: WorkbookRow, sheet: string) => {
 };
 
 const buildDisciplineOriginal = (row: WorkbookRow, sheet: string) => {
-  if (sheet === "abril") return sanitizeText(row["ACTIVIDAD DESAGREGADA"]) ?? sanitizeText(row.ACTIVIDAD);
+  if (sheet === "abril") {
+    const detailed = sanitizeText(row["ACTIVIDAD DESAGREGADA"]);
+    const activity = sanitizeText(row.ACTIVIDAD);
+    const detailedKey = normalizeText(detailed);
+    const activityKey = normalizeText(activity);
+    if (detailedKey === "atletismo" && (activityKey === "atletismo carrera" || activityKey === "atletismo(carrera)" || activityKey === "atletismo carrera")) {
+      return activity;
+    }
+    return detailed ?? activity;
+  }
   return sanitizeText(row["DISCIPLINA CATALOGO 2026"]) ?? sanitizeText(row["DISCIPLINA CATALOGO"]);
 };
 
@@ -231,6 +240,7 @@ export const buildProgrammedOfferRecords = (): ProgrammedOfferRecord[] => {
           disciplineOriginal: normalizedDiscipline.original,
           disciplineNormalized: normalizedDiscipline.normalized,
           disciplineCategory: normalizedDiscipline.category,
+          disciplineSubcategory: normalizedDiscipline.subcategory,
           activityOriginal,
           modality,
           staffSex,
@@ -242,13 +252,16 @@ export const buildProgrammedOfferRecords = (): ProgrammedOfferRecord[] => {
           scheduledHours: parsed.durationHours ?? 1,
           sourceRowCount: 1,
           dataType: "real",
+          dataNature: "oferta_programada",
+          institutionalScope: definition.channel === "PILARES" ? "pilares" : "ponte_pila",
+          coverageLevel: "parcial",
           sourceName: definition.sourceName,
           sourceDate: definition.sourceDate,
           asOfDate: definition.sourceDate,
           qualityGrade: definition.channel === "PILARES" ? "A" : "A",
           calculationVersion: "offer-v1-2026-08-03",
           methodologicalNote:
-            "Oferta programada derivada de mallas operativas reales. Describe clases, horarios y horas asignadas; no mide participación observada, demanda ni preferencias."
+            "Oferta programada derivada de mallas operativas reales de PILARES y Ponte Pila. Describe clases, horarios y horas asignadas; no mide participación observada, demanda ni preferencias y su cobertura es parcial frente al ecosistema deportivo completo de CDMX."
         });
       }
     });

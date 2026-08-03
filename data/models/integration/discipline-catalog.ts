@@ -11,6 +11,7 @@ const normalizeKey = (value: string | null | undefined) =>
 type DisciplineDictionaryEntry = {
   canonical: string;
   category: string;
+  subcategory?: string;
   aliases: string[];
 };
 
@@ -27,13 +28,29 @@ const disciplineDictionary: DisciplineDictionaryEntry[] = [
   },
   {
     canonical: "Aerobics",
-    category: "Clases grupales",
-    aliases: ["aerobics", "aerobics step", "baile aerobico", "baile aeróbico"]
+    category: "Aeróbicos y cardio grupal",
+    aliases: ["aerobics", "aeróbics", "aerobicos", "aeróbicos"]
+  },
+  {
+    canonical: "Aerobics con step",
+    category: "Aeróbicos y cardio grupal",
+    aliases: ["aerobics step", "aerobics (step)", "aerobics (step, baquetas, barra, gap, etc)"]
+  },
+  {
+    canonical: "Baile aeróbico",
+    category: "Aeróbicos y cardio grupal",
+    aliases: ["baile aerobico", "baile aeróbico"]
   },
   {
     canonical: "Atletismo",
-    category: "Resistencia y pista",
+    category: "Atletismo",
     aliases: ["atletismo"]
+  },
+  {
+    canonical: "Atletismo — carrera",
+    category: "Atletismo",
+    subcategory: "Carrera",
+    aliases: ["atletismo (carrera)", "atletismo(carrera)"]
   },
   {
     canonical: "Básquetbol",
@@ -61,9 +78,14 @@ const disciplineDictionary: DisciplineDictionaryEntry[] = [
     aliases: ["natacion", "natación"]
   },
   {
-    canonical: "Running / caminata",
+    canonical: "Running / carrera recreativa",
     category: "Resistencia y movilidad",
-    aliases: ["running", "caminata", "carrera"]
+    aliases: ["running", "carrera recreativa", "trote", "jogging"]
+  },
+  {
+    canonical: "Caminata",
+    category: "Resistencia y movilidad",
+    aliases: ["caminata"]
   },
   {
     canonical: "Tae Kwon Do",
@@ -93,6 +115,7 @@ export type NormalizedDiscipline = {
   original: string | null;
   normalized: string | null;
   category: string | null;
+  subcategory: string | null;
   normalizationTrace: string;
 };
 
@@ -104,6 +127,7 @@ export const normalizeDiscipline = (value: string | null | undefined): Normalize
       original,
       normalized: null,
       category: null,
+      subcategory: null,
       normalizationTrace: "sin_valor"
     };
   }
@@ -114,6 +138,7 @@ export const normalizeDiscipline = (value: string | null | undefined): Normalize
       original,
       normalized: direct.canonical,
       category: direct.category,
+      subcategory: direct.subcategory ?? null,
       normalizationTrace: `diccionario:${key}->${normalizeKey(direct.canonical)}`
     };
   }
@@ -122,6 +147,7 @@ export const normalizeDiscipline = (value: string | null | undefined): Normalize
     original,
     normalized: original,
     category: "No clasificada",
+    subcategory: null,
     normalizationTrace: "sin_homologacion"
   };
 };
@@ -131,5 +157,6 @@ export const getDisciplineCatalog = () =>
     id: normalizeKey(entry.canonical).replace(/\s+/g, "-"),
     canonical: entry.canonical,
     category: entry.category,
+    subcategory: entry.subcategory ?? null,
     aliases: entry.aliases
   }));

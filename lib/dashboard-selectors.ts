@@ -68,6 +68,15 @@ export type ProgrammedOfferDatum = {
   denominator: number;
 };
 
+export type ProgrammedOfferChannelFilter = "ambos" | "pilares" | "ponte_pila";
+export type PanoramaInfrastructureScope =
+  | "publica"
+  | "comunitaria"
+  | "privada_denue"
+  | "canchas"
+  | "utopias"
+  | "parques";
+
 export type PanoramaAlcaldiaDatum = {
   alcaldia: string;
   poblacion: number;
@@ -209,6 +218,15 @@ export const filterProgrammedOfferRecords = (records: ProgrammedOfferRecord[], f
     if (filters.sports.length > 0 && !filters.sports.includes(record.disciplineNormalized ?? "")) return false;
     return true;
   });
+};
+
+export const filterProgrammedOfferByChannel = (
+  records: ProgrammedOfferRecord[],
+  channelFilter: ProgrammedOfferChannelFilter
+) => {
+  if (channelFilter === "ambos") return records;
+  const expectedChannel = channelFilter === "pilares" ? "PILARES" : "Ponte Pila";
+  return records.filter((record) => record.channel === expectedChannel);
 };
 
 export const buildFilterApplicabilityNotes = (filters: DashboardFilterState): FilterApplicabilityNote[] => {
@@ -479,6 +497,41 @@ export const buildProgrammedOfferTop = (records: ProgrammedOfferRecord[], limit:
   return top;
 };
 
+export const buildProgrammedOfferVariantAudit = (
+  records: ProgrammedOfferRecord[],
+  variants: string[]
+) => {
+  const normalizeVariant = (value: string | null | undefined) =>
+    String(value ?? "")
+      .trim()
+      .toUpperCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .replace(/\s+/g, " ")
+      .trim();
+
+  const grouped = new Map<string, { name: string; value: number; byChannel: Record<string, number> }>();
+  const targets = variants.map((variant) => normalizeVariant(variant));
+
+  records.forEach((record) => {
+    const rawValues = new Set(
+      [record.disciplineOriginal, record.activityOriginal]
+        .map((value) => normalizeVariant(value))
+        .filter(Boolean)
+    );
+
+    rawValues.forEach((value) => {
+      if (!targets.some((target) => value.includes(target))) return;
+      const current = grouped.get(value) ?? { name: value, value: 0, byChannel: {} };
+      current.value += 1;
+      current.byChannel[record.channel] = (current.byChannel[record.channel] ?? 0) + 1;
+      grouped.set(value, current);
+    });
+  });
+
+  return Array.from(grouped.values()).sort((a, b) => b.value - a.value || a.name.localeCompare(b.name, "es"));
+};
+
 export const buildProgrammedOfferDistribution = (
   records: ProgrammedOfferRecord[],
   getKey: (record: ProgrammedOfferRecord) => string
@@ -579,6 +632,74 @@ export const buildProgrammedOfferKpis = (records: ProgrammedOfferRecord[]) => {
     { label: "Disciplinas ofertadas", value: formatNumber(uniqueDisciplines), helper: "Disciplinas distintas documentadas y normalizadas" },
     { label: "Oferta en fin de semana", value: formatNumber(weekendSessions), helper: "Sesiones programadas sábado o domingo" }
   ];
+};
+
+export const buildInfrastructureScopeKpi = (
+  infrastructureDetails: InfrastructureDetailRecord[],
+  canchasRecords: CanchaOperationalRecord[],
+  scope: PanoramaInfrastructureScope
+) => {
+  if (scope === "publica") {
+    const value = infrastructureDetails
+      .filter((item) => item.infrastructureType === "Deportivos públicos")
+      .reduce((sum, item) => sum + item.administrativeCount, 0);
+    return {
+      label: "Infraestructura pública visible",
+      value,
+      unit: "instalaciones",
+      helper: "Deportivos públicos documentados en la vista activa"
+    };
+  }
+  if (scope === "comunitaria") {
+    const value = infrastructureDetails
+      .filter((item) => item.infrastructureType === "PILARES")
+      .reduce((sum, item) => sum + item.administrativeCount, 0);
+    return {
+      label: "Infraestructura comunitaria visible",
+      value,
+      unit: "sedes",
+      helper: "Sedes PILARES reales documentadas en la vista activa"
+    };
+  }
+  if (scope === "privada_denue") {
+    const value = infrastructureDetails
+      .filter((item) => item.sourceDataset === "Directorio Estadístico de Unidades Económicas CDMX")
+      .reduce((sum, item) => sum + item.administrativeCount, 0);
+    return {
+      label: "Infraestructura privada formal visible",
+      value,
+      unit: "establecimientos",
+      helper: "Unidades económicas deportivas registradas en DENUE"
+    };
+  }
+  if (scope === "canchas") {
+    return {
+      label: "Canchas visibles",
+      value: canchasRecords.length,
+      unit: "canchas",
+      helper: "Registros operativos del módulo Canchas dentro de la vista activa"
+    };
+  }
+  if (scope === "utopias") {
+    const value = infrastructureDetails
+      .filter((item) => item.infrastructureType === "UTOPÍAs")
+      .reduce((sum, item) => sum + item.administrativeCount, 0);
+    return {
+      label: "UTOPÍAs visibles",
+      value,
+      unit: "sedes",
+      helper: "Capa institucional real por sede documentada"
+    };
+  }
+  const value = infrastructureDetails
+    .filter((item) => item.infrastructureType === "Parques / áreas verdes")
+    .reduce((sum, item) => sum + item.administrativeCount, 0);
+  return {
+    label: "Parques y espacios abiertos visibles",
+    value,
+    unit: "espacios",
+    helper: "Espacios abiertos documentados en la vista activa"
+  };
 };
 
 export const buildProgrammedOfferTableRows = (rows: PanoramaAlcaldiaDatum[]) =>

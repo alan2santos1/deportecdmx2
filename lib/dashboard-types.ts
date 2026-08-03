@@ -1,5 +1,20 @@
 export type DataLayer = "real" | "base_oficial" | "estimado" | "preparado" | "proyectado" | "insight";
 export type QualityGrade = "A" | "B" | "C" | "D";
+export type DataNature =
+  | "oferta_programada"
+  | "infraestructura"
+  | "participacion_observada"
+  | "preferencia_declarada"
+  | "demanda_revelada";
+export type InstitutionalScope =
+  | "pilares"
+  | "ponte_pila"
+  | "pilares_ponte_pila"
+  | "infraestructura_publica"
+  | "infraestructura_privada"
+  | "espacio_publico"
+  | "cdmx_general";
+export type CoverageLevel = "completa" | "parcial" | "agregada" | "no_representativa" | "no_disponible";
 
 export type InfrastructureType =
   | "PILARES"
@@ -16,6 +31,9 @@ export type MetricMetadata = {
   sourceDate?: string;
   asOfDate?: string;
   dataType: DataLayer;
+  dataNature?: DataNature;
+  institutionalScope?: InstitutionalScope;
+  coverageLevel?: CoverageLevel;
   qualityGrade?: QualityGrade;
   calculationVersion?: string;
   note: string;
@@ -111,6 +129,7 @@ export type ProgrammedOfferRecord = {
   disciplineOriginal: string | null;
   disciplineNormalized: string | null;
   disciplineCategory: string | null;
+  disciplineSubcategory: string | null;
   activityOriginal: string | null;
   modality: string | null;
   staffSex: "H" | "M" | "No documentado";
@@ -122,6 +141,9 @@ export type ProgrammedOfferRecord = {
   scheduledHours: number;
   sourceRowCount: number;
   dataType: "real";
+  dataNature: "oferta_programada";
+  institutionalScope: "pilares" | "ponte_pila";
+  coverageLevel: "parcial";
   sourceName: string;
   sourceDate: string;
   asOfDate: string;

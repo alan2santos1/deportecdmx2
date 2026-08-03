@@ -21,6 +21,7 @@ import {
   buildInfrastructureByAlcaldia,
   buildInfrastructureDetailRows,
   buildInfrastructureExecutiveSummary,
+  buildInfrastructureScopeKpi,
   buildInfrastructureStackedByAlcaldia,
   buildInfrastructureSportsSummary,
   buildMapAreaLookup,
@@ -31,6 +32,7 @@ import {
   buildProgrammedOfferKpis,
   buildProgrammedOfferTableRows,
   buildProgrammedOfferTop,
+  buildProgrammedOfferVariantAudit,
   buildRateDistribution,
   buildRiskIndex,
   buildYearTrend,
@@ -39,10 +41,16 @@ import {
   filterCanchasRecords,
   filterHealthProfiles,
   filterInfrastructureDetails,
+  filterProgrammedOfferByChannel,
   filterProgrammedOfferRecords,
   filterTerritorialRecords
 } from "../lib/dashboard-selectors";
-import type { CanchasFilterState, DashboardFilterState, DataLayer, MetricMetadata } from "../lib/dashboard-types";
+import type {
+  CanchasFilterState,
+  DashboardFilterState,
+  DataLayer,
+  MetricMetadata
+} from "../lib/dashboard-types";
 import { useDashboardStore } from "../store/useDashboardStore";
 import { formatNumber } from "../lib/utils";
 import { ChartCard, DistributionBar, DistributionPie, StackedBar } from "./Charts";
@@ -66,6 +74,55 @@ const layerStyles: Record<DataLayer, string> = {
   insight: "bg-rose-50 text-rose-700 border-rose-200"
 };
 
+const offerChannelOptions = [
+  { id: "ambos", label: "Ambos" },
+  { id: "pilares", label: "PILARES" },
+  { id: "ponte_pila", label: "Ponte Pila" }
+] as const;
+
+const infrastructureScopeOptions = [
+  { id: "publica", label: "Pública" },
+  { id: "comunitaria", label: "Comunitaria" },
+  { id: "privada_denue", label: "DENUE preparada" },
+  { id: "canchas", label: "Canchas" },
+  { id: "utopias", label: "UTOPÍAs" },
+  { id: "parques", label: "Parques / espacios abiertos" }
+] as const;
+
+const metadataValueLabels = {
+  dataType: {
+    real: "Registro administrativo real",
+    base_oficial: "Base oficial agregada",
+    estimado: "Estimado",
+    preparado: "Preparado",
+    proyectado: "Proyectado",
+    insight: "Insight derivado"
+  },
+  dataNature: {
+    oferta_programada: "Oferta programada",
+    infraestructura: "Infraestructura",
+    participacion_observada: "Participación observada",
+    preferencia_declarada: "Preferencia declarada",
+    demanda_revelada: "Demanda revelada"
+  },
+  institutionalScope: {
+    pilares: "PILARES",
+    ponte_pila: "Ponte Pila",
+    pilares_ponte_pila: "PILARES y Ponte Pila",
+    infraestructura_publica: "Infraestructura pública",
+    infraestructura_privada: "Infraestructura privada",
+    espacio_publico: "Espacio público",
+    cdmx_general: "CDMX general"
+  },
+  coverageLevel: {
+    completa: "Completa",
+    parcial: "Parcial",
+    agregada: "Agregada",
+    no_representativa: "No representativa",
+    no_disponible: "No disponible"
+  }
+} as const;
+
 const chartMeta = {
   activity: {
     source: "MOPRADEF 2024-2025 + modelo territorial Deporte CDMX",
@@ -80,7 +137,10 @@ const chartMeta = {
   sports: {
     source: "Mallas operativas PILARES abril 2026 + Ponte Pila julio 2026",
     dataType: "real",
-    note: "La visualización muestra disciplinas con mayor oferta programada, no deportes más practicados ni demanda observada."
+    dataNature: "oferta_programada",
+    institutionalScope: "pilares_ponte_pila",
+    coverageLevel: "parcial",
+    note: "Clases y sesiones registradas en las mallas institucionales. No representa participación, demanda, preferencias ni toda la oferta deportiva de CDMX."
   },
   barriers: {
     source: "MOPRADEF 2024",
@@ -140,14 +200,14 @@ const mapMetricMeta: Record<TerritorialMetricKey, { label: string; source: strin
     label: "Infraestructura privada",
     source: "DENUE CDMX",
     dataType: "preparado",
-    note: "DENUE representa unidades económicas registradas, no capacidad ni uso real del espacio.",
+    note: "La capa privada permanece pendiente de validación SCIAN. Si no hay corte verificable, no debe leerse como universo deportivo observado.",
     formatter: (value) => formatNumber(value)
   },
   totalInfrastructure: {
     label: "Infraestructura total",
-    source: "Capas públicas + privadas del dashboard",
+    source: "Capas públicas, comunitarias y espacio público del dashboard",
     dataType: "insight",
-    note: "Suma administrativa útil para lectura territorial. Combina capas reales y preparadas, y no debe confundirse con capacidad operativa ni con oferta disciplinaria completa.",
+    note: "Suma administrativa útil para lectura territorial de capas reales. No agrega candidatos DENUE preparados ni debe confundirse con capacidad operativa.",
     formatter: (value) => formatNumber(value)
   },
   obesity: {
@@ -197,6 +257,58 @@ function NoteBlock({ title, body }: { title: string; body: string }) {
     <div className="rounded-2xl border border-mist-200 bg-mist-100/70 p-4">
       <div className="text-sm font-semibold text-ink-900">{title}</div>
       <div className="mt-2 text-sm leading-6 text-ink-700">{body}</div>
+    </div>
+  );
+}
+
+function MetadataPanel({
+  metadata,
+  scopeOverride
+}: {
+  metadata: MetricMetadata;
+  scopeOverride?: keyof typeof metadataValueLabels.institutionalScope;
+}) {
+  return (
+    <div className="meta-panel">
+      <div className="meta-grid">
+        <div>
+          <div className="meta-label">Tipo de dato</div>
+          <div className="meta-value">{metadataValueLabels.dataType[metadata.dataType]}</div>
+        </div>
+        <div>
+          <div className="meta-label">Naturaleza</div>
+          <div className="meta-value">
+            {metadata.dataNature ? metadataValueLabels.dataNature[metadata.dataNature] : "No disponible"}
+          </div>
+        </div>
+        <div>
+          <div className="meta-label">Cobertura</div>
+          <div className="meta-value">
+            {scopeOverride
+              ? metadataValueLabels.institutionalScope[scopeOverride]
+              : metadata.institutionalScope
+                ? metadataValueLabels.institutionalScope[metadata.institutionalScope]
+                : "No disponible"}
+          </div>
+        </div>
+        <div>
+          <div className="meta-label">Alcance</div>
+          <div className="meta-value">
+            {metadata.coverageLevel ? metadataValueLabels.coverageLevel[metadata.coverageLevel] : "No disponible"}
+            {metadata.coverageLevel === "parcial"
+              ? "; no representa toda la oferta ni la práctica deportiva de CDMX"
+              : ""}
+          </div>
+        </div>
+        <div>
+          <div className="meta-label">Fuente</div>
+          <div className="meta-value">{metadata.source}</div>
+        </div>
+        <div>
+          <div className="meta-label">Nota metodológica</div>
+          <div className="meta-value">{metadata.note}</div>
+        </div>
+      </div>
     </div>
   );
 }
@@ -253,6 +365,10 @@ export default function Dashboard() {
   const [activeSection, setActiveSection] = useState<SectionKey>("Panorama");
   const [filters, setFilters] = useState<DashboardFilterState>(emptyFilters);
   const [sportsLimit, setSportsLimit] = useState<5 | 10>(5);
+  const [programmedOfferChannel, setProgrammedOfferChannel] = useState<"ambos" | "pilares" | "ponte_pila">("ambos");
+  const [panoramaInfrastructureScope, setPanoramaInfrastructureScope] = useState<
+    "publica" | "comunitaria" | "privada_denue" | "canchas" | "utopias" | "parques"
+  >("publica");
   const [showFullInfrastructure, setShowFullInfrastructure] = useState(false);
   const [selectedMapMetric, setSelectedMapMetric] = useState<TerritorialMetricKey>("risk");
   const [selectedMapGeoKey, setSelectedMapGeoKey] = useState<string | null>(null);
@@ -266,6 +382,10 @@ export default function Dashboard() {
   const programmedOfferRecords = useMemo(
     () => (dataset ? filterProgrammedOfferRecords(dataset.programmedOfferRecords, filters) : []),
     [dataset, filters]
+  );
+  const scopedProgrammedOfferRecords = useMemo(
+    () => filterProgrammedOfferByChannel(programmedOfferRecords, programmedOfferChannel),
+    [programmedOfferRecords, programmedOfferChannel]
   );
   const healthProfiles = useMemo(() => (dataset ? filterHealthProfiles(dataset.healthProfiles, filters) : []), [dataset, filters]);
   const infrastructureDetails = useMemo(
@@ -284,16 +404,27 @@ export default function Dashboard() {
   const activityByAge = useMemo(() => buildRateDistribution(territorialRecords, (record) => record.ageGroup), [territorialRecords]);
   const activityByAlcaldia = useMemo(() => buildRateDistribution(territorialRecords, (record) => record.alcaldia), [territorialRecords]);
   const activityTimeline = useMemo(() => buildYearTrend(territorialRecords), [territorialRecords]);
-  const programmedOfferKpis = useMemo(() => buildProgrammedOfferKpis(programmedOfferRecords), [programmedOfferRecords]);
-  const offerByChannel = useMemo(() => buildProgrammedOfferDistribution(programmedOfferRecords, (record) => record.channel), [programmedOfferRecords]);
+  const programmedOfferKpis = useMemo(() => buildProgrammedOfferKpis(scopedProgrammedOfferRecords), [scopedProgrammedOfferRecords]);
+  const offerByChannel = useMemo(
+    () => buildProgrammedOfferDistribution(scopedProgrammedOfferRecords, (record) => record.channel),
+    [scopedProgrammedOfferRecords]
+  );
   const offerByDaypart = useMemo(
     () =>
-      buildProgrammedOfferDistribution(programmedOfferRecords, (record) =>
+      buildProgrammedOfferDistribution(scopedProgrammedOfferRecords, (record) =>
         record.isWeekend ? "Fin de semana" : record.daypart === "matutina" ? "Matutina" : record.daypart === "vespertina" ? "Vespertina" : "Mixta"
       ),
-    [programmedOfferRecords]
+    [scopedProgrammedOfferRecords]
   );
-  const sportsTop = useMemo(() => buildProgrammedOfferTop(programmedOfferRecords, sportsLimit), [programmedOfferRecords, sportsLimit]);
+  const sportsTop = useMemo(() => buildProgrammedOfferTop(scopedProgrammedOfferRecords, sportsLimit), [scopedProgrammedOfferRecords, sportsLimit]);
+  const runningAudit = useMemo(
+    () => buildProgrammedOfferVariantAudit(scopedProgrammedOfferRecords, ["RUNNING", "CORRER", "CARRERA", "ATLETISMO", "ATLETISMO CARRERA", "CAMINATA", "TROTE", "JOGGING"]),
+    [scopedProgrammedOfferRecords]
+  );
+  const aerobicsAudit = useMemo(
+    () => buildProgrammedOfferVariantAudit(scopedProgrammedOfferRecords, ["AEROBICS", "AERÓBICS", "AEROBICS STEP", "AEROBICS (STEP)", "BAILE AEROBICO", "BAILE AERÓBICO", "AERÓBICOS"]),
+    [scopedProgrammedOfferRecords]
+  );
   const barriers = useMemo(() => buildBarrierDistribution(), []);
   const infrastructure = useMemo(() => buildInfrastructureByAlcaldia(territorialRecords, filters), [territorialRecords, filters]);
   const infrastructureYear = useMemo(() => {
@@ -324,6 +455,10 @@ export default function Dashboard() {
     [territorialRecords, programmedOfferRecords, infrastructureDisplayDetails, canchasRecords]
   );
   const panoramaAlcaldiaTable = useMemo(() => buildProgrammedOfferTableRows(panoramaAlcaldiaRows), [panoramaAlcaldiaRows]);
+  const panoramaInfrastructureKpi = useMemo(
+    () => buildInfrastructureScopeKpi(infrastructureDisplayDetails, canchasRecords, panoramaInfrastructureScope),
+    [infrastructureDisplayDetails, canchasRecords, panoramaInfrastructureScope]
+  );
   const infrastructureExecutive = useMemo(() => buildInfrastructureExecutiveSummary(infrastructureDisplayDetails), [infrastructureDisplayDetails]);
   const infraStacked = useMemo(() => buildInfrastructureStackedByAlcaldia(infrastructureDisplayDetails), [infrastructureDisplayDetails]);
   const scopedInfrastructureDetails = useMemo(
@@ -393,7 +528,7 @@ export default function Dashboard() {
     [filters.alcaldias, infrastructureDetails, mapYear]
   );
   const privateMapUnits = useMemo(
-    () => selectedMapInfrastructure.filter((item) => item.sourceDataset === "Directorio Estadístico de Unidades Económicas CDMX").reduce((sum, item) => sum + item.administrativeCount, 0),
+    () => selectedMapInfrastructure.filter((item) => item.sourceDataset === "Directorio Estadístico de Unidades Económicas CDMX" && item.dataType === "real").reduce((sum, item) => sum + item.administrativeCount, 0),
     [selectedMapInfrastructure]
   );
   const publicMapUnits = useMemo(
@@ -425,7 +560,7 @@ export default function Dashboard() {
       pilares: mapScopedInfrastructureDetails.filter((item) => item.infrastructureType === "PILARES").reduce((sum, item) => sum + item.administrativeCount, 0),
       utopias: mapScopedInfrastructureDetails.filter((item) => item.infrastructureType === "UTOPÍAs").reduce((sum, item) => sum + item.administrativeCount, 0),
       publicSports: mapScopedInfrastructureDetails.filter((item) => item.infrastructureType === "Deportivos públicos").reduce((sum, item) => sum + item.administrativeCount, 0),
-      privateFacilities: mapScopedInfrastructureDetails.filter((item) => item.sourceDataset === "Directorio Estadístico de Unidades Económicas CDMX").reduce((sum, item) => sum + item.administrativeCount, 0),
+      privateFacilities: mapScopedInfrastructureDetails.filter((item) => item.sourceDataset === "Directorio Estadístico de Unidades Económicas CDMX" && item.dataType === "real").reduce((sum, item) => sum + item.administrativeCount, 0),
       canchas: canchasRecords.length
     }),
     [canchasRecords.length, mapScopedInfrastructureDetails]
@@ -529,6 +664,12 @@ export default function Dashboard() {
 
   const selectedYears = filters.years.length > 0 ? filters.years.join(", ") : "todos";
   const selectedRecordsText = `${formatNumber(territorialRecords.length)} celdas territoriales`;
+  const programmedOfferScopeLabel = programmedOfferChannel === "ambos" ? "pilares_ponte_pila" : programmedOfferChannel;
+  const runningExplicitCount = runningAudit
+    .filter((item) => item.name === "RUNNING" || item.name === "CORRER" || item.name === "CAMINATA" || item.name === "TROTE" || item.name === "JOGGING")
+    .reduce((sum, item) => sum + item.value, 0);
+  const runningMethodologyNote =
+    "Las mallas documentan sesiones de atletismo en modalidad carrera, pero no running recreativo explícito.";
   const average = (items: Array<{ value: number }>) => (items.length > 0 ? items.reduce((sum, item) => sum + item.value, 0) / items.length : 0);
   const visibleInfrastructureTable = showFullInfrastructure ? infrastructureTable : infrastructureTable.slice(0, 12);
   const visibleInfrastructureAdministrative = scopedInfrastructureDetails.reduce((sum, item) => sum + item.administrativeCount, 0);
@@ -537,18 +678,27 @@ export default function Dashboard() {
     .filter((item) => item.dataType === "real" && item.sourceDataset !== "Directorio Estadístico de Unidades Económicas CDMX")
     .reduce((sum, item) => sum + item.administrativeCount, 0);
   const visiblePrivateUnits = scopedInfrastructureDetails
-    .filter((item) => item.sourceDataset === "Directorio Estadístico de Unidades Económicas CDMX")
+    .filter((item) => item.sourceDataset === "Directorio Estadístico de Unidades Económicas CDMX" && item.dataType === "real")
+    .reduce((sum, item) => sum + item.administrativeCount, 0);
+  const visiblePrivateCandidates = scopedInfrastructureDetails
+    .filter((item) => item.sourceDataset === "Directorio Estadístico de Unidades Económicas CDMX" && item.dataType === "preparado")
     .reduce((sum, item) => sum + item.administrativeCount, 0);
   const visiblePrivateShare = visibleInfrastructureAdministrative > 0 ? (visiblePrivateUnits / visibleInfrastructureAdministrative) * 100 : 0;
   const visiblePublicShare = visibleInfrastructureAdministrative > 0 ? (visiblePublicUnits / visibleInfrastructureAdministrative) * 100 : 0;
   const pilaresRealSites = scopedInfrastructureDetails
     .filter((item) => item.infrastructureType === "PILARES")
     .reduce((sum, item) => sum + item.administrativeCount, 0);
+  const utopiasRealSites = scopedInfrastructureDetails
+    .filter((item) => item.infrastructureType === "UTOPÍAs")
+    .reduce((sum, item) => sum + item.administrativeCount, 0);
   const pilaresOperationalSpaces = scopedInfrastructureDetails
     .filter((item) => item.infrastructureType === "PILARES")
     .reduce((sum, item) => sum + item.operationalUnits, 0);
   const publicSportsRealSites = scopedInfrastructureDetails
     .filter((item) => item.infrastructureType === "Deportivos públicos")
+    .reduce((sum, item) => sum + item.administrativeCount, 0);
+  const parksVisible = scopedInfrastructureDetails
+    .filter((item) => item.infrastructureType === "Parques / áreas verdes")
     .reduce((sum, item) => sum + item.administrativeCount, 0);
   const topPilaresBySite = Array.from(
     scopedInfrastructureDetails
@@ -656,6 +806,111 @@ export default function Dashboard() {
             <div className="section-copy">Integra contexto demográfico, oferta programada, infraestructura documentada y cobertura territorial. Participación observada, demanda revelada y preferencias declaradas quedan preparadas, pero no se inventan.</div>
           </div>
           <KpiGrid items={overviewKpis} />
+          <div className="grid gap-4 xl:grid-cols-3">
+            <Card className="space-y-4 p-5">
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <div className="text-xs font-semibold uppercase tracking-[0.2em] text-ink-500">A. Oferta programada</div>
+                  <div className="mt-2 text-base font-semibold text-ink-900">Programación institucional visible</div>
+                  <div className="mt-1 text-sm leading-6 text-ink-600">
+                    Clases, sesiones, horas y sedes programadas. No equivale a participación observada.
+                  </div>
+                </div>
+                <LayerBadge layer="real" />
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {offerChannelOptions.map((option) => (
+                  <button
+                    key={option.id}
+                    className={`btn-ghost ${programmedOfferChannel === option.id ? "border-ink-900 bg-white" : ""}`}
+                    onClick={() => setProgrammedOfferChannel(option.id)}
+                    type="button"
+                  >
+                    {option.label}
+                  </button>
+                ))}
+              </div>
+              <div className="grid gap-3 sm:grid-cols-2">
+                {programmedOfferKpis.slice(0, 4).map((item) => (
+                  <div key={item.label} className="rounded-2xl border border-mist-200 bg-white px-4 py-4">
+                    <div className="text-[11px] font-semibold uppercase tracking-wide text-ink-600">{item.label}</div>
+                    <div className="mt-2 text-2xl font-semibold text-ink-900">{item.value}</div>
+                    <div className="mt-2 text-xs text-ink-600">{item.helper}</div>
+                  </div>
+                ))}
+              </div>
+              <MetadataPanel
+                metadata={chartMeta.sports}
+                scopeOverride={programmedOfferScopeLabel}
+              />
+            </Card>
+            <Card className="space-y-4 p-5">
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <div className="text-xs font-semibold uppercase tracking-[0.2em] text-ink-500">B. Ecosistema de infraestructura</div>
+                  <div className="mt-2 text-base font-semibold text-ink-900">Capas visibles por fuente</div>
+                  <div className="mt-1 text-sm leading-6 text-ink-600">
+                    Las instalaciones, establecimientos, canchas y espacios abiertos se leen por separado y conservan su unidad.
+                  </div>
+                </div>
+                <LayerBadge layer="insight" />
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {infrastructureScopeOptions.map((option) => (
+                  <button
+                    key={option.id}
+                    className={`btn-ghost ${panoramaInfrastructureScope === option.id ? "border-ink-900 bg-white" : ""}`}
+                    onClick={() => setPanoramaInfrastructureScope(option.id)}
+                    type="button"
+                  >
+                    {option.label}
+                  </button>
+                ))}
+              </div>
+              <div className="rounded-2xl border border-mist-200 bg-white px-4 py-4">
+                <div className="text-[11px] font-semibold uppercase tracking-wide text-ink-600">{panoramaInfrastructureKpi.label}</div>
+                <div className="mt-2 text-3xl font-semibold text-ink-900">
+                  {panoramaInfrastructureScope === "privada_denue" && panoramaInfrastructureKpi.value === 0
+                    ? "Pendiente"
+                    : (<>{formatNumber(panoramaInfrastructureKpi.value)} <span className="text-base font-medium text-ink-500">{panoramaInfrastructureKpi.unit}</span></>)}
+                </div>
+                <div className="mt-2 text-xs text-ink-600">
+                  {panoramaInfrastructureScope === "privada_denue" && panoramaInfrastructureKpi.value === 0
+                    ? "Pendiente de validación SCIAN. No existe todavía universo privado verificable para esta vista."
+                    : panoramaInfrastructureKpi.helper}
+                </div>
+              </div>
+              <div className="text-xs leading-6 text-ink-600">
+                Esta lectura no se suma con clases, sesiones ni horas programadas. Cada fuente mantiene su propia unidad de análisis.
+              </div>
+            </Card>
+            <Card className="space-y-4 p-5">
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <div className="text-xs font-semibold uppercase tracking-[0.2em] text-ink-500">C. Participación y preferencias</div>
+                  <div className="mt-2 text-base font-semibold text-ink-900">Capas aún no observadas de forma productiva</div>
+                  <div className="mt-1 text-sm leading-6 text-ink-600">
+                    Permanecen separadas de oferta e infraestructura hasta contar con registros nominales o instrumentos válidos.
+                  </div>
+                </div>
+                <LayerBadge layer="preparado" />
+              </div>
+              <NoteBlock title="Participación observada" body="No disponible en esta vista. Requiere asistencia productiva por clase, fecha y sede." />
+              <NoteBlock title="Preferencias y demanda" body="No disponibles. Las mallas operativas representan oferta programada, no gustos, solicitudes ni demanda revelada." />
+            </Card>
+          </div>
+          <Card className="space-y-3 p-5">
+            <div className="text-base font-semibold text-ink-900">Lectura metodológica de CDMX general</div>
+            <div className="text-sm leading-6 text-ink-700">
+              Este panorama combina fuentes con unidades y coberturas diferentes. Cada vista conserva su propia unidad de análisis; no se suman clases, instalaciones, establecimientos y espacios como si fueran equivalentes.
+            </div>
+            <div className="grid gap-2 text-xs text-ink-600 md:grid-cols-2 xl:grid-cols-4">
+              <div>Oferta institucional programada</div>
+              <div>Infraestructura pública y comunitaria</div>
+              <div>Infraestructura privada formal o candidata</div>
+              <div>Encuestas agregadas y futura participación observada</div>
+            </div>
+          </Card>
           <div className="grid gap-4 lg:grid-cols-2">
             <Card className="space-y-4 p-5">
               <div className="text-base font-semibold text-ink-900">Capas del sistema</div>
@@ -729,10 +984,22 @@ export default function Dashboard() {
             <Card className="space-y-4 p-5">
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div>
-                  <div className="text-base font-semibold text-ink-900">Disciplinas con mayor oferta programada</div>
-                  <div className="text-xs text-ink-600">Top {sportsLimit} visible por sesiones programadas; el resto se agrupa como Otros.</div>
+                  <div className="text-base font-semibold text-ink-900">Oferta deportiva programada en PILARES y Ponte Pila</div>
+                  <div className="text-xs leading-6 text-ink-600">
+                    Clases y sesiones registradas en las mallas institucionales. No representa participación, demanda, preferencias ni toda la oferta deportiva de CDMX.
+                  </div>
                 </div>
-                <div className="flex gap-2">
+                <div className="flex flex-wrap gap-2">
+                  {offerChannelOptions.map((option) => (
+                    <button
+                      key={option.id}
+                      className={`btn-ghost ${programmedOfferChannel === option.id ? "border-ink-900 bg-white" : ""}`}
+                      onClick={() => setProgrammedOfferChannel(option.id)}
+                      type="button"
+                    >
+                      {option.label}
+                    </button>
+                  ))}
                   <button className={`btn-ghost ${sportsLimit === 5 ? "border-ink-900" : ""}`} onClick={() => setSportsLimit(5)} type="button">Top 5</button>
                   <button className={`btn-ghost ${sportsLimit === 10 ? "border-ink-900" : ""}`} onClick={() => setSportsLimit(10)} type="button">Top 10</button>
                 </div>
@@ -740,22 +1007,47 @@ export default function Dashboard() {
               <div className="h-64">
                 <DistributionBar data={sportsTop} />
               </div>
-              <div className="text-xs text-ink-600">La lectura usa mallas operativas reales y debe interpretarse como oferta programada. No describe participación efectiva ni “deportes favoritos”.</div>
-              <div className="meta-panel">
-                <div className="meta-grid">
-                  <div>
-                    <div className="meta-label">Fuente</div>
-                    <div className="meta-value">{chartMeta.sports.source}</div>
+              <div className="grid gap-3 md:grid-cols-2">
+                <NoteBlock
+                  title="Lectura conservadora de running / caminata"
+                  body={
+                    runningExplicitCount > 0
+                      ? "En las mallas sí aparecen variantes explícitas vinculadas con carrera o atletismo, pero no deben leerse automáticamente como running recreativo en toda la ciudad."
+                      : runningMethodologyNote
+                  }
+                />
+                <NoteBlock
+                  title="Ayuda contextual de aeróbicos"
+                  body="Aeróbicos agrupa clases cardiovasculares grupales documentadas como aerobics, step o baile aeróbico en las mallas."
+                />
+              </div>
+              <MetadataPanel
+                metadata={chartMeta.sports}
+                scopeOverride={programmedOfferScopeLabel}
+              />
+              <div className="grid gap-3 lg:grid-cols-2">
+                <Card className="border border-mist-200 bg-white p-4 shadow-none">
+                  <div className="text-sm font-semibold text-ink-900">Variantes auditadas: running / carrera / caminata</div>
+                  <div className="mt-3 space-y-2 text-xs text-ink-700">
+                    {runningAudit.length > 0 ? runningAudit.slice(0, 6).map((item) => (
+                      <div key={item.name} className="flex items-center justify-between gap-3 rounded-xl border border-mist-200 px-3 py-2">
+                        <span>{item.name}</span>
+                        <span>{formatNumber(item.value)} sesiones</span>
+                      </div>
+                    )) : <div>{runningMethodologyNote}</div>}
                   </div>
-                  <div>
-                    <div className="meta-label">Tipo de dato</div>
-                    <div className="meta-value">{chartMeta.sports.dataType}</div>
+                </Card>
+                <Card className="border border-mist-200 bg-white p-4 shadow-none">
+                  <div className="text-sm font-semibold text-ink-900">Variantes auditadas: aeróbicos</div>
+                  <div className="mt-3 space-y-2 text-xs text-ink-700">
+                    {aerobicsAudit.slice(0, 6).map((item) => (
+                      <div key={item.name} className="flex items-center justify-between gap-3 rounded-xl border border-mist-200 px-3 py-2">
+                        <span>{item.name}</span>
+                        <span>{formatNumber(item.value)} sesiones</span>
+                      </div>
+                    ))}
                   </div>
-                  <div>
-                    <div className="meta-label">Nota metodológica</div>
-                    <div className="meta-value">{chartMeta.sports.note}</div>
-                  </div>
-                </div>
+                </Card>
               </div>
             </Card>
             <ChartCard title="Barreras principales" helper="Base oficial agregada útil para diseño de política pública" tooltip={chartMeta.barriers}>
@@ -821,31 +1113,52 @@ export default function Dashboard() {
                   </button>
                 ) : null}
               </div>
-              <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-5">
+              <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
                 <div className="rounded-2xl border border-mist-200 bg-white px-4 py-4">
-                  <div className="text-[11px] font-semibold uppercase tracking-wide text-ink-600">Infraestructura visible</div>
-                  <div className="mt-2 text-2xl font-semibold text-ink-900">{formatNumber(visibleInfrastructureAdministrative)}</div>
-                  <div className="mt-2 text-xs text-ink-600">Conteos administrativos visibles en la vista</div>
+                  <div className="text-[11px] font-semibold uppercase tracking-wide text-ink-600">Sedes comunitarias</div>
+                  <div className="mt-2 text-2xl font-semibold text-ink-900">{formatNumber(pilaresRealSites)}</div>
+                  <div className="mt-2 text-xs text-ink-600">Sedes PILARES reales documentadas</div>
                 </div>
                 <div className="rounded-2xl border border-mist-200 bg-white px-4 py-4">
-                  <div className="text-[11px] font-semibold uppercase tracking-wide text-ink-600">Sedes PILARES reales</div>
-                  <div className="mt-2 text-2xl font-semibold text-ink-900">{formatNumber(pilaresRealSites)}</div>
-                  <div className="mt-2 text-xs text-ink-600">Conteo administrativo nominal por sede</div>
+                  <div className="text-[11px] font-semibold uppercase tracking-wide text-ink-600">Instalaciones públicas</div>
+                  <div className="mt-2 text-2xl font-semibold text-ink-900">{formatNumber(publicSportsRealSites)}</div>
+                  <div className="mt-2 text-xs text-ink-600">Deportivos públicos reales por instalación</div>
+                </div>
+                <div className="rounded-2xl border border-mist-200 bg-white px-4 py-4">
+                  <div className="text-[11px] font-semibold uppercase tracking-wide text-ink-600">UTOPÍAs</div>
+                  <div className="mt-2 text-2xl font-semibold text-ink-900">{formatNumber(utopiasRealSites)}</div>
+                  <div className="mt-2 text-xs text-ink-600">Sedes institucionales reales documentadas</div>
+                </div>
+                <div className="rounded-2xl border border-mist-200 bg-white px-4 py-4">
+                  <div className="text-[11px] font-semibold uppercase tracking-wide text-ink-600">Parques y espacios</div>
+                  <div className="mt-2 text-2xl font-semibold text-ink-900">{formatNumber(parksVisible)}</div>
+                  <div className="mt-2 text-xs text-ink-600">Espacios abiertos visibles en la vista</div>
+                </div>
+              </div>
+              <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+                <div className="rounded-2xl border border-mist-200 bg-white px-4 py-4">
+                  <div className="text-[11px] font-semibold uppercase tracking-wide text-ink-600">Canchas</div>
+                  <div className="mt-2 text-2xl font-semibold text-ink-900">{formatNumber(canchasRecords.length)}</div>
+                  <div className="mt-2 text-xs text-ink-600">Registros operativos del módulo Canchas</div>
+                </div>
+                <div className="rounded-2xl border border-mist-200 bg-white px-4 py-4">
+                  <div className="text-[11px] font-semibold uppercase tracking-wide text-ink-600">Privados verificados</div>
+                  <div className="mt-2 text-2xl font-semibold text-ink-900">
+                    {visiblePrivateUnits > 0 ? formatNumber(visiblePrivateUnits) : "Pendiente"}
+                  </div>
+                  <div className="mt-2 text-xs text-ink-600">Establecimientos con SCIAN verificable</div>
+                </div>
+                <div className="rounded-2xl border border-mist-200 bg-white px-4 py-4">
+                  <div className="text-[11px] font-semibold uppercase tracking-wide text-ink-600">Candidatos DENUE</div>
+                  <div className="mt-2 text-2xl font-semibold text-ink-900">
+                    {visiblePrivateCandidates > 0 ? formatNumber(visiblePrivateCandidates) : "Pendiente"}
+                  </div>
+                  <div className="mt-2 text-xs text-ink-600">Registros preparados en espera de validación SCIAN</div>
                 </div>
                 <div className="rounded-2xl border border-mist-200 bg-white px-4 py-4">
                   <div className="text-[11px] font-semibold uppercase tracking-wide text-ink-600">Espacios operativos PILARES</div>
                   <div className="mt-2 text-2xl font-semibold text-ink-900">{formatNumber(pilaresOperationalSpaces)}</div>
                   <div className="mt-2 text-xs text-ink-600">Estimación analítica de capacidad territorial, no sedes</div>
-                </div>
-                <div className="rounded-2xl border border-mist-200 bg-white px-4 py-4">
-                  <div className="text-[11px] font-semibold uppercase tracking-wide text-ink-600">Deportivos públicos reales</div>
-                  <div className="mt-2 text-2xl font-semibold text-ink-900">{formatNumber(publicSportsRealSites)}</div>
-                  <div className="mt-2 text-xs text-ink-600">Instalaciones oficiales integradas</div>
-                </div>
-                <div className="rounded-2xl border border-mist-200 bg-white px-4 py-4">
-                  <div className="text-[11px] font-semibold uppercase tracking-wide text-ink-600">Infraestructura privada</div>
-                  <div className="mt-2 text-2xl font-semibold text-ink-900">{formatNumber(visiblePrivateUnits)}</div>
-                  <div className="mt-2 text-xs text-ink-600">Preparada desde DENUE; no equivalente a sedes públicas</div>
                 </div>
               </div>
               <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
@@ -917,16 +1230,16 @@ export default function Dashboard() {
                 <div className="rounded-2xl border border-mist-200 bg-white px-4 py-4">
                   <div className="flex items-center justify-between gap-3">
                     <div>
-                      <div className="text-sm font-semibold text-ink-900">Infraestructura privada</div>
+                      <div className="text-sm font-semibold text-ink-900">Infraestructura privada verificable</div>
                       <div className="mt-1 text-xs text-ink-600">
                         {visiblePrivateUnits > 0
-                          ? "DENUE CDMX descargado y normalizado por alcaldía; mientras no entre un corte con SCIAN verificable se reporta como preparado."
-                          : "El extracto local de DENUE no expone SCIAN ni suficientes establecimientos deportivos defendibles; la capa queda lista para cargarse en cuanto entre un corte verificable."}
+                          ? "Solo cuenta establecimientos privados con SCIAN verificable dentro del universo deportivo objetivo."
+                          : "Pendiente de validación SCIAN. El extracto local no aporta todavía un universo privado defendible como infraestructura deportiva observada."}
                       </div>
                     </div>
                     <div className="text-right">
-                      <div className="text-2xl font-semibold text-ink-900">{formatNumber(visiblePrivateUnits)}</div>
-                      <div className="text-xs text-ink-600">{visiblePrivateShare.toFixed(1)}% del total visible</div>
+                      <div className="text-2xl font-semibold text-ink-900">{visiblePrivateUnits > 0 ? formatNumber(visiblePrivateUnits) : "Pendiente"}</div>
+                      <div className="text-xs text-ink-600">{visiblePrivateUnits > 0 ? `${visiblePrivateShare.toFixed(1)}% del total visible` : "No se suma al total real visible"}</div>
                     </div>
                   </div>
                 </div>
@@ -939,11 +1252,11 @@ export default function Dashboard() {
                   </div>
                   <div>
                     <div className="meta-label">Tipo de dato</div>
-                    <div className="meta-value">Real para sedes e instalaciones públicas; preparado para DENUE privado; estimado para espacios operativos y capacidad</div>
+                    <div className="meta-value">Real para sedes, instalaciones, canchas y espacios públicos; preparado para DENUE; estimado para espacios operativos y capacidad</div>
                   </div>
                   <div>
                     <div className="meta-label">Nota metodológica</div>
-                    <div className="meta-value">DENUE representa unidades económicas registradas, no capacidad ni uso real del espacio. La comparación público vs privado es útil para lectura ejecutiva, pero no debe interpretarse como aforo equivalente entre sectores.</div>
+                    <div className="meta-value">DENUE representa unidades económicas registradas, no capacidad ni uso real del espacio. Mientras no exista SCIAN verificable en el corte local, la capa privada queda fuera del total real y se presenta solo como preparación metodológica.</div>
                   </div>
                 </div>
               </div>
@@ -1014,8 +1327,8 @@ export default function Dashboard() {
                     <div className="text-[11px] font-semibold uppercase tracking-wide text-ink-600">Privados</div>
                     <LayerBadge layer="preparado" />
                   </div>
-                  <div className="mt-2 text-2xl font-semibold text-ink-900">{formatNumber(mapLayerTotals.privateFacilities)}</div>
-                  <div className="mt-2 text-xs text-ink-600">Unidades económicas del corte DENUE disponible</div>
+                  <div className="mt-2 text-2xl font-semibold text-ink-900">{mapLayerTotals.privateFacilities > 0 ? formatNumber(mapLayerTotals.privateFacilities) : "Pendiente"}</div>
+                  <div className="mt-2 text-xs text-ink-600">Validación SCIAN requerida para lectura privada territorial</div>
                 </div>
                 <div className="rounded-2xl border border-mist-200 bg-white px-4 py-4">
                   <div className="flex items-center justify-between gap-2">
@@ -1120,8 +1433,8 @@ export default function Dashboard() {
                         </div>
                         <div className="rounded-2xl border border-mist-200 bg-white px-4 py-4">
                           <div className="text-[11px] font-semibold uppercase tracking-wide text-ink-600">Infraestructura privada</div>
-                          <div className="mt-2 text-2xl font-semibold text-ink-900">{formatNumber(privateMapUnits)}</div>
-                          <div className="mt-2 text-xs text-ink-600">Corte DENUE disponible</div>
+                          <div className="mt-2 text-2xl font-semibold text-ink-900">{privateMapUnits > 0 ? formatNumber(privateMapUnits) : "Pendiente"}</div>
+                          <div className="mt-2 text-xs text-ink-600">Pendiente de validación SCIAN</div>
                         </div>
                         <div className="rounded-2xl border border-mist-200 bg-white px-4 py-4">
                           <div className="text-[11px] font-semibold uppercase tracking-wide text-ink-600">Canchas</div>

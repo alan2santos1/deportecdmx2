@@ -25,16 +25,16 @@ export const sourceRegistry: SourceRegistryEntry[] = [
   {
     metric: "Gimnasios y centros privados",
     layer: "preparado",
-    source: "DENUE CDMX descargado + clasificación textual compatible con SCIAN objetivo",
-    coverage: "Oferta privada preparada por unidad económica y alcaldía",
-    note: "Mientras el export no exponga SCIAN verificable, la capa privada debe leerse como preparada y no como conteo oficial definitivo."
+    source: "DENUE CDMX descargado + validación SCIAN pendiente",
+    coverage: "Capa privada preparada por unidad económica candidata, no validada como universo deportivo",
+    note: "Mientras el export no exponga SCIAN verificable, la capa privada debe leerse como preparada y no como conteo oficial definitivo ni como infraestructura observada."
   },
   {
     metric: "Clubes y academias privadas",
     layer: "preparado",
     source: "DENUE CDMX descargado + clasificación textual por nombre/actividad",
     coverage: "Subtipos privados compatibles con el dashboard ejecutivo",
-    note: "Se distinguen gimnasios, clubes y academias sin mezclarlos con infraestructura pública, pero no equivalen a una clasificación oficial por SCIAN verificada."
+    note: "Se distinguen gimnasios, clubes y academias sin mezclarlos con infraestructura pública, pero no equivalen a una clasificación oficial por SCIAN verificada ni se suman al total real."
   },
   {
     metric: "Parques y áreas verdes",
@@ -101,7 +101,7 @@ export const methodologyEntries: MethodologyEntry[] = [
     metric: "Conteo de espacios por tipo",
     layer: "real",
     source: "PILARES, UTOPÍAs, deportivos públicos, DENUE e inventarios de áreas verdes",
-    logic: "La gráfica principal consolida conteos administrativos de sedes, instalaciones o establecimientos y los transforma en densidad por 100 mil habitantes.",
+    logic: "La gráfica principal consolida sedes comunitarias, instalaciones públicas, UTOPÍAs y espacios públicos abiertos observables. Los candidatos DENUE se mantienen fuera del total real mientras no exista SCIAN verificable.",
     limitation: "No debe mezclarse con espacios operativos o capacidad estimada. La infraestructura privada descargada desde DENUE sigue preparada hasta validar SCIAN y fecha de corte con un extracto más robusto."
   },
   {
@@ -189,7 +189,7 @@ export const qualityChecks: QualityEntry[] = [
     check: "Capa privada DENUE",
     scope: "Infraestructura económica",
     status: "ATENCION",
-    note: "La clasificación privada usa heurísticas textuales porque el export descargado no trae SCIAN verificable en la salida usada por este MVP."
+    note: "El extracto local no aporta SCIAN verificable en la salida usada por este MVP. La capa privada queda preparada y no se suma al total real."
   },
   {
     check: "Disciplinas y amenidades",
