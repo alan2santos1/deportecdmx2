@@ -150,6 +150,8 @@ Responsabilidades actuales:
   - integra PILARES, deportivos públicos, DENUE preparado y UTOPÍAs
 - `data/models/integration/build-canchas-operativas.ts`
   - integra el Excel de canchas
+  - separa estado administrativo, documental, de obra y de apertura
+  - concilia evidencia oficial manual cuando existe
 - `data/models/integration/build-operacion-asistencia.ts`
   - integra las mallas de Ponte Pila y PILARES
 - `scripts/etl/fetch-official-sources.ts`
@@ -182,6 +184,7 @@ npm run build:deporte
 - DENUE: `data/raw/external/denue_cdmx.geojson`
 - UTOPÍAs: `data/processed/infrastructure/utopias.json`
 - Canchas: `docs/fuentes-operativas/13-03-2026-Proyecto_500_canchas_PILARES_ASIGNADO 315 mallas arquitecto.xlsx`
+- Evidencia oficial manual de Canchas: `data/raw/manual/canchas-evidencias-oficiales.json`
 - Operación:
   - `docs/fuentes-operativas/MALLA HORARIA PUNTOS PONTE PILA 2026.xlsx`
   - `docs/fuentes-operativas/ACUMULADA PILARES ABRIL 26 GDE.xlsx`
@@ -197,6 +200,17 @@ Del corte auditado en `public/data/dashboard.json`:
 - `healthProfiles`: 70
 - `mapAreas`: 112
 - `canchasRecords`: 315
+- Corte vigente de Canchas tras conciliación D1.1:
+  - `openingStatus.inaugurada_confirmada`: 0
+  - `openingStatus.probable`: 0
+  - `openingStatus.sin_confirmacion_publica`: 315
+  - `workStatus.sin_confirmacion`: 315
+  - `documentationStatus.completa`: 105
+  - `documentationStatus.parcial`: 199
+  - `documentationStatus.minima`: 11
+  - `geolocationType.real`: 20
+  - `geolocationType.aproximada_pilares`: 223
+  - `geolocationType.aproximada_alcaldia`: 72
 
 Resumen nuevo de oferta programada agregada:
 - `PILARES` (corte abril 2026): 17854 sesiones programadas visibles
@@ -238,6 +252,7 @@ Del corte auditado en `public/data/operacion-asistencia.json`:
 - visualización de infraestructura pública, privada y canchas
 - visualización de oferta programada real agregada desde mallas operativas
 - notas metodológicas visibles por capa
+- módulo Canchas con conciliación documental estricta: ya no publica inauguración u obra como confirmadas sin evidencia oficial individual
 
 ### Operación
 - navegación separada y consistente
@@ -328,6 +343,7 @@ El sistema necesita, para producción operativa real:
 - Operación aún no distingue productivamente entre autenticación, autorización y simulación de usuario.
 - La capa privada DENUE sigue limitada por la ausencia de SCIAN verificable en el extracto local integrado.
 - La infraestructura documentada por disciplina sigue siendo parcial; la ausencia de disciplina visible no debe leerse como ausencia real de oferta o amenidad.
+- La capa Canchas sigue sin evidencia oficial individual suficiente dentro del repositorio para confirmar aperturas o entregas por registro.
 
 ## Contradicciones documentales relevantes
 

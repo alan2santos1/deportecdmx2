@@ -126,22 +126,6 @@ const operationalUnitFactors = {
 
 type PrivateInfrastructureSubtype = "Gimnasio privado" | "Club deportivo privado" | "Academia deportiva privada";
 
-const denueExcludePattern =
-  /(articulos y aparatos deportivos|articulos para albercas|ropa deportiva|boutique|suplement|nutricion|farmacia|vinos|joyeria|papeleria|musica|instrumentos|moto|automovil|llantas|bazar|figuras coleccionables|abarrotes|carniceria|dulces|bebidas|panader|juguetes|revistas|decoracion|refacciones|calzado|ropa, excepto|productos naturistas|farmacias sin minisuper|cooperativa|escuela primaria|escuela secundaria|escuela nacional|escuela superior|escuela de manejo|escuela de musica|pronosticos|optica|lentes|autopartes|muebles|herramient|calentadores|bombas|ferreter)/;
-
-const denuePublicMarkerPattern =
-  /(gobierno|alcaldia|sector publico|indeporte|instituto del deporte|sedena|semar|imss|issste|cetram)/;
-
-const buildDenueDedupeKey = (feature: DenueGeojson["features"][number]) => {
-  const coordinates = feature.geometry?.coordinates;
-  return [
-    normalizeText(feature.properties.nmbr_st ?? feature.properties.rzn_scl ?? ""),
-    normalizeText(feature.properties.direccn),
-    normalizeText(feature.properties.alcaldi),
-    Array.isArray(coordinates) ? coordinates.map((item) => item.toFixed(5)).join(",") : ""
-  ].join("|");
-};
-
 const mapSubtypeLabels = (subtype: PrivateInfrastructureSubtype) => ({
   tipo_espacio:
     subtype === "Gimnasio privado"
@@ -175,35 +159,18 @@ const mapSubtypeLabels = (subtype: PrivateInfrastructureSubtype) => ({
         : 35
 });
 
-const inferDenueSubtypeFromText = (
-  nameText: string,
-  activityText: string,
-  categoryText: string
-): PrivateInfrastructureSubtype | null => {
-  const merged = ` ${nameText} ${activityText} ${categoryText} `;
-  if (!merged.trim() || denueExcludePattern.test(merged) || denuePublicMarkerPattern.test(merged)) return null;
-
-  if (/(gimnasio| gym |gym$|gymnasium|fitness|crossfit|pilates|spinning|yoga|calistenia|acondicionamiento)/.test(merged)) {
-    return "Gimnasio privado";
-  }
-
-  if (
-    ((merged.includes("academia") || merged.includes("escuela") || merged.includes("studio")) &&
-      /(futbol|natacion|box|boxing|taekwondo|karate|tenis|basquet|voleibol|deporte|fitness|gimnas|pilates|yoga|dance|ballet|artes marciales)/.test(merged)) ||
-    /(boxing studio|martial arts|taekwondo|karate|jiu jitsu|jiujitsu)/.test(merged)
-  ) {
-    return "Academia deportiva privada";
-  }
-
-  if (
-    merged.includes("club deportivo") ||
-    /(club|centro)\s+(de\s+)?(tenis|natacion|futbol|golf|padel|deportivo|acuatico)/.test(merged) ||
-    /(deportivo chapultepec|sport city club|club campestre|club de golf)/.test(merged)
-  ) {
-    return "Club deportivo privado";
-  }
-
-  return null;
+const buildDenueDedupeKey = (feature: DenueGeojson["features"][number], index: number) => {
+  const coordinates = feature.geometry?.coordinates;
+  const lat = Array.isArray(coordinates) ? coordinates[1]?.toFixed(6) : "";
+  const lon = Array.isArray(coordinates) ? coordinates[0]?.toFixed(6) : "";
+  return [
+    feature.properties.nmbr_st ?? feature.properties.rzn_scl ?? "",
+    feature.properties.direccn ?? "",
+    feature.properties.alcaldi ?? "",
+    lat,
+    lon,
+    String(index + 1)
+  ].join("|");
 };
 
 const createResult = (
@@ -381,16 +348,13 @@ export const buildDenueModule = (): InfrastructureLayerModule => {
       const seen = new Set<string>();
       const details = denue.features.flatMap((feature, index) => {
         const name = feature.properties.nmbr_st ?? feature.properties.rzn_scl ?? `DENUE ${index + 1}`;
-        const nameText = normalizeText(feature.properties.nmbr_st ?? feature.properties.rzn_scl ?? "");
-        const activityText = normalizeText(feature.properties.activdd);
-        const categoryText = normalizeText(feature.properties.ctgr_ct);
-        const mergedText = [nameText, activityText, categoryText].filter(Boolean).join(" ");
+        const scianCode = extractDenueScianCode(feature.properties);
+        if (!scianCode) return [];
 
-        const dedupeKey = buildDenueDedupeKey(feature);
+        const dedupeKey = buildDenueDedupeKey(feature, index);
         if (seen.has(dedupeKey)) return [];
         seen.add(dedupeKey);
 
-        const scianCode = extractDenueScianCode(feature.properties);
         const scianRecord = scianCode
           ? normalizeDenueRecord({
               id: `denue-${index + 1}`,
@@ -399,34 +363,26 @@ export const buildDenueModule = (): InfrastructureLayerModule => {
               scianCode
             })
           : null;
-        const subtypeFromScian = scianCode ? getDashboardCategoryFromScian(scianCode) : null;
-        const inferredSubtype = inferDenueSubtypeFromText(nameText, activityText, categoryText);
-        const subtype = (subtypeFromScian ?? inferredSubtype) as PrivateInfrastructureSubtype | null;
-        if (!mergedText || !subtype) return [];
+        const subtype = scianCode ? getDashboardCategoryFromScian(scianCode) : null;
+        if (!scianRecord || scianRecord.ownershipScope !== "privado" || !subtype) return [];
 
         const normalized = normalizeAlcaldia(feature.properties.alcaldi);
         const coordinates = feature.geometry?.coordinates;
-        const documentedSports = extractDocumentedSports(
-          feature.properties.nmbr_st,
-          feature.properties.rzn_scl,
-          feature.properties.activdd,
-          feature.properties.ctgr_ct
-        );
-        const labels = mapSubtypeLabels(subtype);
-        const isScianVerified = Boolean(scianRecord && subtypeFromScian);
+        const dashboardSubtype = subtype as PrivateInfrastructureSubtype;
+        const labels = mapSubtypeLabels(dashboardSubtype);
 
         const detail: InfrastructureDetailRecord = {
             id: `denue-${index + 1}`,
             spaceName: name,
             tipo_espacio: labels.tipo_espacio,
-            infrastructureType: subtype,
+            infrastructureType: dashboardSubtype,
             alcaldia: normalized.alcaldia,
             originalAlcaldia: normalized.original,
             needsAlcaldiaNormalization: !normalized.matched,
             geoKey: normalized.geoKey,
             year: 2025,
-            sportsAvailable: documentedSports,
-            disciplineStatus: documentedSports.length > 0 ? "disponible" : "no_documentado",
+            sportsAvailable: [],
+            disciplineStatus: "no_documentado",
             administrativeCount: 1,
             administrativeLabel: labels.administrativeLabel,
             operationalUnits: labels.operationalUnits,
@@ -438,14 +394,10 @@ export const buildDenueModule = (): InfrastructureLayerModule => {
             longitude: Array.isArray(coordinates) ? coordinates[0] : null,
             status: "Fuente económica sin estatus operativo",
             sourceDataset: descriptor.label,
-            subtype,
-            dataType: isScianVerified ? "real" : descriptor.dataType,
+            subtype: dashboardSubtype,
+            dataType: "real",
             source: descriptor.provenance.sourceUrl ?? descriptor.label,
-            methodologicalNote: isScianVerified
-              ? `Registro DENUE clasificado con SCIAN ${scianCode}. Las disciplinas visibles provienen solo de texto explícito del registro; no se infieren amenidades internas.`
-              : documentedSports.length > 0
-                ? "Registro descargado de DENUE CDMX y clasificado por nombre/actividad observable. Las disciplinas visibles provienen solo de texto explícito del registro; no se infieren amenidades internas."
-                : "Registro descargado de DENUE CDMX y clasificado por nombre/actividad observable porque este export no expone el código SCIAN objetivo de forma usable. Se integra como capa privada preparada y las disciplinas quedan no documentadas cuando la fuente no las explicita."
+            methodologicalNote: scianRecord.methodologicalNote
           };
 
         return [detail];

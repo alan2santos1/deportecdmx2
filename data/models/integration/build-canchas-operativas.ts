@@ -2,9 +2,16 @@ import fs from "fs";
 import path from "path";
 import xlsx from "xlsx";
 import type {
+  CanchaAdministrativeStatus,
+  CanchaDocumentationStatus,
+  CanchaEvidenceRecord,
   CanchaGeolocationType,
-  CanchaInaugurationStatus,
   CanchaOperationalRecord,
+  CanchaOpeningStatus,
+  CanchaReconciliationConfidence,
+  CanchaReconciliationMethod,
+  CanchaStatusHistoryEntry,
+  CanchaWorkStatus,
   CanchasSummaryRecord
 } from "../../../lib/dashboard-types";
 import { alcaldiasSeed } from "../../raw/alcaldias";
@@ -68,10 +75,12 @@ const resolveWorkbookPath = () => {
 const workbookSource = resolveWorkbookPath();
 const workbookRelativePath = workbookSource.relativePath;
 const workbookPath = workbookSource.absolutePath;
+const manualEvidencePath = path.join(process.cwd(), "data", "raw", "manual", "canchas-evidencias-oficiales.json");
 const mapGeometryPath = path.join(process.cwd(), "data", "raw", "external", "alcaldias.geojson");
 const mapWidth = 900;
 const mapHeight = 660;
 const mapPadding = 24;
+const canchasCalculationVersion = "d1.1-canchas-reconciliacion-2026-08-03";
 
 const monthMap: Record<string, number> = {
   enero: 0,
@@ -182,16 +191,17 @@ const parseSpanishDate = (value: string) => {
   return Number.isNaN(date.getTime()) ? null : date;
 };
 
-const parseInaugurationDate = (rawValue: string | number | null | undefined) => {
+const parseAdministrativeOpeningSignal = (rawValue: string | number | null | undefined) => {
   const buildResponse = (
     raw: string | null,
     iso: string | null,
-    status: CanchaInaugurationStatus,
-    hasDateSignal: boolean
-  ) => ({ raw, iso, status, hasDateSignal });
+    hasDateSignal: boolean,
+    signal: "past" | "future" | "unknown",
+    note: string
+  ) => ({ raw, iso, hasDateSignal, signal, note });
   const raw = sanitizeText(rawValue);
   if (!raw) {
-    return buildResponse(null, null, "sin_fecha", false);
+    return buildResponse(null, null, false, "unknown", "Sin fecha administrativa utilizable.");
   }
 
   const normalized = normalizeText(raw);
@@ -211,21 +221,56 @@ const parseInaugurationDate = (rawValue: string | number | null | undefined) => 
 
   if (date) {
     const iso = date.toISOString().slice(0, 10);
-    const today = new Date();
-    const status: CanchaInaugurationStatus = date.getTime() <= today.getTime() ? "inaugurada" : "proxima";
-    return buildResponse(raw, iso, status, true);
+    const today = new Date("2026-08-03T00:00:00.000Z");
+    return buildResponse(
+      raw,
+      iso,
+      true,
+      date.getTime() <= today.getTime() ? "past" : "future",
+      date.getTime() <= today.getTime()
+        ? "La fecha administrativa cargada ya pasó al corte actual."
+        : "La fecha administrativa cargada es futura al corte actual."
+    );
   }
 
   if (isPastKeyword(normalized)) {
-    return buildResponse(raw, null, "inaugurada", true);
+    return buildResponse(raw, null, true, "past", "El texto administrativo sugiere que hubo apertura o uso, pero no equivale a confirmación pública.");
   }
 
   if (isFutureKeyword(normalized)) {
-    return buildResponse(raw, null, "proxima", true);
+    return buildResponse(raw, null, true, "future", "El texto administrativo sugiere entrega o apertura futura/tentativa.");
   }
 
-  return buildResponse(raw, null, "sin_fecha", false);
+  return buildResponse(raw, null, false, "unknown", "No se encontró fecha administrativa ni señal textual concluyente.");
 };
+
+const loadManualEvidence = (): CanchaEvidenceRecord[] => {
+  if (!fs.existsSync(manualEvidencePath)) return [];
+  const payload = JSON.parse(fs.readFileSync(manualEvidencePath, "utf-8")) as
+    | CanchaEvidenceRecord[]
+    | { evidences?: CanchaEvidenceRecord[] };
+  return Array.isArray(payload) ? payload : payload.evidences ?? [];
+};
+
+const normalizeEvidenceStatus = (status: string) => normalizeText(status);
+
+const buildStatusHistoryEntry = (
+  statusType: CanchaStatusHistoryEntry["statusType"],
+  newValue: string,
+  changedAt: string,
+  method: string,
+  evidenceId: string | null,
+  effectiveDate: string | null
+): CanchaStatusHistoryEntry => ({
+  statusType,
+  previousValue: null,
+  newValue,
+  effectiveDate,
+  evidenceId,
+  method,
+  changedAt,
+  calculationVersion: canchasCalculationVersion
+});
 
 const buildMapProjector = () => {
   if (!fs.existsSync(mapGeometryPath)) return null;
@@ -428,6 +473,98 @@ const buildTerritorialRows = (rows: WorkbookRow[], sheet: string) =>
     observations: sanitizeText(row["OBSERVACIONES_1"] ?? row.OBSERVACIONES)
   }));
 
+const buildEvidenceMatch = (
+  evidence: CanchaEvidenceRecord,
+  context: {
+    name: string;
+    domicilio: string;
+    alcaldia: string;
+    latitude: number | null;
+    longitude: number | null;
+    consecutiveNumber: number;
+  }
+): { method: CanchaReconciliationMethod; confidence: CanchaReconciliationConfidence; notes: string } => {
+  const evidenceVenueKey = normalizeMatchKey(evidence.venueName);
+  const evidenceAddressKey = normalizeMatchKey(evidence.addressText);
+  const recordNameKey = normalizeMatchKey(context.name);
+  const recordAddressKey = normalizeMatchKey(context.domicilio);
+  const evidenceOfficialNumber = normalizeMatchKey(evidence.officialCourtNumber);
+  const recordOfficialNumber = normalizeMatchKey(context.consecutiveNumber);
+  const sameAlcaldia =
+    !evidence.alcaldia || normalizeMatchKey(evidence.alcaldia) === normalizeMatchKey(context.alcaldia);
+
+  if (evidenceOfficialNumber && evidenceOfficialNumber === recordOfficialNumber) {
+    return { method: "exact_official_number", confidence: "alta", notes: "Coincidencia exacta por número oficial." };
+  }
+
+  if (
+    evidence.coordinates &&
+    context.latitude !== null &&
+    context.longitude !== null &&
+    Math.abs(evidence.coordinates.lat - context.latitude) < 0.0002 &&
+    Math.abs(evidence.coordinates.lon - context.longitude) < 0.0002
+  ) {
+    return { method: "exact_coordinates", confidence: "alta", notes: "Coincidencia exacta por coordenadas documentadas." };
+  }
+
+  if (sameAlcaldia && evidenceVenueKey && evidenceAddressKey && evidenceVenueKey === recordNameKey && evidenceAddressKey === recordAddressKey) {
+    return { method: "exact_name_address", confidence: "alta", notes: "Coincidencia exacta por nombre y domicilio." };
+  }
+
+  if (sameAlcaldia && evidenceVenueKey && evidenceVenueKey === recordNameKey) {
+    return { method: "probable_name_alcaldia", confidence: "media", notes: "Coincidencia probable por nombre y alcaldía." };
+  }
+
+  if (
+    sameAlcaldia &&
+    evidenceAddressKey &&
+    recordAddressKey &&
+    evidenceAddressKey.length > 10 &&
+    (evidenceAddressKey.includes(recordAddressKey) || recordAddressKey.includes(evidenceAddressKey))
+  ) {
+    return { method: "probable_address", confidence: "media", notes: "Coincidencia probable por domicilio." };
+  }
+
+  return { method: "unmatched", confidence: "sin_match", notes: "Sin coincidencia defendible con la evidencia oficial." };
+};
+
+const deriveAdministrativeStatus = (params: {
+  domicilio: string;
+  hasAdministrativeDateSignal: boolean;
+  hasAssignedPilares: boolean;
+  geolocationType: CanchaGeolocationType;
+  territorialConflict: boolean;
+}): { status: CanchaAdministrativeStatus; note: string } => {
+  if (params.territorialConflict) {
+    return {
+      status: "requiere_revision",
+      note: "El registro contiene señales administrativas o territoriales conflictivas y requiere revisión humana."
+    };
+  }
+  if (!params.domicilio || (!params.hasAdministrativeDateSignal && !params.hasAssignedPilares)) {
+    return {
+      status: "incompleta",
+      note: "El expediente administrativo carece de piezas básicas visibles para seguimiento."
+    };
+  }
+  return {
+    status: "registrada",
+    note: params.geolocationType === "sin_coordenada"
+      ? "Registro administrativo presente, aunque sin georreferencia utilizable."
+      : "Registro administrativo presente con trazabilidad territorial básica."
+  };
+};
+
+const deriveDocumentationStatus = (signals: boolean[]): { status: CanchaDocumentationStatus; score: number; note: string } => {
+  const score = signals.filter(Boolean).length;
+  const status: CanchaDocumentationStatus = score >= 4 ? "completa" : score >= 2 ? "parcial" : "minima";
+  return {
+    status,
+    score,
+    note: `Completitud documental ${status} derivada por ${score}/5 señales: fecha administrativa, contacto operativo, horario, actividades y vínculo institucional.`
+  };
+};
+
 const buildSummaryByAlcaldia = (records: CanchaOperationalRecord[]): CanchasSummaryRecord[] => {
   const grouped = new Map<string, CanchaOperationalRecord[]>();
   records.forEach((record) => {
@@ -438,18 +575,23 @@ const buildSummaryByAlcaldia = (records: CanchaOperationalRecord[]): CanchasSumm
     .map(([alcaldia, items]) => ({
       alcaldia,
       total: items.length,
-      inauguradas: items.filter((item) => item.inaugurationStatus === "inaugurada").length,
-      proximas: items.filter((item) => item.inaugurationStatus === "proxima").length,
-      pendientes: items.filter((item) => item.operationalStatus === "pendiente").length,
-      completas: items.filter((item) => item.operationalStatus === "completa").length,
+      inauguradasConfirmadas: items.filter((item) => item.openingStatus === "inaugurada_confirmada").length,
+      probables: items.filter((item) => item.openingStatus === "probable").length,
+      sinConfirmacionPublica: items.filter((item) => item.openingStatus === "sin_confirmacion_publica").length,
+      contradicciones: items.filter((item) => item.openingStatus === "contradiccion" || item.workStatus === "contradiccion").length,
+      requiereRevision: items.filter((item) => item.administrativeStatus === "requiere_revision").length,
+      documentacionCompleta: items.filter((item) => item.documentationStatus === "completa").length,
+      documentacionMinima: items.filter((item) => item.documentationStatus === "minima").length,
+      entregadasConfirmadas: items.filter((item) => item.workStatus === "entregada_confirmada" || item.workStatus === "lista_confirmada").length,
       conHorario: items.filter((item) => item.hasSchedule).length,
-      conFiguraEducativa: items.filter((item) => item.hasFigureEducativa).length,
+      conPromotor: items.filter((item) => item.tienePromotorFutbol === "si").length,
       conActividades: items.filter((item) => item.hasActivities).length,
-      conCoordenadas: items.filter((item) => item.hasCoordinates).length,
+      coordenadaReal: items.filter((item) => item.geolocationType === "real").length,
+      coordenadaAproximada: items.filter((item) => item.geolocationType === "aproximada_pilares" || item.geolocationType === "aproximada_alcaldia").length,
       source: `Excel operativo 500 Canchas (${workbookRelativePath})`,
       dataType: "insight" as const,
       methodologicalNote:
-        "Resumen agregado de una base operativa real. Los estatus de inauguración y completitud se derivan de la información capturada en el Excel, no de una capa poblacional."
+        "Resumen agregado de una base operativa real. La apertura, entrega u obra solo se marcan como confirmadas cuando existe evidencia oficial conciliada individualmente."
     }))
     .sort((a, b) => b.total - a.total);
 };
@@ -486,6 +628,8 @@ export const buildCanchasOperativasLayer = (): CanchasOperationalLayer => {
   });
   const pilaresCatalog = enrichPilaresCatalog(pilaresCatalogRows);
   const matchPilaresCoordinates = buildPilaresCoordinateMatcher();
+  const evidences = loadManualEvidence();
+  const generatedAt = new Date().toISOString();
 
   let pilaresCatalogMatches = 0;
 
@@ -494,7 +638,7 @@ export const buildCanchasOperativasLayer = (): CanchasOperationalLayer => {
     const normalizedAlcaldia = normalizeAlcaldia(String(row.ALCALDIA ?? ""));
     const hoja2Row = hoja2ByConsecutive.get(consecutiveNumber);
     const territorialRow = chooseBestTerritorialRow(row, hoja2Row, territorialRows);
-    const inauguration = parseInaugurationDate(row["FECHA DE INAUGURACION"]);
+    const administrativeOpening = parseAdministrativeOpeningSignal(row["FECHA DE INAUGURACION"]);
     const nombreFiguraEducativa = sanitizeMeaningfulText(row["NOMBRE DEL LCPO\n(118 EN TOTAL)"]);
     const tipoFiguraEducativa = nombreFiguraEducativa ? "LCPO" : null;
     const telefonoFiguraEducativa = sanitizeMeaningfulText(row["NÚMERO TELEFÓNICO DEL LCPO"]);
@@ -554,22 +698,91 @@ export const buildCanchasOperativasLayer = (): CanchasOperationalLayer => {
 
     const projectedPoint = latitude !== null && longitude !== null && projectPoint ? projectPoint(longitude, latitude) : null;
 
-    const completionSignals = [
-      inauguration.hasDateSignal,
-      Boolean(nombreFiguraEducativa),
-      Boolean(telefonoFiguraEducativa),
-      Boolean(schedule),
-      activities.length > 0
+    const documentation = deriveDocumentationStatus([
+      administrativeOpening.hasDateSignal,
+      Boolean(telefonoFiguraEducativa || assignedPilaresMatch.contact || assignedPilaresMatch.email),
+      Boolean(schedule || mallaHorariaFutbol || mallaHorariaDisciplinas),
+      activities.length > 0,
+      Boolean(assignedPilaresMatch.officialName || pilaresAssignedRaw)
+    ]);
+    const territorialConflict = /sigue en obra|en obra/.test(normalizeText(territorialRow?.territorialStatus)) && administrativeOpening.signal === "past";
+    const administrative = deriveAdministrativeStatus({
+      domicilio: sanitizeText(row.DOMICILIO) ?? "",
+      hasAdministrativeDateSignal: administrativeOpening.hasDateSignal,
+      hasAssignedPilares: Boolean(assignedPilaresMatch.officialName || pilaresAssignedRaw),
+      geolocationType,
+      territorialConflict
+    });
+
+    const evidenceMatches = evidences
+      .map((evidence) => ({
+        evidence,
+        ...buildEvidenceMatch(evidence, {
+          name: sanitizeText(row["UBICACION / NOMBRE"]) ?? `Cancha ${consecutiveNumber}`,
+          domicilio: sanitizeText(row.DOMICILIO) ?? "",
+          alcaldia: normalizedAlcaldia.alcaldia,
+          latitude,
+          longitude,
+          consecutiveNumber
+        })
+      }))
+      .filter((item) => item.method !== "unmatched");
+
+    const bestMatch =
+      evidenceMatches.find((item) => item.confidence === "alta") ??
+      evidenceMatches.find((item) => item.confidence === "media") ??
+      evidenceMatches.find((item) => item.confidence === "baja") ??
+      null;
+
+    const matchedEvidenceIds = evidenceMatches.map((item) => item.evidence.evidenceId);
+    const hasOfficialEvidence = matchedEvidenceIds.length > 0;
+    const matchMethod: CanchaReconciliationMethod = bestMatch?.method ?? "unmatched";
+    const matchConfidence: CanchaReconciliationConfidence = bestMatch?.confidence ?? "sin_match";
+
+    let workStatus: CanchaWorkStatus = "sin_confirmacion";
+    let openingStatus: CanchaOpeningStatus = "sin_confirmacion_publica";
+    let workStatusNote = "Sin evidencia oficial individual conciliada sobre avance de obra, entrega o lista.";
+    let openingStatusNote = "Sin evidencia oficial individual conciliada de inauguración o apertura pública.";
+
+    if (territorialConflict || evidenceMatches.some((item) => normalizeEvidenceStatus(item.evidence.reportedStatus).includes("contradic"))) {
+      workStatus = "contradiccion";
+      openingStatus = "contradiccion";
+      workStatusNote = "Se detectaron señales contradictorias entre expediente administrativo y evidencia conciliada.";
+      openingStatusNote = "Se detectaron señales contradictorias entre expediente administrativo y evidencia conciliada.";
+    } else if (bestMatch) {
+      const normalizedReportedStatus = normalizeEvidenceStatus(bestMatch.evidence.reportedStatus);
+      if (bestMatch.confidence === "alta") {
+        if (normalizedReportedStatus.includes("inaugur")) {
+          openingStatus = "inaugurada_confirmada";
+          openingStatusNote = `Apertura confirmada por evidencia oficial conciliada (${bestMatch.evidence.evidenceId}).`;
+        }
+        if (normalizedReportedStatus.includes("entreg")) {
+          workStatus = "entregada_confirmada";
+          workStatusNote = `Entrega confirmada por evidencia oficial conciliada (${bestMatch.evidence.evidenceId}).`;
+        } else if (normalizedReportedStatus.includes("lista")) {
+          workStatus = "lista_confirmada";
+          workStatusNote = `Registro reportado como listo en evidencia oficial conciliada (${bestMatch.evidence.evidenceId}).`;
+        } else if (normalizedReportedStatus.includes("intervencion") || normalizedReportedStatus.includes("obra") || normalizedReportedStatus.includes("avance")) {
+          workStatus = "intervencion_confirmada";
+          workStatusNote = `Intervención confirmada por evidencia oficial conciliada (${bestMatch.evidence.evidenceId}).`;
+        }
+      } else if (bestMatch.confidence === "media") {
+        openingStatus = "probable";
+        openingStatusNote = `Existe coincidencia probable con evidencia oficial (${bestMatch.evidence.evidenceId}), pero no se publica como confirmación individual.`;
+        workStatusNote = `Existe coincidencia probable con evidencia oficial (${bestMatch.evidence.evidenceId}), insuficiente para confirmar obra o entrega.`;
+      }
+    }
+
+    const reconciliationNotes = bestMatch
+      ? `${bestMatch.notes} Evidencias asociadas: ${matchedEvidenceIds.join(", ")}.`
+      : "Sin evidencia oficial individual conciliada. Los anuncios agregados del programa no acreditan por sí solos el estado de este registro.";
+
+    const statusHistory: CanchaStatusHistoryEntry[] = [
+      buildStatusHistoryEntry("administrativeStatus", administrative.status, generatedAt, "excel_admin_rule", null, null),
+      buildStatusHistoryEntry("documentationStatus", documentation.status, generatedAt, "excel_documentation_rule", null, null),
+      buildStatusHistoryEntry("workStatus", workStatus, generatedAt, bestMatch ? matchMethod : "no_official_evidence", bestMatch?.evidence.evidenceId ?? null, bestMatch?.evidence.publicationDate ?? null),
+      buildStatusHistoryEntry("openingStatus", openingStatus, generatedAt, bestMatch ? matchMethod : "no_official_evidence", bestMatch?.evidence.evidenceId ?? null, bestMatch?.evidence.publicationDate ?? null)
     ];
-    const completionScore = completionSignals.filter(Boolean).length;
-    const operationalStatus =
-      completionScore >= 5
-        ? "completa"
-        : completionScore >= 4
-          ? "lista_para_operar"
-          : completionScore >= 2
-          ? "parcial"
-          : "pendiente";
 
     const sourceSheets = ["Base"];
     if (hoja2Row) sourceSheets.push("Hoja 2");
@@ -611,9 +824,8 @@ export const buildCanchasOperativasLayer = (): CanchasOperationalLayer => {
       nombreFiguraEducativa,
       tipoFiguraEducativa,
       telefonoFiguraEducativa,
-      inaugurationDateRaw: inauguration.raw,
-      inaugurationDateIso: inauguration.iso,
-      inaugurationStatus: inauguration.status,
+      inaugurationDateRaw: administrativeOpening.raw,
+      inaugurationDateIso: administrativeOpening.iso,
       tienePromotorFutbol,
       mallaHorariaFutbol,
       schedule,
@@ -622,7 +834,17 @@ export const buildCanchasOperativasLayer = (): CanchasOperationalLayer => {
       activities,
       promoterCount,
       observations: sanitizeText(row.OBSERVACIONES) ?? territorialRow?.observations ?? null,
-      operationalStatus,
+      administrativeStatus: administrative.status,
+      documentationStatus: documentation.status,
+      workStatus,
+      openingStatus,
+      matchMethod,
+      matchConfidence,
+      matchedEvidenceIds,
+      hasOfficialEvidence,
+      lastVerifiedAt: hasOfficialEvidence ? generatedAt : null,
+      reconciliationNotes,
+      statusHistory,
       hasFigureEducativa: Boolean(nombreFiguraEducativa),
       hasPhone: Boolean(telefonoFiguraEducativa),
       hasSchedule: Boolean(schedule),
@@ -633,18 +855,14 @@ export const buildCanchasOperativasLayer = (): CanchasOperationalLayer => {
       dataType: "real",
       methodologicalNote:
         "Base operativa real consolidada desde múltiples hojas del Excel. Base prioriza operación administrativa; Alc Dic, AlcFeb y Hoja 2 complementan atributos territoriales y geolocalización; Hoja 1 enriquece datos institucionales de PILARES cuando el match es posible. PILARES asignado se conserva separado del PILARES cercano territorial.",
-      statusDerivedNote:
-        `Estatus ${operationalStatus.replace(/_/g, " ")} derivado por ${completionScore}/5 señales presentes: fecha ${completionSignals[0] ? "sí" : "no"}, figura educativa ${completionSignals[1] ? "sí" : "no"}, teléfono ${completionSignals[2] ? "sí" : "no"}, horario general ${completionSignals[3] ? "sí" : "no"}, actividades ${completionSignals[4] ? "sí" : "no"}.`,
-      inaugurationDerivedNote:
-        inauguration.status === "inaugurada"
-          ? "Marcada como inaugurada por fecha válida pasada o señal textual explícita de inauguración."
-          : inauguration.status === "proxima"
-            ? "Marcada como próxima por fecha futura o texto tentativo / por inaugurar."
-            : "Marcada sin fecha porque no se encontró fecha usable ni señal textual suficiente.",
+      administrativeStatusNote: administrative.note,
+      documentationStatusNote: documentation.note,
+      workStatusNote,
+      openingStatusNote,
       dataQualityLabel:
-        completionScore >= 4 && geolocationType === "real"
+        documentation.score >= 4 && geolocationType === "real"
           ? "alta"
-          : completionScore >= 2 || geolocationType !== "sin_coordenada"
+          : documentation.score >= 2 || geolocationType !== "sin_coordenada"
             ? "media"
             : "baja"
     } satisfies CanchaOperationalRecord;

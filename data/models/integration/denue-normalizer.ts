@@ -1,10 +1,19 @@
+export type DenueOwnershipScope = "privado" | "publico_mixto";
+
 export type DenueTargetCategory =
   | "gimnasio_privado"
   | "club_deportivo_privado"
   | "escuela_deportiva_privada"
   | "club_deportivo_mixto"
   | "infraestructura_acuatica"
-  | "escuela_deportiva_mixta";
+  | "escuela_deportiva_mixta"
+  | "otros_deportivos";
+
+export type DenueDashboardCategory =
+  | "Gimnasio privado"
+  | "Club deportivo privado"
+  | "Academia deportiva privada"
+  | "Otros deportivos";
 
 export type DenueNormalizedRecord = {
   id: string;
@@ -12,19 +21,59 @@ export type DenueNormalizedRecord = {
   alcaldia: string | null;
   geoKey: string | null;
   scianCode: string;
+  scianLabel: string;
   category: DenueTargetCategory;
+  dashboardCategory: DenueDashboardCategory | null;
+  ownershipScope: DenueOwnershipScope;
   source: "DENUE";
   dataType: "real";
   methodologicalNote: string;
 };
 
-const scianCategoryMap: Record<string, { category: DenueTargetCategory; label: string }> = {
-  "713941": { category: "club_deportivo_privado", label: "Club deportivo privado" },
-  "713942": { category: "club_deportivo_mixto", label: "Club deportivo público o mixto" },
-  "713943": { category: "gimnasio_privado", label: "Gimnasio privado" },
-  "713944": { category: "infraestructura_acuatica", label: "Instalación acuática o balneario" },
-  "611621": { category: "escuela_deportiva_privada", label: "Escuela deportiva privada" },
-  "611622": { category: "escuela_deportiva_mixta", label: "Escuela deportiva pública o mixta" }
+type DenueScianDefinition = {
+  category: DenueTargetCategory;
+  label: string;
+  ownershipScope: DenueOwnershipScope;
+  dashboardCategory: DenueDashboardCategory | null;
+};
+
+const scianCategoryMap: Record<string, DenueScianDefinition> = {
+  "713941": {
+    category: "club_deportivo_privado",
+    label: "Clubes deportivos del sector privado",
+    ownershipScope: "privado",
+    dashboardCategory: "Club deportivo privado"
+  },
+  "713942": {
+    category: "club_deportivo_mixto",
+    label: "Clubes deportivos del sector público o mixto",
+    ownershipScope: "publico_mixto",
+    dashboardCategory: null
+  },
+  "713943": {
+    category: "gimnasio_privado",
+    label: "Centros de acondicionamiento físico del sector privado",
+    ownershipScope: "privado",
+    dashboardCategory: "Gimnasio privado"
+  },
+  "713944": {
+    category: "infraestructura_acuatica",
+    label: "Infraestructura acuática o balnearios del sector público o mixto",
+    ownershipScope: "publico_mixto",
+    dashboardCategory: null
+  },
+  "611621": {
+    category: "escuela_deportiva_privada",
+    label: "Escuelas de deporte del sector privado",
+    ownershipScope: "privado",
+    dashboardCategory: "Academia deportiva privada"
+  },
+  "611622": {
+    category: "escuela_deportiva_mixta",
+    label: "Escuelas de deporte del sector público o mixto",
+    ownershipScope: "publico_mixto",
+    dashboardCategory: null
+  }
 };
 
 export const denueScianFieldCandidates = [
@@ -56,13 +105,12 @@ export const extractDenueScianCode = (properties: Record<string, string | null |
   return null;
 };
 
+export const getDenueScianDefinition = (scianCode: string) => {
+  return scianCategoryMap[scianCode] ?? null;
+};
+
 export const getDashboardCategoryFromScian = (scianCode: string) => {
-  const match = scianCategoryMap[scianCode];
-  if (!match) return null;
-  if (match.category === "gimnasio_privado") return "Gimnasio privado" as const;
-  if (match.category === "club_deportivo_privado") return "Club deportivo privado" as const;
-  if (match.category === "escuela_deportiva_privada") return "Academia deportiva privada" as const;
-  return null;
+  return getDenueScianDefinition(scianCode)?.dashboardCategory ?? null;
 };
 
 export const normalizeDenueRecord = (input: {
@@ -81,9 +129,12 @@ export const normalizeDenueRecord = (input: {
     alcaldia: input.alcaldia?.trim() || null,
     geoKey: normalizeGeoKey(input.alcaldia),
     scianCode,
+    scianLabel: match.label,
     category: match.category,
+    dashboardCategory: match.dashboardCategory,
+    ownershipScope: match.ownershipScope,
     source: "DENUE",
     dataType: "real",
-    methodologicalNote: `Estructura preparada para integrar DENUE por SCIAN verificable. Este registro se clasifica como ${match.label} sin inferir disciplinas ni amenidades.`
+    methodologicalNote: `Registro DENUE clasificado únicamente por SCIAN ${scianCode} (${match.label}). No se infieren disciplinas, amenidades, capacidad ni usuarios.`
   };
 };

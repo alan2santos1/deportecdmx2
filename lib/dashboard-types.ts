@@ -216,9 +216,59 @@ export type DashboardMeta = {
   };
 };
 
-export type CanchaOperationalStatus = "completa" | "lista_para_operar" | "parcial" | "pendiente";
-export type CanchaInaugurationStatus = "inaugurada" | "proxima" | "sin_fecha";
+export type CanchaAdministrativeStatus = "registrada" | "incompleta" | "requiere_revision";
+export type CanchaDocumentationStatus = "completa" | "parcial" | "minima";
+export type CanchaWorkStatus =
+  | "intervencion_confirmada"
+  | "lista_confirmada"
+  | "entregada_confirmada"
+  | "sin_confirmacion"
+  | "contradiccion";
+export type CanchaOpeningStatus =
+  | "inaugurada_confirmada"
+  | "probable"
+  | "sin_confirmacion_publica"
+  | "contradiccion";
 export type CanchaGeolocationType = "real" | "aproximada_pilares" | "aproximada_alcaldia" | "sin_coordenada";
+export type CanchaReconciliationMethod =
+  | "exact_name_address"
+  | "exact_coordinates"
+  | "exact_official_number"
+  | "probable_name_alcaldia"
+  | "probable_address"
+  | "manual_confirmed"
+  | "unmatched";
+export type CanchaReconciliationConfidence = "alta" | "media" | "baja" | "sin_match";
+
+export type CanchaEvidenceRecord = {
+  evidenceId: string;
+  title: string;
+  sourceInstitution: string;
+  sourceType: string;
+  sourceDate: string | null;
+  publicationDate: string | null;
+  sourceUrl: string | null;
+  alcaldia: string | null;
+  venueName: string | null;
+  addressText: string | null;
+  coordinates: { lat: number; lon: number } | null;
+  officialCourtNumber: string | null;
+  reportedStatus: string;
+  description: string;
+  sourceReliability: "alta" | "media" | "baja";
+  capturedAt: string;
+};
+
+export type CanchaStatusHistoryEntry = {
+  statusType: "administrativeStatus" | "documentationStatus" | "workStatus" | "openingStatus";
+  previousValue: string | null;
+  newValue: string;
+  effectiveDate: string | null;
+  evidenceId: string | null;
+  method: string;
+  changedAt: string;
+  calculationVersion: string;
+};
 
 export type CanchaOperationalRecord = {
   id: string;
@@ -257,7 +307,6 @@ export type CanchaOperationalRecord = {
   telefonoFiguraEducativa?: string | null;
   inaugurationDateRaw?: string | null;
   inaugurationDateIso?: string | null;
-  inaugurationStatus: CanchaInaugurationStatus;
   tienePromotorFutbol: "si" | "no" | "sin_dato";
   mallaHorariaFutbol?: string | null;
   schedule?: string | null;
@@ -266,7 +315,17 @@ export type CanchaOperationalRecord = {
   activities: string[];
   promoterCount?: number | null;
   observations?: string | null;
-  operationalStatus: CanchaOperationalStatus;
+  administrativeStatus: CanchaAdministrativeStatus;
+  documentationStatus: CanchaDocumentationStatus;
+  workStatus: CanchaWorkStatus;
+  openingStatus: CanchaOpeningStatus;
+  matchMethod: CanchaReconciliationMethod;
+  matchConfidence: CanchaReconciliationConfidence;
+  matchedEvidenceIds: string[];
+  hasOfficialEvidence: boolean;
+  lastVerifiedAt: string | null;
+  reconciliationNotes: string;
+  statusHistory: CanchaStatusHistoryEntry[];
   hasFigureEducativa: boolean;
   hasPhone: boolean;
   hasSchedule: boolean;
@@ -276,22 +335,29 @@ export type CanchaOperationalRecord = {
   source: string;
   dataType: "real";
   methodologicalNote: string;
-  statusDerivedNote: string;
-  inaugurationDerivedNote: string;
+  administrativeStatusNote: string;
+  documentationStatusNote: string;
+  workStatusNote: string;
+  openingStatusNote: string;
   dataQualityLabel: "alta" | "media" | "baja";
 };
 
 export type CanchasSummaryRecord = {
   alcaldia: string;
   total: number;
-  inauguradas: number;
-  proximas: number;
-  pendientes: number;
-  completas: number;
+  inauguradasConfirmadas: number;
+  probables: number;
+  sinConfirmacionPublica: number;
+  contradicciones: number;
+  requiereRevision: number;
+  documentacionCompleta: number;
+  documentacionMinima: number;
+  entregadasConfirmadas: number;
   conHorario: number;
-  conFiguraEducativa: number;
+  conPromotor: number;
   conActividades: number;
-  conCoordenadas: number;
+  coordenadaReal: number;
+  coordenadaAproximada: number;
   source: string;
   dataType: "insight";
   methodologicalNote: string;
@@ -299,9 +365,14 @@ export type CanchasSummaryRecord = {
 
 export type CanchasFilterState = {
   alcaldias: string[];
-  operationalStatuses: string[];
-  inaugurationStatuses: string[];
-  figurePresence: string[];
+  administrativeStatuses: string[];
+  documentationStatuses: string[];
+  workStatuses: string[];
+  openingStatuses: string[];
+  locationQualities: string[];
+  reconciliationConfidences: string[];
+  evidencePresence: string[];
+  promoterPresence: string[];
   schedulePresence: string[];
   activityPresence: string[];
   types: string[];

@@ -116,9 +116,14 @@ export const emptyFilters: DashboardFilterState = {
 
 export const emptyCanchasFilters: CanchasFilterState = {
   alcaldias: [],
-  operationalStatuses: [],
-  inaugurationStatuses: [],
-  figurePresence: [],
+  administrativeStatuses: [],
+  documentationStatuses: [],
+  workStatuses: [],
+  openingStatuses: [],
+  locationQualities: [],
+  reconciliationConfidences: [],
+  evidencePresence: [],
+  promoterPresence: [],
   schedulePresence: [],
   activityPresence: [],
   types: [],
@@ -663,7 +668,7 @@ export const buildInfrastructureScopeKpi = (
   }
   if (scope === "privada_denue") {
     const value = infrastructureDetails
-      .filter((item) => item.sourceDataset === "Directorio Estadístico de Unidades Económicas CDMX")
+      .filter((item) => item.sourceDataset === "Infraestructura privada DENUE")
       .reduce((sum, item) => sum + item.administrativeCount, 0);
     return {
       label: "Infraestructura privada formal visible",
@@ -906,32 +911,94 @@ export const buildMapAreaLookup = (records: MapAreaRecord[]) => {
 
 const canchaPresenceLabel = (value: boolean, positive: string, negative: string) => (value ? positive : negative);
 
+const documentationTrafficLight = (record: CanchaOperationalRecord) => {
+  if (record.documentationStatus === "completa") return "Verde";
+  if (record.documentationStatus === "parcial") return "Amarillo";
+  return "Rojo";
+};
+
+const locationQualityFilterValue = (record: CanchaOperationalRecord) => {
+  if (record.geolocationType === "real") return "real";
+  if (record.geolocationType === "aproximada_pilares") return "aproximada_pilares";
+  if (record.geolocationType === "aproximada_alcaldia") return "aproximada_alcaldia";
+  return "sin_coordenada";
+};
+
 export const buildCanchasFilterConfig = (records: CanchaOperationalRecord[]) => [
   { title: "Alcaldía", key: "alcaldias" as const, options: uniq(records.map((item) => item.alcaldia)).map((value) => ({ label: value, value })) },
   {
-    title: "Estatus operativo",
-    key: "operationalStatuses" as const,
+    title: "Estado administrativo",
+    key: "administrativeStatuses" as const,
+    options: [
+      { label: "Registrada", value: "registrada" },
+      { label: "Incompleta", value: "incompleta" },
+      { label: "Requiere revisión", value: "requiere_revision" }
+    ]
+  },
+  {
+    title: "Completitud documental",
+    key: "documentationStatuses" as const,
     options: [
       { label: "Completa", value: "completa" },
       { label: "Parcial", value: "parcial" },
-      { label: "Pendiente", value: "pendiente" }
+      { label: "Mínima", value: "minima" }
     ]
   },
   {
-    title: "Estatus de inauguración",
-    key: "inaugurationStatuses" as const,
+    title: "Estado de obra",
+    key: "workStatuses" as const,
     options: [
-      { label: "Inaugurada", value: "inaugurada" },
-      { label: "Próxima", value: "proxima" },
-      { label: "Sin fecha", value: "sin_fecha" }
+      { label: "Intervención confirmada", value: "intervencion_confirmada" },
+      { label: "Lista confirmada", value: "lista_confirmada" },
+      { label: "Entrega confirmada", value: "entregada_confirmada" },
+      { label: "Sin confirmación", value: "sin_confirmacion" },
+      { label: "Contradicción", value: "contradiccion" }
     ]
   },
   {
-    title: "Figura educativa",
-    key: "figurePresence" as const,
+    title: "Estado de apertura",
+    key: "openingStatuses" as const,
     options: [
-      { label: "Con figura educativa", value: "con_figura" },
-      { label: "Sin figura educativa", value: "sin_figura" }
+      { label: "Inaugurada confirmada", value: "inaugurada_confirmada" },
+      { label: "Probable", value: "probable" },
+      { label: "Sin confirmación pública", value: "sin_confirmacion_publica" },
+      { label: "Contradicción", value: "contradiccion" }
+    ]
+  },
+  {
+    title: "Calidad de ubicación",
+    key: "locationQualities" as const,
+    options: [
+      { label: "Coordenada real", value: "real" },
+      { label: "Aproximada por PILARES", value: "aproximada_pilares" },
+      { label: "Aproximada por alcaldía", value: "aproximada_alcaldia" },
+      { label: "Sin coordenada", value: "sin_coordenada" }
+    ]
+  },
+  {
+    title: "Confianza de conciliación",
+    key: "reconciliationConfidences" as const,
+    options: [
+      { label: "Alta", value: "alta" },
+      { label: "Media", value: "media" },
+      { label: "Baja", value: "baja" },
+      { label: "Sin match", value: "sin_match" }
+    ]
+  },
+  {
+    title: "Evidencia oficial",
+    key: "evidencePresence" as const,
+    options: [
+      { label: "Con evidencia", value: "con_evidencia" },
+      { label: "Sin evidencia", value: "sin_evidencia" }
+    ]
+  },
+  {
+    title: "Promotor de futbol",
+    key: "promoterPresence" as const,
+    options: [
+      { label: "Con promotor", value: "con_promotor" },
+      { label: "Sin promotor", value: "sin_promotor" }
     ]
   },
   {
@@ -964,9 +1031,14 @@ export const filterCanchasRecords = (
     if (globalFilters.alcaldias.length > 0 && !globalFilters.alcaldias.includes(record.alcaldia)) return false;
     if (globalFilters.years.length > 0 && !globalFilters.years.includes(String(record.year))) return false;
     if (filters.alcaldias.length > 0 && !filters.alcaldias.includes(record.alcaldia)) return false;
-    if (filters.operationalStatuses.length > 0 && !filters.operationalStatuses.includes(record.operationalStatus)) return false;
-    if (filters.inaugurationStatuses.length > 0 && !filters.inaugurationStatuses.includes(record.inaugurationStatus)) return false;
-    if (filters.figurePresence.length > 0 && !filters.figurePresence.includes(record.hasFigureEducativa ? "con_figura" : "sin_figura")) return false;
+    if (filters.administrativeStatuses.length > 0 && !filters.administrativeStatuses.includes(record.administrativeStatus)) return false;
+    if (filters.documentationStatuses.length > 0 && !filters.documentationStatuses.includes(record.documentationStatus)) return false;
+    if (filters.workStatuses.length > 0 && !filters.workStatuses.includes(record.workStatus)) return false;
+    if (filters.openingStatuses.length > 0 && !filters.openingStatuses.includes(record.openingStatus)) return false;
+    if (filters.locationQualities.length > 0 && !filters.locationQualities.includes(locationQualityFilterValue(record))) return false;
+    if (filters.reconciliationConfidences.length > 0 && !filters.reconciliationConfidences.includes(record.matchConfidence)) return false;
+    if (filters.evidencePresence.length > 0 && !filters.evidencePresence.includes(record.hasOfficialEvidence ? "con_evidencia" : "sin_evidencia")) return false;
+    if (filters.promoterPresence.length > 0 && !filters.promoterPresence.includes(record.tienePromotorFutbol === "si" ? "con_promotor" : "sin_promotor")) return false;
     if (filters.schedulePresence.length > 0 && !filters.schedulePresence.includes(record.hasSchedule ? "con_horario" : "sin_horario")) return false;
     if (filters.activityPresence.length > 0 && !filters.activityPresence.includes(record.hasActivities ? "con_actividades" : "sin_actividades")) return false;
     if (filters.types.length > 0 && !filters.types.includes(record.tipoCancha ?? "")) return false;
@@ -977,54 +1049,50 @@ export const filterCanchasRecords = (
 };
 
 export const buildCanchasKpis = (records: CanchaOperationalRecord[]) => [
-  { label: "Total de canchas", value: formatNumber(records.length), helper: "Registros operativos integrados desde el Excel real" },
-  { label: "Inauguradas", value: formatNumber(records.filter((item) => item.inaugurationStatus === "inaugurada").length), helper: "Fecha válida pasada o señal explícita de inauguración" },
-  { label: "Próximas", value: formatNumber(records.filter((item) => item.inaugurationStatus === "proxima").length), helper: "Fecha futura o mención tentativa / por inaugurar" },
-  { label: "Pendientes", value: formatNumber(records.filter((item) => item.operationalStatus === "pendiente").length), helper: "Información mínima para operación" },
-  { label: "Con datos completos", value: formatNumber(records.filter((item) => item.operationalStatus === "completa").length), helper: "Fecha + dato operativo básico + horario + actividades" },
+  { label: "Registros administrativos", value: formatNumber(records.length), helper: "Padrón administrativo integrado desde el Excel real" },
+  { label: "Inauguración confirmada", value: formatNumber(records.filter((item) => item.openingStatus === "inaugurada_confirmada").length), helper: "Solo con evidencia oficial conciliada individualmente" },
+  { label: "Entrega / lista confirmada", value: formatNumber(records.filter((item) => item.workStatus === "entregada_confirmada" || item.workStatus === "lista_confirmada").length), helper: "Evidencia oficial individual de entrega o lista" },
+  { label: "Coincidencia probable", value: formatNumber(records.filter((item) => item.matchConfidence === "media").length), helper: "Match probable que no se publica como confirmación" },
+  { label: "Sin confirmación pública", value: formatNumber(records.filter((item) => item.openingStatus === "sin_confirmacion_publica").length), helper: "Sin evidencia pública individual conciliada" },
+  { label: "Requiere revisión", value: formatNumber(records.filter((item) => item.administrativeStatus === "requiere_revision").length), helper: "Registro con señal administrativa o territorial conflictiva" },
   { label: "Con horario", value: formatNumber(records.filter((item) => item.hasSchedule).length), helper: "Horario operativo o malla horaria capturada" },
-  { label: "Con responsable PILARES", value: formatNumber(records.filter((item) => Boolean(item.assignedPilaresResponsibleName)).length), helper: "Responsable de sede identificado desde el catálogo PILARES" },
   { label: "Con actividades", value: formatNumber(records.filter((item) => item.hasActivities).length), helper: "Actividades operativas registradas en la base" }
 ];
-
-const buildOperationalTrafficLight = (record: CanchaOperationalRecord) => {
-  if (record.operationalStatus === "completa") return "Verde";
-  if (record.operationalStatus === "lista_para_operar" || record.operationalStatus === "parcial") return "Amarillo";
-  return "Rojo";
-};
 
 export const buildCanchasSummaryRows = (records: CanchaOperationalRecord[]) => {
   return Array.from(groupBy(records, (record) => record.alcaldia))
     .map(([alcaldia, items]) => ({
       Alcaldía: alcaldia,
-      "Total de canchas": formatNumber(items.length),
-      Inauguradas: formatNumber(items.filter((item) => item.inaugurationStatus === "inaugurada").length),
-      Próximas: formatNumber(items.filter((item) => item.inaugurationStatus === "proxima").length),
-      "Sin fecha": formatNumber(items.filter((item) => item.inaugurationStatus === "sin_fecha").length),
-      Completas: formatNumber(items.filter((item) => item.operationalStatus === "completa").length),
-      "Lista para operar": formatNumber(items.filter((item) => item.operationalStatus === "lista_para_operar").length),
-      Pendientes: formatNumber(items.filter((item) => item.operationalStatus === "pendiente").length),
+      "Total de registros": formatNumber(items.length),
+      "Inauguración confirmada": formatNumber(items.filter((item) => item.openingStatus === "inaugurada_confirmada").length),
+      Probables: formatNumber(items.filter((item) => item.openingStatus === "probable").length),
+      "Sin confirmación pública": formatNumber(items.filter((item) => item.openingStatus === "sin_confirmacion_publica").length),
+      "Documentación completa": formatNumber(items.filter((item) => item.documentationStatus === "completa").length),
+      "Documentación mínima": formatNumber(items.filter((item) => item.documentationStatus === "minima").length),
+      "Entrega/lista confirmada": formatNumber(items.filter((item) => item.workStatus === "entregada_confirmada" || item.workStatus === "lista_confirmada").length),
       "Sin promotor": formatNumber(items.filter((item) => item.tienePromotorFutbol !== "si").length),
       "Con horario": formatNumber(items.filter((item) => item.hasSchedule).length),
-      "Sin responsable PILARES": formatNumber(items.filter((item) => !item.assignedPilaresResponsibleName).length),
+      "Con evidencia oficial": formatNumber(items.filter((item) => item.hasOfficialEvidence).length),
       "Con actividades": formatNumber(items.filter((item) => item.hasActivities).length),
-      "Con coordenadas": formatNumber(items.filter((item) => item.hasCoordinates).length),
-      "Semáforo operativo":
-        items.filter((item) => item.operationalStatus === "pendiente").length / (items.length || 1) >= 0.25
+      "Coordenada real": formatNumber(items.filter((item) => item.geolocationType === "real").length),
+      "Ubicación aproximada": formatNumber(items.filter((item) => item.geolocationType === "aproximada_pilares" || item.geolocationType === "aproximada_alcaldia").length),
+      "Semáforo documental":
+        items.filter((item) => item.documentationStatus === "minima").length / (items.length || 1) >= 0.25
           ? "Rojo"
-          : items.filter((item) => item.operationalStatus === "completa" || item.operationalStatus === "lista_para_operar").length / (items.length || 1) >= 0.6
+          : items.filter((item) => item.documentationStatus === "completa").length / (items.length || 1) >= 0.45
             ? "Verde"
             : "Amarillo"
     }))
-    .sort((a, b) => Number(b["Total de canchas"].replace(/,/g, "")) - Number(a["Total de canchas"].replace(/,/g, "")));
+    .sort((a, b) => Number(b["Total de registros"].replace(/,/g, "")) - Number(a["Total de registros"].replace(/,/g, "")));
 };
 
 export const buildCanchasAlerts = (records: CanchaOperationalRecord[]) => [
-  { label: "Canchas sin fecha", value: formatNumber(records.filter((item) => item.inaugurationStatus === "sin_fecha").length), helper: "Requieren confirmación de inauguración" },
+  { label: "Sin confirmación pública", value: formatNumber(records.filter((item) => item.openingStatus === "sin_confirmacion_publica").length), helper: "No existe evidencia pública individual conciliada" },
+  { label: "Coincidencia probable", value: formatNumber(records.filter((item) => item.openingStatus === "probable").length), helper: "Requieren revisión humana antes de publicar como confirmadas" },
+  { label: "Requiere revisión", value: formatNumber(records.filter((item) => item.administrativeStatus === "requiere_revision").length), helper: "Registro con señales administrativas o territoriales conflictivas" },
   { label: "Sin promotor", value: formatNumber(records.filter((item) => item.tienePromotorFutbol !== "si").length), helper: "Sin promotor de futbol confirmado en la base" },
   { label: "Sin horario", value: formatNumber(records.filter((item) => !item.hasSchedule).length), helper: "Sin horario operativo o malla horaria" },
-  { label: "Sin actividades", value: formatNumber(records.filter((item) => !item.hasActivities).length), helper: "Sin actividades registradas en la base" },
-  { label: "Sin responsable PILARES", value: formatNumber(records.filter((item) => !item.assignedPilaresResponsibleName).length), helper: "Sin responsable de sede identificado" }
+  { label: "Sin actividades", value: formatNumber(records.filter((item) => !item.hasActivities).length), helper: "Sin actividades registradas en la base" }
 ];
 
 export const buildCanchasQualitySummary = (records: CanchaOperationalRecord[]) => [
@@ -1032,84 +1100,85 @@ export const buildCanchasQualitySummary = (records: CanchaOperationalRecord[]) =
   { label: "Coordenada real", value: formatNumber(records.filter((item) => item.geolocationType === "real").length), helper: "Tomada desde hojas territoriales" },
   { label: "Coordenada aproximada", value: formatNumber(records.filter((item) => item.geolocationType === "aproximada_pilares" || item.geolocationType === "aproximada_alcaldia").length), helper: "Heredada desde PILARES o centroide de alcaldía" },
   { label: "Sin coordenada", value: formatNumber(records.filter((item) => item.geolocationType === "sin_coordenada").length), helper: "Sin ubicación utilizable" },
-  { label: "Con responsable PILARES", value: formatNumber(records.filter((item) => Boolean(item.assignedPilaresResponsibleName)).length), helper: "Responsable de sede disponible" },
+  { label: "Con evidencia oficial", value: formatNumber(records.filter((item) => item.hasOfficialEvidence).length), helper: "Con evidencia oficial conciliada" },
+  { label: "Confianza alta", value: formatNumber(records.filter((item) => item.matchConfidence === "alta").length), helper: "Match alto o validación manual" },
   { label: "Con horario", value: formatNumber(records.filter((item) => item.hasSchedule).length), helper: "Horario o malla horaria disponible" },
   { label: "Con actividades", value: formatNumber(records.filter((item) => item.hasActivities).length), helper: "Actividades registradas" },
-  { label: "Con fecha válida", value: formatNumber(records.filter((item) => item.inaugurationStatus !== "sin_fecha").length), helper: "Fecha o señal textual usable" }
+  { label: "Con fecha cargada", value: formatNumber(records.filter((item) => Boolean(item.inaugurationDateIso || item.inaugurationDateRaw)).length), helper: "Fecha o texto administrativo disponible" }
 ];
 
 export const buildCanchasExecutiveKpis = (records: CanchaOperationalRecord[]) => {
   const total = records.length || 1;
   return [
-    { label: "% inauguradas", value: `${share(records.filter((item) => item.inaugurationStatus === "inaugurada").length, total).toFixed(1)}%`, helper: "Fecha pasada o señal explícita de inauguración" },
-    { label: "% próximas", value: `${share(records.filter((item) => item.inaugurationStatus === "proxima").length, total).toFixed(1)}%`, helper: "Corte con arranque próximo o tentativo" },
-    { label: "% sin fecha", value: `${share(records.filter((item) => item.inaugurationStatus === "sin_fecha").length, total).toFixed(1)}%`, helper: "Pendiente de programación visible" },
-    { label: "% completas", value: `${share(records.filter((item) => item.operationalStatus === "completa").length, total).toFixed(1)}%`, helper: "Operación documentada con 5/5 señales" },
-    { label: "% parciales", value: `${share(records.filter((item) => item.operationalStatus === "parcial" || item.operationalStatus === "lista_para_operar").length, total).toFixed(1)}%`, helper: "Operación en captura o casi lista" },
+    { label: "% inauguración confirmada", value: `${share(records.filter((item) => item.openingStatus === "inaugurada_confirmada").length, total).toFixed(1)}%`, helper: "Solo con evidencia oficial individual" },
+    { label: "% probable", value: `${share(records.filter((item) => item.openingStatus === "probable").length, total).toFixed(1)}%`, helper: "Coincidencia media que requiere validación humana" },
+    { label: "% sin confirmación pública", value: `${share(records.filter((item) => item.openingStatus === "sin_confirmacion_publica").length, total).toFixed(1)}%`, helper: "Sin evidencia pública individual conciliada" },
+    { label: "% documentación completa", value: `${share(records.filter((item) => item.documentationStatus === "completa").length, total).toFixed(1)}%`, helper: "Expediente documental con señales operativas suficientes" },
+    { label: "% documentación mínima", value: `${share(records.filter((item) => item.documentationStatus === "minima").length, total).toFixed(1)}%`, helper: "Expediente con información mínima" },
     { label: "% con promotor", value: `${share(records.filter((item) => item.tienePromotorFutbol === "si").length, total).toFixed(1)}%`, helper: "Promotor de futbol confirmado en la base" },
     { label: "% con horario", value: `${share(records.filter((item) => item.hasSchedule || item.mallaHorariaFutbol || item.mallaHorariaDisciplinas).length, total).toFixed(1)}%`, helper: "Horario general o malla específica visible" },
-    { label: "% con responsable PILARES", value: `${share(records.filter((item) => Boolean(item.assignedPilaresResponsibleName)).length, total).toFixed(1)}%`, helper: "Sede PILARES con responsable identificado" }
+    { label: "% con evidencia oficial", value: `${share(records.filter((item) => item.hasOfficialEvidence).length, total).toFixed(1)}%`, helper: "Registro con evidencia oficial conciliada" }
   ];
 };
 
 export const buildCanchasExecutiveInsights = (records: CanchaOperationalRecord[]): CanchasExecutiveInsight[] => {
   if (records.length === 0) return [];
   const total = records.length;
-  const inaugurated = records.filter((item) => item.inaugurationStatus === "inaugurada");
+  const confirmedOpening = records.filter((item) => item.openingStatus === "inaugurada_confirmada");
+  const probableOpening = records.filter((item) => item.openingStatus === "probable");
   const noPromoter = records.filter((item) => item.tienePromotorFutbol !== "si");
   const withPromoter = records.filter((item) => item.tienePromotorFutbol === "si");
   const withHorario = records.filter((item) => item.hasSchedule || Boolean(item.mallaHorariaFutbol) || Boolean(item.mallaHorariaDisciplinas));
-  const completeLike = records.filter((item) => item.operationalStatus === "completa" || item.operationalStatus === "lista_para_operar");
+  const fullyDocumented = records.filter((item) => item.documentationStatus === "completa");
   const topBy = (
-    label: string,
     predicate: (item: CanchaOperationalRecord) => boolean
   ) =>
     Array.from(groupBy(records.filter(predicate), (item) => item.alcaldia))
       .map(([alcaldia, items]) => ({ alcaldia, total: items.length }))
       .sort((a, b) => b.total - a.total)[0] ?? null;
 
-  const topPending = topBy("pendientes", (item) => item.operationalStatus === "pendiente");
-  const topComplete = topBy("completas", (item) => item.operationalStatus === "completa");
-  const topNoDate = topBy("sin fecha", (item) => item.inaugurationStatus === "sin_fecha");
-  const topNoPromoter = topBy("sin promotor", (item) => item.tienePromotorFutbol !== "si");
-  const topNoHorario = topBy("sin horario", (item) => !item.hasSchedule && !item.mallaHorariaFutbol && !item.mallaHorariaDisciplinas);
-  const topUpcomingLowOps = Array.from(groupBy(records.filter((item) => item.inaugurationStatus === "proxima"), (item) => item.alcaldia))
+  const topMinimal = topBy((item) => item.documentationStatus === "minima");
+  const topComplete = topBy((item) => item.documentationStatus === "completa");
+  const topNoConfirmation = topBy((item) => item.openingStatus === "sin_confirmacion_publica");
+  const topNoPromoter = topBy((item) => item.tienePromotorFutbol !== "si");
+  const topNoHorario = topBy((item) => !item.hasSchedule && !item.mallaHorariaFutbol && !item.mallaHorariaDisciplinas);
+  const topProbableLowDocs = Array.from(groupBy(records.filter((item) => item.openingStatus === "probable"), (item) => item.alcaldia))
     .map(([alcaldia, items]) => ({
       alcaldia,
       total: items.length,
-      lowOpsShare: items.filter((item) => item.operationalStatus === "parcial" || item.operationalStatus === "pendiente").length / (items.length || 1)
+      lowDocsShare: items.filter((item) => item.documentationStatus !== "completa").length / (items.length || 1)
     }))
-    .sort((a, b) => b.total - a.total || b.lowOpsShare - a.lowOpsShare)[0] ?? null;
+    .sort((a, b) => b.total - a.total || b.lowDocsShare - a.lowDocsShare)[0] ?? null;
 
-  const promoterCompleteShare = share(withPromoter.filter((item) => item.operationalStatus === "completa" || item.operationalStatus === "lista_para_operar").length, withPromoter.length || 1);
-  const noPromoterCompleteShare = share(noPromoter.filter((item) => item.operationalStatus === "completa" || item.operationalStatus === "lista_para_operar").length, noPromoter.length || 1);
-  const horarioCompleteShare = share(withHorario.filter((item) => item.operationalStatus === "completa" || item.operationalStatus === "lista_para_operar").length, withHorario.length || 1);
-  const inauguratedCompleteShare = share(inaugurated.filter((item) => item.operationalStatus === "completa" || item.operationalStatus === "lista_para_operar").length, inaugurated.length || 1);
+  const promoterCompleteShare = share(withPromoter.filter((item) => item.documentationStatus === "completa").length, withPromoter.length || 1);
+  const noPromoterCompleteShare = share(noPromoter.filter((item) => item.documentationStatus === "completa").length, noPromoter.length || 1);
+  const horarioCompleteShare = share(withHorario.filter((item) => item.documentationStatus === "completa").length, withHorario.length || 1);
+  const confirmedDocumentedShare = share(confirmedOpening.filter((item) => item.documentationStatus === "completa").length, confirmedOpening.length || 1);
 
   return [
     {
-      title: "Cobertura operativa documentada",
-      body: `${share(completeLike.length, total).toFixed(1)}% de las canchas visibles están completas o listas para operar. ${topComplete ? `${topComplete.alcaldia} concentra el mayor volumen de canchas completas (${formatNumber(topComplete.total)}).` : ""}`
+      title: "Cobertura documental defendible",
+      body: `${share(fullyDocumented.length, total).toFixed(1)}% de las canchas visibles tiene documentación completa. ${topComplete ? `${topComplete.alcaldia} concentra el mayor volumen de expedientes completos (${formatNumber(topComplete.total)}).` : ""}`
     },
     {
-      title: "Promotor de futbol y madurez operativa",
-      body: `${share(withPromoter.length, total).toFixed(1)}% de las canchas reporta promotor de futbol. Entre ellas, ${promoterCompleteShare.toFixed(1)}% está completa o lista para operar, frente a ${noPromoterCompleteShare.toFixed(1)}% entre las canchas sin promotor confirmado.`
+      title: "Promotor de futbol y completitud documental",
+      body: `${share(withPromoter.length, total).toFixed(1)}% de las canchas reporta promotor de futbol. Entre ellas, ${promoterCompleteShare.toFixed(1)}% tiene expediente completo, frente a ${noPromoterCompleteShare.toFixed(1)}% entre las canchas sin promotor confirmado.`
     },
     {
-      title: "Horario como señal de preparación",
-      body: `${share(withHorario.length, total).toFixed(1)}% ya registra horario o malla horaria. Dentro de ese grupo, ${horarioCompleteShare.toFixed(1)}% está completa o lista para operar. ${topNoHorario ? `${topNoHorario.alcaldia} concentra más casos sin horario (${formatNumber(topNoHorario.total)}).` : ""}`
+      title: "Horario como señal de expediente maduro",
+      body: `${share(withHorario.length, total).toFixed(1)}% ya registra horario o malla horaria. Dentro de ese grupo, ${horarioCompleteShare.toFixed(1)}% tiene documentación completa. ${topNoHorario ? `${topNoHorario.alcaldia} concentra más casos sin horario (${formatNumber(topNoHorario.total)}).` : ""}`
     },
     {
-      title: "Arranque próximo con documentación desigual",
-      body: `${share(records.filter((item) => item.inaugurationStatus === "proxima").length, total).toFixed(1)}% de las canchas está marcada como próxima. ${topUpcomingLowOps ? `${topUpcomingLowOps.alcaldia} destaca por tener más canchas próximas con operación aún parcial o pendiente.` : ""}`
+      title: "Coincidencias probables aún no confirmadas",
+      body: `${share(probableOpening.length, total).toFixed(1)}% de las canchas visibles tiene coincidencia probable con evidencia oficial, pero todavía no confirmación suficiente para publicarse como inaugurada. ${topProbableLowDocs ? `${topProbableLowDocs.alcaldia} concentra más probables con expediente todavía incompleto.` : ""}`
     },
     {
       title: "Focos de seguimiento inmediato",
-      body: `${topPending ? `${topPending.alcaldia} concentra más canchas pendientes (${formatNumber(topPending.total)}). ` : ""}${topNoDate ? `${topNoDate.alcaldia} lidera los casos sin fecha (${formatNumber(topNoDate.total)}). ` : ""}${topNoPromoter ? `${topNoPromoter.alcaldia} concentra más canchas sin promotor confirmado (${formatNumber(topNoPromoter.total)}).` : ""}`
+      body: `${topMinimal ? `${topMinimal.alcaldia} concentra más expedientes mínimos (${formatNumber(topMinimal.total)}). ` : ""}${topNoConfirmation ? `${topNoConfirmation.alcaldia} lidera los casos sin confirmación pública (${formatNumber(topNoConfirmation.total)}). ` : ""}${topNoPromoter ? `${topNoPromoter.alcaldia} concentra más canchas sin promotor confirmado (${formatNumber(topNoPromoter.total)}).` : ""}`
     },
     {
-      title: "Inauguración y documentación",
-      body: `${share(inaugurated.length, total).toFixed(1)}% de las canchas ya se marca como inaugurada. Dentro de ese grupo, ${inauguratedCompleteShare.toFixed(1)}% ya cuenta con documentación operativa completa o lista para operar.`
+      title: "Confirmación pública y expediente",
+      body: `${share(confirmedOpening.length, total).toFixed(1)}% de las canchas visibles cuenta con inauguración confirmada individualmente. Dentro de ese grupo, ${confirmedDocumentedShare.toFixed(1)}% también tiene expediente documental completo.`
     }
   ];
 };
@@ -1119,17 +1188,38 @@ export const buildCanchasTableRows = (records: CanchaOperationalRecord[]) => {
     Nombre: record.name,
     Alcaldía: record.alcaldia,
     Domicilio: record.domicilio,
-    "Fecha de inauguración": record.inaugurationDateIso ?? record.inaugurationDateRaw ?? "",
-    "Estatus de inauguración": record.inaugurationStatus === "proxima" ? "Próxima" : record.inaugurationStatus === "sin_fecha" ? "Sin fecha" : "Inaugurada",
-    "Estatus operativo":
-      record.operationalStatus === "completa"
+    "Fecha administrativa": record.inaugurationDateIso ?? record.inaugurationDateRaw ?? "",
+    "Estado administrativo":
+      record.administrativeStatus === "registrada"
+        ? "Registrada"
+        : record.administrativeStatus === "incompleta"
+          ? "Incompleta"
+          : "Requiere revisión",
+    "Completitud documental":
+      record.documentationStatus === "completa"
         ? "Completa"
-        : record.operationalStatus === "lista_para_operar"
-          ? "Lista para operar"
-          : record.operationalStatus === "parcial"
-            ? "Parcial"
-            : "Pendiente",
-    "Semáforo operativo": buildOperationalTrafficLight(record),
+        : record.documentationStatus === "parcial"
+          ? "Parcial"
+          : "Mínima",
+    "Estado de obra":
+      record.workStatus === "intervencion_confirmada"
+        ? "Intervención confirmada"
+        : record.workStatus === "lista_confirmada"
+          ? "Lista confirmada"
+          : record.workStatus === "entregada_confirmada"
+            ? "Entrega confirmada"
+            : record.workStatus === "contradiccion"
+              ? "Contradicción"
+              : "Sin confirmación",
+    "Estado de apertura":
+      record.openingStatus === "inaugurada_confirmada"
+        ? "Inaugurada confirmada"
+        : record.openingStatus === "probable"
+          ? "Probable"
+          : record.openingStatus === "contradiccion"
+            ? "Contradicción"
+            : "Sin confirmación pública",
+    "Semáforo documental": documentationTrafficLight(record),
     "Cuenta con promotor de futbol":
       record.tienePromotorFutbol === "si"
         ? "Sí"
@@ -1149,6 +1239,16 @@ export const buildCanchasTableRows = (records: CanchaOperationalRecord[]) => {
     Actividades: record.activities.join(", "),
     Observaciones: record.observations ?? "",
     "Geolocalización": record.geolocationLabel,
+    "Confianza conciliación":
+      record.matchConfidence === "alta"
+        ? "Alta"
+        : record.matchConfidence === "media"
+          ? "Media"
+          : record.matchConfidence === "baja"
+            ? "Baja"
+            : "Sin match",
+    "Evidencia oficial": record.hasOfficialEvidence ? "Sí" : "No",
+    "Última verificación": record.lastVerifiedAt ?? "",
     "Calidad del dato": record.dataQualityLabel
   }));
 };

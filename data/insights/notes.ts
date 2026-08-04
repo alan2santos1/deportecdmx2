@@ -25,16 +25,16 @@ export const sourceRegistry: SourceRegistryEntry[] = [
   {
     metric: "Gimnasios y centros privados",
     layer: "preparado",
-    source: "DENUE CDMX descargado + validación SCIAN pendiente",
+    source: "DENUE CDMX descargado + validación estricta por SCIAN",
     coverage: "Capa privada preparada por unidad económica candidata, no validada como universo deportivo",
     note: "Mientras el export no exponga SCIAN verificable, la capa privada debe leerse como preparada y no como conteo oficial definitivo ni como infraestructura observada."
   },
   {
     metric: "Clubes y academias privadas",
     layer: "preparado",
-    source: "DENUE CDMX descargado + clasificación textual por nombre/actividad",
-    coverage: "Subtipos privados compatibles con el dashboard ejecutivo",
-    note: "Se distinguen gimnasios, clubes y academias sin mezclarlos con infraestructura pública, pero no equivalen a una clasificación oficial por SCIAN verificada ni se suman al total real."
+    source: "DENUE CDMX descargado + clasificación exclusiva por SCIAN oficial",
+    coverage: "Subtipos privados solo cuando el extracto preserve SCIAN verificable",
+    note: "No se usan nombre comercial, actividad o categoría textual para clasificar establecimientos privados. Sin SCIAN verificable, la capa permanece preparada y fuera del total real."
   },
   {
     metric: "Parques y áreas verdes",

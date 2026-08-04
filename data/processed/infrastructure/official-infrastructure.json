@@ -1,6 +1,6 @@
 {
   "meta": {
-    "generatedAt": "2026-08-03T18:34:56.624Z",
+    "generatedAt": "2026-08-04T03:24:26.134Z",
     "integratedSources": [
       {
         "key": "pilares",
@@ -89,7 +89,7 @@
         "dataType": "preparado",
         "qualityGrade": "D",
         "coverageLevel": "parcial_cdmx",
-        "methodology": "Clasificación por SCIAN verificable cuando exista; mientras tanto, solo como capa preparada y candidata.",
+        "methodology": "Integración exclusiva por SCIAN verificable. Si el extracto local no preserva SCIAN usable, la capa permanece preparada y fuera de los totales reales.",
         "provenance": {
           "institution": "INEGI / DENUE CDMX",
           "sourceType": "dataset_oficial",
@@ -97,7 +97,7 @@
           "sourceDate": "2026-08-03",
           "asOfDate": "2026-08-03",
           "coverage": "CDMX por establecimiento, sujeto a calidad del extracto local",
-          "methodology": "Debe distinguir registros con SCIAN verificable de clasificaciones textuales auxiliares.",
+          "methodology": "Solo admite registros con SCIAN verificable; no permite clasificación por nombre comercial, actividad textual ni NLP.",
           "provenanceNote": "Con el corte local actual la capa no debe presentarse como universo privado definitivo."
         }
       },
@@ -257,7 +257,7 @@
         "dataType": "preparado",
         "qualityGrade": "D",
         "coverageLevel": "parcial_cdmx",
-        "methodology": "Clasificación por SCIAN verificable cuando exista; mientras tanto, solo como capa preparada y candidata."
+        "methodology": "Integración exclusiva por SCIAN verificable. Si el extracto local no preserva SCIAN usable, la capa permanece preparada y fuera de los totales reales."
       }
     ]
   },

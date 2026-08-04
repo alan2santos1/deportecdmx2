@@ -1,0 +1,62 @@
+{
+  "meta": {
+    "generatedAt": "2026-08-03T00:00:00.000Z",
+    "methodologicalNote": "Esta capa solo incluye evidencia oficial ya documentada dentro del proyecto. Los anuncios agregados del programa no acreditan por sí solos el estado individual de cada cancha."
+  },
+  "evidences": [
+    {
+      "evidenceId": "canchas-agregado-2025-09",
+      "title": "Anuncio agregado del programa de 500 canchas",
+      "sourceInstitution": "Jefatura de Gobierno de la Ciudad de México",
+      "sourceType": "comunicado_oficial_agregado",
+      "sourceDate": "2025-09",
+      "publicationDate": "2025-09",
+      "sourceUrl": "https://www.jefaturadegobierno.cdmx.gob.mx/comunicacion/nota/presenta-clara-brugada-proyecto-un-mundial-donde-la-pelota-ruede-que-incluye-rehabilitar-y-construir-500-canchas-de-futbol",
+      "alcaldia": null,
+      "venueName": null,
+      "addressText": null,
+      "coordinates": null,
+      "officialCourtNumber": null,
+      "reportedStatus": "anuncio_agregado_programa",
+      "description": "La investigación verificable reporta un anuncio agregado del programa con composición 100 canchas nuevas y 400 rehabilitadas. No incluye padrón nominal completo ni identificadores unitarios.",
+      "sourceReliability": "media",
+      "capturedAt": "2026-08-03T00:00:00.000Z"
+    },
+    {
+      "evidenceId": "canchas-agregado-2025-12",
+      "title": "Reporte agregado de intervenciones centrales y alcaldías",
+      "sourceInstitution": "Gobierno de la Ciudad de México",
+      "sourceType": "comunicado_oficial_agregado",
+      "sourceDate": "2025-12",
+      "publicationDate": "2025-12",
+      "sourceUrl": null,
+      "alcaldia": null,
+      "venueName": null,
+      "addressText": null,
+      "coordinates": null,
+      "officialCourtNumber": null,
+      "reportedStatus": "avance_agregado_programa",
+      "description": "La investigación verificable documenta un corte agregado de 300 intervenciones centrales y 200 a cargo de alcaldías. No hay padrón nominal descargable conciliable por registro.",
+      "sourceReliability": "media",
+      "capturedAt": "2026-08-03T00:00:00.000Z"
+    },
+    {
+      "evidenceId": "canchas-agregado-2026-03",
+      "title": "Reporte agregado de canchas listas e intervenciones en curso",
+      "sourceInstitution": "Gobierno de la Ciudad de México",
+      "sourceType": "comunicado_oficial_agregado",
+      "sourceDate": "2026-03",
+      "publicationDate": "2026-03",
+      "sourceUrl": null,
+      "alcaldia": null,
+      "venueName": null,
+      "addressText": null,
+      "coordinates": null,
+      "officialCourtNumber": null,
+      "reportedStatus": "mas_de_200_listas_y_316_en_intervencion",
+      "description": "La investigación verificable documenta que en marzo de 2026 se informaron más de 200 canchas listas y 316 áreas en intervención. Esa evidencia es agregada y no acredita registros individuales.",
+      "sourceReliability": "media",
+      "capturedAt": "2026-08-03T00:00:00.000Z"
+    }
+  ]
+}

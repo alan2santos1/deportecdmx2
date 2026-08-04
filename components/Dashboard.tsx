@@ -155,7 +155,7 @@ const chartMeta = {
   canchas: {
     source: "Excel operativo 500 Canchas PILARES asignado (Base + Alc Dic + AlcFeb + Hoja 2 + Hoja 1)",
     dataType: "real",
-    note: "La sección es operativa / administrativa. Los estatus de inauguración y completitud se derivan de la base cargada y no del color visual del Excel."
+    note: "La sección es operativa / administrativa. El padrón proviene del Excel institucional y la confirmación pública de inauguración, entrega u obra solo se publica cuando existe evidencia oficial conciliada individualmente."
   },
   health: {
     source: "ENSANUT Continua 2022 + segmentación sexo/edad",
@@ -375,7 +375,7 @@ export default function Dashboard() {
   const [selectedSpaceType, setSelectedSpaceType] = useState<string | null>(null);
   const [canchasFilters, setCanchasFilters] = useState<CanchasFilterState>(emptyCanchasFilters);
   const [selectedCanchaId, setSelectedCanchaId] = useState<string | null>(null);
-  const [canchasMapColorMode, setCanchasMapColorMode] = useState<CanchasMapColorMode>("inauguration");
+  const [canchasMapColorMode, setCanchasMapColorMode] = useState<CanchasMapColorMode>("opening");
 
   const filterConfig = useMemo(() => (dataset ? buildFilterConfig(dataset) : []), [dataset]);
   const territorialRecords = useMemo(() => (dataset ? filterTerritorialRecords(dataset.territorialRecords, filters) : []), [dataset, filters]);
@@ -727,21 +727,30 @@ export default function Dashboard() {
   ];
   const canchasWithoutCoordinates = canchasRecords.filter((record) => record.geolocationType === "sin_coordenada").length;
   const selectedCanchaPilares = selectedCancha?.assignedPilaresOfficialName ?? selectedCancha?.pilaresAssigned ?? "Sin dato";
-  const selectedCanchaStatusLabel = selectedCancha?.operationalStatus === "completa"
-    ? "Completa"
-    : selectedCancha?.operationalStatus === "lista_para_operar"
-      ? "Lista para operar"
-    : selectedCancha?.operationalStatus === "parcial"
-      ? "Parcial"
-      : "Pendiente";
-  const selectedCanchaInaugurationLabel = selectedCancha?.inaugurationStatus === "inaugurada"
-    ? "Inaugurada"
-    : selectedCancha?.inaugurationStatus === "proxima"
-      ? "Próxima"
-      : "Sin fecha";
-  const selectedCanchaTrafficLight = selectedCancha?.operationalStatus === "completa"
+  const selectedCanchaStatusLabel = selectedCancha?.documentationStatus === "completa"
+    ? "Documentación completa"
+    : selectedCancha?.documentationStatus === "parcial"
+      ? "Documentación parcial"
+      : "Documentación mínima";
+  const selectedCanchaOpeningLabel = selectedCancha?.openingStatus === "inaugurada_confirmada"
+    ? "Inauguración confirmada"
+    : selectedCancha?.openingStatus === "probable"
+      ? "Probable"
+      : selectedCancha?.openingStatus === "contradiccion"
+        ? "Contradicción"
+        : "Sin confirmación pública";
+  const selectedCanchaWorkLabel = selectedCancha?.workStatus === "intervencion_confirmada"
+    ? "Intervención confirmada"
+    : selectedCancha?.workStatus === "lista_confirmada"
+      ? "Lista confirmada"
+      : selectedCancha?.workStatus === "entregada_confirmada"
+        ? "Entrega confirmada"
+        : selectedCancha?.workStatus === "contradiccion"
+          ? "Contradicción"
+          : "Sin confirmación";
+  const selectedCanchaTrafficLight = selectedCancha?.documentationStatus === "completa"
     ? "Verde"
-    : selectedCancha?.operationalStatus === "lista_para_operar" || selectedCancha?.operationalStatus === "parcial"
+    : selectedCancha?.documentationStatus === "parcial"
       ? "Amarillo"
       : "Rojo";
 
@@ -1558,7 +1567,7 @@ export default function Dashboard() {
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div>
                 <div className="text-base font-semibold text-ink-900">Filtros operativos de canchas</div>
-                <div className="text-xs text-ink-600">Permiten revisar completitud, inauguración, tipo de cancha, material y origen sin tocar el resto del dashboard.</div>
+                <div className="text-xs text-ink-600">Permiten revisar expediente administrativo, completitud documental, conciliación oficial, calidad territorial y atributos de cancha sin tocar el resto del dashboard.</div>
               </div>
               <button className="btn-ghost" type="button" onClick={() => setCanchasFilters(emptyCanchasFilters)}>
                 Limpiar filtros operativos
@@ -1609,13 +1618,13 @@ export default function Dashboard() {
                 Esta sección es operativa / administrativa y no es una estimación poblacional. La hoja <span className="font-semibold text-ink-900">Base</span> organiza la operación principal; <span className="font-semibold text-ink-900">Alc Dic</span>, <span className="font-semibold text-ink-900">AlcFeb</span> y <span className="font-semibold text-ink-900">Hoja 2</span> completan la lectura territorial; <span className="font-semibold text-ink-900">Hoja 1</span> enriquece PILARES cuando el match es posible.
               </div>
               <div className="text-sm leading-6 text-ink-700">
-                Los estatus se derivan con reglas transparentes sobre fecha de inauguración, dato operativo básico, horario y actividades. No dependen del color visual del Excel.
+                El expediente administrativo, la completitud documental, el estado de obra y el estado de apertura se leen por separado. Un campo no sustituye al otro.
               </div>
               <div className="text-sm leading-6 text-ink-700">
                 La geolocalización se distingue entre <span className="font-semibold text-ink-900">real</span>, <span className="font-semibold text-ink-900">aproximada por PILARES</span>, <span className="font-semibold text-ink-900">aproximada por alcaldía</span> y <span className="font-semibold text-ink-900">sin coordenada</span>. Las ubicaciones aproximadas sirven para lectura operativa, no para validación catastral o de obra.
               </div>
               <div className="text-sm leading-6 text-ink-700">
-                Los insights del módulo no explican causalidad. Solo sintetizan rezagos, cobertura documental y seguimiento operativo a partir del Excel institucional cargado.
+                El padrón de Canchas proviene del Excel administrativo institucional. Los estados de inauguración, entrega u obra solo se consideran confirmados cuando existe evidencia oficial conciliada individualmente. Los anuncios agregados del programa no acreditan por sí solos el estado de cada registro.
               </div>
               <div className="meta-panel">
                 <div className="meta-grid">
@@ -1649,18 +1658,32 @@ export default function Dashboard() {
                 </div>
                 <div className="flex gap-2">
                   <button
-                    className={`btn-ghost ${canchasMapColorMode === "inauguration" ? "border-ink-900 bg-ink-900 text-white hover:text-white" : ""}`}
-                    onClick={() => setCanchasMapColorMode("inauguration")}
+                    className={`btn-ghost ${canchasMapColorMode === "opening" ? "border-ink-900 bg-ink-900 text-white hover:text-white" : ""}`}
+                    onClick={() => setCanchasMapColorMode("opening")}
                     type="button"
                   >
-                    Inauguración
+                    Apertura
                   </button>
                   <button
-                    className={`btn-ghost ${canchasMapColorMode === "completion" ? "border-ink-900 bg-ink-900 text-white hover:text-white" : ""}`}
-                    onClick={() => setCanchasMapColorMode("completion")}
+                    className={`btn-ghost ${canchasMapColorMode === "work" ? "border-ink-900 bg-ink-900 text-white hover:text-white" : ""}`}
+                    onClick={() => setCanchasMapColorMode("work")}
                     type="button"
                   >
-                    Completitud
+                    Obra
+                  </button>
+                  <button
+                    className={`btn-ghost ${canchasMapColorMode === "documentation" ? "border-ink-900 bg-ink-900 text-white hover:text-white" : ""}`}
+                    onClick={() => setCanchasMapColorMode("documentation")}
+                    type="button"
+                  >
+                    Documentación
+                  </button>
+                  <button
+                    className={`btn-ghost ${canchasMapColorMode === "location" ? "border-ink-900 bg-ink-900 text-white hover:text-white" : ""}`}
+                    onClick={() => setCanchasMapColorMode("location")}
+                    type="button"
+                  >
+                    Ubicación
                   </button>
                 </div>
               </div>
@@ -1687,14 +1710,17 @@ export default function Dashboard() {
               {selectedCancha ? (
                 <>
                   <div className="rounded-[26px] border border-mist-200 bg-white px-5 py-5">
-                    <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-ink-600">Estatus operativo derivado</div>
+                    <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-ink-600">Lectura documental y de evidencia</div>
                     <div className="mt-3 flex flex-wrap items-center gap-2">
                       <div className="text-3xl font-semibold text-ink-900">{selectedCanchaStatusLabel}</div>
                       <span className={`rounded-full px-3 py-1 text-xs font-semibold ${selectedCanchaTrafficLight === "Verde" ? "bg-emerald-100 text-emerald-700" : selectedCanchaTrafficLight === "Amarillo" ? "bg-amber-100 text-amber-700" : "bg-red-100 text-red-700"}`}>
-                        Semáforo {selectedCanchaTrafficLight}
+                        Semáforo documental {selectedCanchaTrafficLight}
                       </span>
                       <span className="rounded-full border border-mist-200 bg-mist-100 px-3 py-1 text-xs font-medium text-ink-700">
-                        {selectedCanchaInaugurationLabel}
+                        {selectedCanchaOpeningLabel}
+                      </span>
+                      <span className="rounded-full border border-mist-200 bg-mist-100 px-3 py-1 text-xs font-medium text-ink-700">
+                        {selectedCanchaWorkLabel}
                       </span>
                       <span className="rounded-full border border-mist-200 bg-mist-100 px-3 py-1 text-xs font-medium text-ink-700">
                         {selectedCancha.geolocationLabel}
@@ -1704,8 +1730,10 @@ export default function Dashboard() {
                       </span>
                     </div>
                     <div className="mt-2 text-sm text-ink-600">{selectedCancha.alcaldia}</div>
-                    <div className="mt-3 text-xs leading-6 text-ink-600">{selectedCancha.statusDerivedNote}</div>
-                    <div className="mt-2 text-xs leading-6 text-ink-600">{selectedCancha.inaugurationDerivedNote}</div>
+                    <div className="mt-3 text-xs leading-6 text-ink-600">{selectedCancha.administrativeStatusNote}</div>
+                    <div className="mt-2 text-xs leading-6 text-ink-600">{selectedCancha.documentationStatusNote}</div>
+                    <div className="mt-2 text-xs leading-6 text-ink-600">{selectedCancha.workStatusNote}</div>
+                    <div className="mt-2 text-xs leading-6 text-ink-600">{selectedCancha.openingStatusNote}</div>
                   </div>
                   <div className="grid gap-3 md:grid-cols-2">
                     <div className="rounded-2xl border border-mist-200 bg-white px-4 py-4">
@@ -1729,9 +1757,10 @@ export default function Dashboard() {
                       <div className="mt-2 text-xs text-ink-600">{selectedCancha.material ?? "Sin material"} · {selectedCancha.origen ?? "Sin origen"}</div>
                     </div>
                     <div className="rounded-2xl border border-mist-200 bg-white px-4 py-4">
-                      <div className="text-[11px] font-semibold uppercase tracking-wide text-ink-600">Ubicación</div>
+                      <div className="text-[11px] font-semibold uppercase tracking-wide text-ink-600">Ubicación y conciliación</div>
                       <div className="mt-2 text-lg font-semibold text-ink-900">{selectedCancha.geolocationLabel}</div>
                       <div className="mt-2 text-xs text-ink-600">{selectedCancha.geolocationSource}</div>
+                      <div className="mt-2 text-xs text-ink-600">Confianza {selectedCancha.matchConfidence} · método {selectedCancha.matchMethod.replace(/_/g, " ")}</div>
                     </div>
                     <div className="rounded-2xl border border-mist-200 bg-white px-4 py-4">
                       <div className="text-[11px] font-semibold uppercase tracking-wide text-ink-600">Promotor de futbol</div>
@@ -1745,7 +1774,14 @@ export default function Dashboard() {
                     <div className="text-[11px] font-semibold uppercase tracking-wide text-ink-600">Detalle operativo</div>
                     <div className="mt-3 space-y-3 text-sm leading-6 text-ink-700">
                       <div><span className="font-semibold text-ink-900">Domicilio:</span> {selectedCancha.domicilio || "Sin dato"}</div>
-                      <div><span className="font-semibold text-ink-900">Fecha de inauguración:</span> {selectedCancha.inaugurationDateIso ?? selectedCancha.inaugurationDateRaw ?? "Sin fecha"}</div>
+                      <div><span className="font-semibold text-ink-900">Fecha / señal administrativa:</span> {selectedCancha.inaugurationDateIso ?? selectedCancha.inaugurationDateRaw ?? "Sin fecha"}</div>
+                      <div><span className="font-semibold text-ink-900">Estado administrativo:</span> {selectedCancha.administrativeStatus.replace(/_/g, " ")}</div>
+                      <div><span className="font-semibold text-ink-900">Completitud documental:</span> {selectedCancha.documentationStatus.replace(/_/g, " ")}</div>
+                      <div><span className="font-semibold text-ink-900">Estado de obra:</span> {selectedCanchaWorkLabel}</div>
+                      <div><span className="font-semibold text-ink-900">Estado de apertura:</span> {selectedCanchaOpeningLabel}</div>
+                      <div><span className="font-semibold text-ink-900">Evidencia oficial:</span> {selectedCancha.hasOfficialEvidence ? selectedCancha.matchedEvidenceIds.join(", ") : "Sin evidencia conciliada"}</div>
+                      <div><span className="font-semibold text-ink-900">Última verificación:</span> {selectedCancha.lastVerifiedAt ?? "Sin verificación oficial"}</div>
+                      <div><span className="font-semibold text-ink-900">Notas de conciliación:</span> {selectedCancha.reconciliationNotes}</div>
                       <div><span className="font-semibold text-ink-900">Coordinador:</span> No identificable de forma defendible en la fuente</div>
                       <div><span className="font-semibold text-ink-900">Malla horaria futbol:</span> {selectedCancha.mallaHorariaFutbol ?? "Sin malla horaria de futbol"}</div>
                       <div><span className="font-semibold text-ink-900">Actividades:</span> {selectedCancha.activities.join(", ") || "Sin actividades registradas"}</div>

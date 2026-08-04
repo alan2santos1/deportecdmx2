@@ -55,10 +55,27 @@ Regla metodológica:
     - `713944` balnearios o infraestructura acuática del sector público o mixto
     - `611621` escuelas de deporte del sector privado
     - `611622` escuelas de deporte del sector público o mixto
-  - El corte local actual se clasifica como `preparado` porque el export descargado no expone SCIAN verificable en la salida usada por el proyecto y obliga a una clasificación textual auxiliar.
+  - El corte local actual se clasifica como `preparado` porque el export descargado no expone SCIAN verificable en la salida usada por el proyecto.
   - Regla crítica:
     - no presentar esta capa como conteo privado definitivo
+    - no clasificar por nombre comercial, actividad textual o NLP
     - no inferir disciplinas concretas solo desde SCIAN
+
+## Capa operativa documental de Canchas
+
+- Fuente administrativa principal:
+  - `docs/fuentes-operativas/13-03-2026-Proyecto_500_canchas_PILARES_ASIGNADO 315 mallas arquitecto.xlsx`
+- Evidencia oficial complementaria:
+  - `data/raw/manual/canchas-evidencias-oficiales.json`
+- Salida procesada:
+  - `data/processed/canchas/canchas-operativas.json`
+
+Reglas vigentes:
+- el Excel sigue siendo el padrón administrativo principal;
+- la apertura, entrega u obra no se confirman por fecha del Excel ni por comunicados agregados;
+- solo se publican como confirmadas cuando existe evidencia oficial conciliada individualmente;
+- si no hay match individual, el registro queda como `sin_confirmacion_publica` o `sin_confirmacion`;
+- los anuncios agregados del programa sirven como contexto documental, no como validación masiva de las 315 filas.
 
 ## ETL mínimo reproducible
 

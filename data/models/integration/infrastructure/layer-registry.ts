@@ -226,7 +226,7 @@ export const infrastructureLayerRegistry: InfrastructureLayerDescriptor[] = [
       sourceDate: "2026-08-03",
       asOfDate: "2026-08-03",
       referencePeriod: "Pendiente extracto verificable",
-      methodology: "Debe distinguir registros verificados por SCIAN de candidatos textuales.",
+      methodology: "Debe distinguir registros verificados por SCIAN de capas todavía no integradas, sin clasificación por texto ni NLP.",
       coverage: "Pendiente",
       provenanceNote: "No integra nuevos datos; prepara la capa privada desacoplada."
     }
@@ -263,7 +263,7 @@ export const infrastructureLayerRegistry: InfrastructureLayerDescriptor[] = [
     qualityGrade: "D",
     layerKind: "infraestructura_privada",
     coverageLevel: "parcial_cdmx",
-    methodology: "Clasificación por SCIAN verificable cuando exista; mientras tanto, solo como capa preparada y candidata.",
+    methodology: "Integración exclusiva por SCIAN verificable. Si el extracto local no preserva SCIAN usable, la capa permanece preparada y fuera de los totales reales.",
     provenance: {
       institution: "INEGI / DENUE CDMX",
       sourceType: "dataset_oficial",
@@ -272,7 +272,7 @@ export const infrastructureLayerRegistry: InfrastructureLayerDescriptor[] = [
       sourceDate: "2026-08-03",
       asOfDate: "2026-08-03",
       referencePeriod: "Extracto local descargado",
-      methodology: "Debe distinguir registros con SCIAN verificable de clasificaciones textuales auxiliares.",
+      methodology: "Solo admite registros con SCIAN verificable; no permite clasificación por nombre comercial, actividad textual ni NLP.",
       coverage: "CDMX por establecimiento, sujeto a calidad del extracto local",
       provenanceNote: "Con el corte local actual la capa no debe presentarse como universo privado definitivo."
     }
