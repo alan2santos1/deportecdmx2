@@ -30,9 +30,24 @@ const download = (url: string, destination: string) =>
 const run = async () => {
   await download(officialSourceConfig.pilares.url, officialSourceConfig.pilares.localPath);
   await download(officialSourceConfig.publicSports.url, officialSourceConfig.publicSports.localPath);
-  console.log("Descargadas fuentes oficiales locales para PILARES y deportivos públicos.");
+  await download(officialSourceConfig.greenAreas.url, officialSourceConfig.greenAreas.localPath);
+  await download(officialSourceConfig.greenAreas.dictionaryUrl, officialSourceConfig.greenAreas.dictionaryLocalPath);
+  await download(officialSourceConfig.publicSpace.url, officialSourceConfig.publicSpace.localPath);
+  await download(officialSourceConfig.publicSpace.dictionaryUrl, officialSourceConfig.publicSpace.dictionaryLocalPath);
+  console.log("Descargadas fuentes oficiales locales para PILARES, deportivos públicos, áreas verdes y espacio público.");
   console.log("DENUE y geometría se mantienen preparados por configuración:");
-  console.log(JSON.stringify({ denue: officialSourceConfig.denue, geometry: officialSourceConfig.geometry }, null, 2));
+  console.log(
+    JSON.stringify(
+      {
+        denue: officialSourceConfig.denue,
+        geometry: officialSourceConfig.geometry,
+        greenAreas: officialSourceConfig.greenAreas,
+        publicSpace: officialSourceConfig.publicSpace
+      },
+      null,
+      2
+    )
+  );
 };
 
 run().catch((error) => {

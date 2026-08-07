@@ -2,7 +2,7 @@
 
 ## Estado del documento
 - Tipo: documento vivo del estado actual del proyecto
-- Fecha de actualización: 2026-08-03
+- Fecha de actualización: 2026-08-06
 - Rama actual auditada: `sprint/denue-utopias`
 
 ## Documentos fuente y jerarquía de autoridad
@@ -134,6 +134,7 @@ Responsabilidades actuales:
 ### Dashboard
 - `public/data/dashboard.json`
 - `data/processed/infrastructure/official-infrastructure.json`
+- `data/processed/infrastructure/public-space.json`
 - `data/processed/canchas/canchas-operativas.json`
 - `data/processed/operacion/operacion-asistencia.json` como fuente curada para derivar oferta programada agregada sin exponer nominales en el dashboard
 
@@ -148,6 +149,9 @@ Responsabilidades actuales:
   - arma el dataset institucional principal
 - `data/models/integration/build-official-infrastructure.ts`
   - integra PILARES, deportivos públicos, DENUE preparado y UTOPÍAs
+- `data/models/integration/build-public-space-layer.ts`
+  - integra áreas verdes oficiales como capa separada
+  - mantiene espacio público oficial como fuente conectada, pero no publicada nominalmente mientras el recurso descargable no exponga atributos suficientes
 - `data/models/integration/build-canchas-operativas.ts`
   - integra el Excel de canchas
   - separa estado administrativo, documental, de obra y de apertura
@@ -181,6 +185,8 @@ npm run build:deporte
 - PILARES: `data/raw/external/pilares.csv`
 - Deportivos públicos: `data/raw/external/deportivos_publicos.csv`
 - Geometría alcaldías: `data/raw/external/alcaldias.geojson`
+- Áreas verdes: `data/raw/external/green_areas_cdmx.geojson`
+- Espacio público: `data/raw/external/public_space_cdmx.zip`
 - DENUE: `data/raw/external/denue_cdmx.geojson`
 - UTOPÍAs: `data/processed/infrastructure/utopias.json`
 - Canchas: `docs/fuentes-operativas/13-03-2026-Proyecto_500_canchas_PILARES_ASIGNADO 315 mallas arquitecto.xlsx`
@@ -191,15 +197,18 @@ npm run build:deporte
   - `docs/fuentes-operativas/MALLA-HORARIA-DPP-PPP-JUL2026 SPPA.xlsx`
 
 ## Cifras actuales del Dashboard
-Del corte auditado en `public/data/dashboard.json`:
+Del corte auditado en `public/data/dashboard.json` del 2026-08-06:
 
 - `territorialRecords`: 1120
 - `programmedOfferRecords`: 24636
-- `infrastructureDetails`: 1281
+- `infrastructureDetails`: 881
 - `sportsRecords`: 0
 - `healthProfiles`: 70
 - `mapAreas`: 112
 - `canchasRecords`: 315
+- `publicSpaceSummary.greenAreaRecordCount`: 11739
+- `publicSpaceSummary.publicSpaceRecordCount`: 0
+- `publicSpaceSummary.greenAreaSurfaceSqMTotal`: 67713932.74
 - Corte vigente de Canchas tras conciliación D1.1:
   - `openingStatus.inaugurada_confirmada`: 0
   - `openingStatus.probable`: 0
@@ -250,6 +259,7 @@ Del corte auditado en `public/data/operacion-asistencia.json`:
 - compatibilidad visible de filtros para evitar ceros falsos por dimensiones no aplicables
 - mapas territoriales por alcaldía
 - visualización de infraestructura pública, privada y canchas
+- visualización separada de áreas verdes oficiales y superficie verde por alcaldía
 - visualización de oferta programada real agregada desde mallas operativas
 - notas metodológicas visibles por capa
 - módulo Canchas con conciliación documental estricta: ya no publica inauguración u obra como confirmadas sin evidencia oficial individual

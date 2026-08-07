@@ -12,6 +12,7 @@ import { buildCanchasOperativasLayer } from "./integration/build-canchas-operati
 import { buildOfficialInfrastructureLayer } from "./integration/build-official-infrastructure";
 import { buildProgrammedOfferRecords } from "./integration/build-programmed-offer";
 import { buildMapGeometry } from "./integration/build-map-geometry";
+import { buildPublicSpaceLayer } from "./integration/build-public-space-layer";
 import { canonicalCatalogs } from "./integration/canonical-catalogs";
 import { projectPopulation } from "../processed/population";
 
@@ -33,8 +34,7 @@ const weightedCoveragePer100k = (record: {
     record.publicSportsCenters * 1 +
     (record.utopias ?? 0) * 1 +
     record.pilares * 0.45 +
-    (record.privateGyms + (record.privateClubs ?? 0) + (record.privateSchools ?? 0)) * (0.55 / record.privateAccessPenalty) +
-    record.parks * 0.65;
+    (record.privateGyms + (record.privateClubs ?? 0) + (record.privateSchools ?? 0)) * (0.55 / record.privateAccessPenalty);
   return (weighted / record.population2020) * 100000;
 };
 
@@ -42,9 +42,8 @@ const meanCoverage =
   alcaldiasSeed.reduce((sum, item) => sum + weightedCoveragePer100k(item), 0) / alcaldiasSeed.length;
 
 const inferDominantInfraType = (item: typeof alcaldiasSeed[number]): TerritorialRecord["dominantInfraType"] => {
-  const maxValue = Math.max(item.publicSportsCenters, item.pilares, item.parks);
+  const maxValue = Math.max(item.publicSportsCenters, item.pilares);
   if (item.publicSportsCenters === maxValue) return "Deportivos públicos";
-  if (item.parks === maxValue) return "Parques / áreas verdes";
   return "PILARES";
 };
 
@@ -52,9 +51,14 @@ const buildHealthProfileKey = (sex: string, ageGroup: string, year: number) => `
 
 const buildTerritorialRecords = (): TerritorialRecord[] => {
   const officialInfrastructure = buildOfficialInfrastructureLayer();
+  const publicSpaceLayer = buildPublicSpaceLayer();
+  const publicSpaceLookup = new Map(
+    publicSpaceLayer.summary.byAlcaldia.map((item) => [item.alcaldia, item])
+  );
   return yearSeeds.flatMap((yearSeed) =>
     alcaldiasSeed.flatMap((alcaldia) => {
       const officialSummary = officialInfrastructure.summaryByAlcaldia[alcaldia.name];
+      const publicSpaceSummary = publicSpaceLookup.get(alcaldia.name);
       const projectedPopulation = projectPopulation(alcaldia.population2020, yearSeed.year);
       const privateGyms = yearSeed.year === 2025 ? (officialSummary?.privateGyms ?? 0) : 0;
       const privateClubs = yearSeed.year === 2025 ? (officialSummary?.privateClubs ?? 0) : 0;
@@ -63,8 +67,7 @@ const buildTerritorialRecords = (): TerritorialRecord[] => {
       const totalInfrastructure =
         (officialSummary?.publicSportsCenters ?? alcaldia.publicSportsCenters) +
         (officialSummary?.pilares ?? alcaldia.pilares) +
-        utopias +
-        alcaldia.parks;
+        utopias;
       const infraPer100k = (totalInfrastructure / projectedPopulation) * 100000;
       const normalizedCoverage =
         weightedCoveragePer100k(alcaldia) / meanCoverage;
@@ -130,7 +133,7 @@ const buildTerritorialRecords = (): TerritorialRecord[] => {
             privateGyms,
             privateClubs,
             privateSchools,
-            parks: alcaldia.parks,
+            parks: publicSpaceSummary?.greenAreaRecords ?? 0,
             totalInfrastructure,
             infraPer100k,
             activityDataType: yearSeed.type,
@@ -144,7 +147,7 @@ const buildTerritorialRecords = (): TerritorialRecord[] => {
                   ? "Proyección 2026 basada en MOPRADEF 2024-2025"
                   : "MOPRADEF 2024-2025",
             healthSource: "ENSANUT Continua 2022",
-            infrastructureSource: "PILARES histórico + UTOPÍAs + Deportivos Públicos CDMX + DENUE preparado + áreas verdes",
+            infrastructureSource: "PILARES histórico + UTOPÍAs + Deportivos Públicos CDMX + DENUE preparado; espacio público en capa separada",
             populationSource:
               yearSeed.year === 2026
                 ? "Censo 2020 INEGI + proyección lineal de planeación"
@@ -223,16 +226,6 @@ const infrastructureTemplates = [
     operationalFactor: 2,
     administrativeLabel: "Academias deportivas privadas",
     operationalLabel: "Espacios operativos de academia"
-  },
-  {
-    infrastructureType: "Parques / áreas verdes" as const,
-    tipo_espacio: "parque",
-    source: "Inventario de áreas verdes / espacio público CDMX",
-    note: "Espacio abierto para caminata, running y activación de bajo costo.",
-    capacityFactor: 120,
-    operationalFactor: 3,
-    administrativeLabel: "Espacios públicos abiertos",
-    operationalLabel: "Zonas operativas estimadas"
   }
 ];
 
@@ -245,8 +238,7 @@ const buildInfrastructureDetails = (): InfrastructureDetailRecord[] => {
         "Deportivos públicos": alcaldia.publicSportsCenters,
         "Gimnasio privado": 0,
         "Club deportivo privado": 0,
-        "Academia deportiva privada": 0,
-        "Parques / áreas verdes": alcaldia.parks
+        "Academia deportiva privada": 0
       } as const;
 
       return infrastructureTemplates.map((template) => {
@@ -257,7 +249,7 @@ const buildInfrastructureDetails = (): InfrastructureDetailRecord[] => {
         ) {
           return null;
         }
-        if (yearSeed.year === 2025 && template.infrastructureType !== "Parques / áreas verdes") {
+        if (yearSeed.year === 2025) {
           return null;
         }
         const safeUnits = counts[template.infrastructureType];
@@ -315,8 +307,12 @@ const buildHealthProfiles = (territorialRecords: TerritorialRecord[]): HealthPro
   return Array.from(map.values()).sort((a, b) => a.year - b.year || a.sex.localeCompare(b.sex) || a.ageGroup.localeCompare(b.ageGroup));
 };
 
-const buildMapAreas = (territorialRecords: TerritorialRecord[]): MapAreaRecord[] => {
+const buildMapAreas = (
+  territorialRecords: TerritorialRecord[],
+  publicSpaceSummary: DashboardDataset["publicSpaceSummary"]
+): MapAreaRecord[] => {
   const groups = new Map<string, TerritorialRecord[]>();
+  const publicSpaceLookup = new Map(publicSpaceSummary.byAlcaldia.map((item) => [item.alcaldia, item]));
   territorialRecords.forEach((record) => {
     const key = `${record.alcaldia}-${record.year}`;
     groups.set(key, [...(groups.get(key) ?? []), record]);
@@ -331,7 +327,8 @@ const buildMapAreas = (territorialRecords: TerritorialRecord[]): MapAreaRecord[]
     const diabetesRate = items.reduce((sum, item) => sum + item.diabetesRate * item.population, 0) / population;
     const sedentaryRate = items.reduce((sum, item) => sum + item.sedentaryRate * item.population, 0) / population;
     const sample = items[0];
-    const publicInfrastructureCount = (sample?.pilares ?? 0) + (sample?.utopias ?? 0) + (sample?.publicSportsCenters ?? 0) + (sample?.parks ?? 0);
+    const publicSpace = publicSpaceLookup.get(alcaldia);
+    const publicInfrastructureCount = (sample?.pilares ?? 0) + (sample?.utopias ?? 0) + (sample?.publicSportsCenters ?? 0);
     const privateInfrastructureCount = (sample?.privateGyms ?? 0) + (sample?.privateClubs ?? 0) + (sample?.privateSchools ?? 0);
     const totalInfrastructureCount = publicInfrastructureCount + privateInfrastructureCount;
     const infraPer100k = items[0]?.infraPer100k ?? 0;
@@ -352,27 +349,31 @@ const buildMapAreas = (territorialRecords: TerritorialRecord[]): MapAreaRecord[]
       privateInfrastructureCount,
       totalInfrastructureCount,
       utopiasCount: sample?.utopias ?? 0,
+      greenAreaCount: publicSpace?.greenAreaRecords ?? 0,
+      greenAreaSurfaceSqM: publicSpace?.greenAreaSurfaceSqM ?? 0,
+      publicSpaceCount: publicSpace?.publicSpaceRecords ?? 0,
       infraPer100k,
       dataType: Number(yearString) === 2026 ? "proyectado" : "insight",
       source: "Modelo territorial Deporte CDMX listo para choropleth o heatmap",
-      methodologicalNote: "Registro territorial listo para mapa por alcaldía. La geometría es oficial; actividad y salud son modeladas; UTOPÍAs se integran como capa real institucional; la infraestructura privada depende del corte DENUE disponible."
+      methodologicalNote:
+        "Registro territorial listo para mapa por alcaldía. La geometría es oficial; actividad y salud son modeladas; la infraestructura deportiva pública/comunitaria y la capa de espacio público se leen por separado; la infraestructura privada depende del corte DENUE disponible."
     };
   });
 };
 
 export const buildDashboardData = (): DashboardDataset => {
   const officialInfrastructure = buildOfficialInfrastructureLayer();
+  const publicSpaceLayer = buildPublicSpaceLayer();
   const canchasLayer = buildCanchasOperativasLayer();
   const programmedOfferRecords = buildProgrammedOfferRecords();
   const territorialRecords = buildTerritorialRecords();
   const infrastructureDetails = [
     ...officialInfrastructure.details,
     ...buildInfrastructureDetails()
-      .filter((item) => item.year !== 2025 || item.infrastructureType === "Parques / áreas verdes")
   ];
   const sportsRecords: DashboardDataset["sportsRecords"] = [];
   const healthProfiles = buildHealthProfiles(territorialRecords);
-  const mapAreas = buildMapAreas(territorialRecords);
+  const mapAreas = buildMapAreas(territorialRecords, publicSpaceLayer.summary);
   const mapGeometry = buildMapGeometry();
 
   return {
@@ -399,6 +400,7 @@ export const buildDashboardData = (): DashboardDataset => {
     territorialRecords,
     programmedOfferRecords,
     infrastructureDetails,
+    publicSpaceSummary: publicSpaceLayer.summary,
     canchasRecords: canchasLayer.records,
     canchasSummary: canchasLayer.summaryByAlcaldia,
     sportsRecords,

@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type { ColumnDef } from "@tanstack/react-table";
 import {
   buildBarrierDistribution,
@@ -49,7 +49,8 @@ import type {
   CanchasFilterState,
   DashboardFilterState,
   DataLayer,
-  MetricMetadata
+  MetricMetadata,
+  PublicSpaceLayerDataset
 } from "../lib/dashboard-types";
 import { useDashboardStore } from "../store/useDashboardStore";
 import { formatNumber } from "../lib/utils";
@@ -86,8 +87,17 @@ const infrastructureScopeOptions = [
   { id: "privada_denue", label: "DENUE preparada" },
   { id: "canchas", label: "Canchas" },
   { id: "utopias", label: "UTOPÍAs" },
-  { id: "parques", label: "Parques / espacios abiertos" }
+  { id: "parques", label: "Espacio público / áreas verdes" }
 ] as const;
+
+const emptyPublicSpaceFilters = {
+  alcaldias: [] as string[],
+  sourceLayers: [] as string[],
+  normalizedCategories: [] as string[],
+  originalCategories: [] as string[],
+  qualities: [] as string[],
+  cutDates: [] as string[]
+};
 
 const metadataValueLabels = {
   dataType: {
@@ -148,9 +158,9 @@ const chartMeta = {
     note: "Dato agregado nacional/urbano usado como referencia operativa."
   },
   infrastructure: {
-    source: "PILARES histórico + UTOPÍAs + Deportivos Públicos CDMX + DENUE + espacios abiertos",
+    source: "PILARES histórico + UTOPÍAs + Deportivos Públicos CDMX + DENUE verificable + capa separada de espacio público",
     dataType: "insight",
-    note: "La lectura mezcla capas reales y preparadas: UTOPÍAs, PILARES, deportivos públicos y espacios abiertos como capas institucionales; DENUE privado sigue preparado. Las disciplinas solo se muestran cuando están documentadas de forma explícita."
+    note: "La lectura deportiva mezcla capas reales y preparadas de infraestructura deportiva. El espacio público y las áreas verdes ya se publican en una capa separada para no mezclar polígonos con sedes o instalaciones."
   },
   canchas: {
     source: "Excel operativo 500 Canchas PILARES asignado (Base + Alc Dic + AlcFeb + Hoja 2 + Hoja 1)",
@@ -191,9 +201,9 @@ const mapMetricMeta: Record<TerritorialMetricKey, { label: string; source: strin
   },
   publicInfrastructure: {
     label: "Infraestructura pública",
-    source: "PILARES + UTOPÍAs + deportivos públicos + parques",
+    source: "PILARES + UTOPÍAs + deportivos públicos",
     dataType: "real",
-    note: "Conteo administrativo visible de sedes, instalaciones y espacios públicos abiertos. No implica amenidades ni disciplinas por sede si la fuente no las documenta.",
+    note: "Conteo administrativo visible de sedes e instalaciones deportivas públicas o comunitarias. No incluye polígonos de espacio público o áreas verdes para evitar mezcla de unidades incompatibles.",
     formatter: (value) => formatNumber(value)
   },
   privateInfrastructure: {
@@ -204,11 +214,25 @@ const mapMetricMeta: Record<TerritorialMetricKey, { label: string; source: strin
     formatter: (value) => formatNumber(value)
   },
   totalInfrastructure: {
-    label: "Infraestructura total",
-    source: "Capas públicas, comunitarias y espacio público del dashboard",
+    label: "Infraestructura deportiva total",
+    source: "Capas públicas, comunitarias y privadas verificables del dashboard",
     dataType: "insight",
-    note: "Suma administrativa útil para lectura territorial de capas reales. No agrega candidatos DENUE preparados ni debe confundirse con capacidad operativa.",
+    note: "Suma administrativa útil para lectura territorial de sedes, instalaciones y establecimientos deportivos. No agrega polígonos de espacio público, candidatos DENUE preparados ni debe confundirse con capacidad operativa.",
     formatter: (value) => formatNumber(value)
+  },
+  greenAreas: {
+    label: "Áreas verdes",
+    source: "IPDP / Inventario de Áreas Verdes",
+    dataType: "real",
+    note: "Conteo de polígonos oficiales de áreas verdes. No acredita por sí solo infraestructura deportiva, amenidades, acceso ni práctica física.",
+    formatter: (value) => formatNumber(value)
+  },
+  greenAreaSurface: {
+    label: "Superficie verde documentada",
+    source: "IPDP / Inventario de Áreas Verdes",
+    dataType: "real",
+    note: "Superficie derivada de los polígonos oficiales integrados. Se muestra como contexto territorial y no como capacidad deportiva.",
+    formatter: (value) => `${value.toFixed(1)} ha`
   },
   obesity: {
     label: "Obesidad",
@@ -239,9 +263,33 @@ const mapMetricTitle: Record<TerritorialMetricKey, string> = {
   publicInfrastructure: "Infraestructura deportiva pública por alcaldía",
   privateInfrastructure: "Infraestructura deportiva privada por alcaldía",
   totalInfrastructure: "Infraestructura deportiva total por alcaldía",
+  greenAreas: "Áreas verdes por alcaldía",
+  greenAreaSurface: "Superficie verde documentada por alcaldía",
   obesity: "Obesidad estimada por alcaldía",
   diabetes: "Diabetes estimada por alcaldía",
   sedentary: "Sedentarismo estimado por alcaldía"
+};
+
+const emptyPublicSpaceSummary: PublicSpaceLayerDataset["summary"] = {
+  generatedAt: "",
+  greenAreasIntegrated: false,
+  publicSpaceIntegrated: false,
+  greenAreaRecordCount: 0,
+  publicSpaceRecordCount: 0,
+  greenAreaSurfaceSqMTotal: 0,
+  sourceDate: "",
+  note: "La capa de espacio público aún no está disponible.",
+  byAlcaldia: [],
+  categorySummary: [],
+  syntheticReplacementAudit: {
+    syntheticRecordsDetected: 0,
+    syntheticAdministrativeUnitsDetected: 0,
+    syntheticCategories: [],
+    replacedSyntheticRecords: 0,
+    frozenSyntheticRecords: 0,
+    removedSyntheticRecords: 0,
+    remainingSyntheticDifference: 0
+  }
 };
 
 function LayerBadge({ layer }: { layer: DataLayer }) {
@@ -373,9 +421,40 @@ export default function Dashboard() {
   const [selectedMapMetric, setSelectedMapMetric] = useState<TerritorialMetricKey>("risk");
   const [selectedMapGeoKey, setSelectedMapGeoKey] = useState<string | null>(null);
   const [selectedSpaceType, setSelectedSpaceType] = useState<string | null>(null);
+  const [publicSpaceLayer, setPublicSpaceLayer] = useState<PublicSpaceLayerDataset | null>(null);
+  const [publicSpaceError, setPublicSpaceError] = useState<string | null>(null);
+  const [publicSpaceFilters, setPublicSpaceFilters] = useState(emptyPublicSpaceFilters);
   const [canchasFilters, setCanchasFilters] = useState<CanchasFilterState>(emptyCanchasFilters);
   const [selectedCanchaId, setSelectedCanchaId] = useState<string | null>(null);
   const [canchasMapColorMode, setCanchasMapColorMode] = useState<CanchasMapColorMode>("opening");
+
+  useEffect(() => {
+    let cancelled = false;
+    const loadPublicSpace = async () => {
+      const basePath = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
+      const candidates = [`${basePath}/data/public-space.json`, "/data/public-space.json"];
+      for (const url of candidates) {
+        try {
+          const response = await fetch(url, { cache: "no-store" });
+          if (!response.ok) continue;
+          const payload = (await response.json()) as PublicSpaceLayerDataset;
+          if (!cancelled) {
+            setPublicSpaceLayer(payload);
+            setPublicSpaceError(null);
+          }
+          return;
+        } catch (error) {
+          if (!cancelled) {
+            setPublicSpaceError(error instanceof Error ? error.message : "No fue posible cargar la capa de espacio público.");
+          }
+        }
+      }
+    };
+    loadPublicSpace();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const filterConfig = useMemo(() => (dataset ? buildFilterConfig(dataset) : []), [dataset]);
   const territorialRecords = useMemo(() => (dataset ? filterTerritorialRecords(dataset.territorialRecords, filters) : []), [dataset, filters]);
@@ -396,6 +475,10 @@ export default function Dashboard() {
   const canchasRecords = useMemo(
     () => (dataset ? filterCanchasRecords(dataset.canchasRecords, canchasFilters, filters) : []),
     [dataset, canchasFilters, filters]
+  );
+  const publicSpaceSummary = useMemo(
+    () => dataset?.publicSpaceSummary ?? publicSpaceLayer?.summary ?? emptyPublicSpaceSummary,
+    [dataset, publicSpaceLayer]
   );
 
   const overviewKpis = useMemo(() => buildOverviewKpis(territorialRecords), [territorialRecords]);
@@ -456,8 +539,8 @@ export default function Dashboard() {
   );
   const panoramaAlcaldiaTable = useMemo(() => buildProgrammedOfferTableRows(panoramaAlcaldiaRows), [panoramaAlcaldiaRows]);
   const panoramaInfrastructureKpi = useMemo(
-    () => buildInfrastructureScopeKpi(infrastructureDisplayDetails, canchasRecords, panoramaInfrastructureScope),
-    [infrastructureDisplayDetails, canchasRecords, panoramaInfrastructureScope]
+    () => buildInfrastructureScopeKpi(infrastructureDisplayDetails, canchasRecords, panoramaInfrastructureScope, publicSpaceSummary.byAlcaldia),
+    [canchasRecords, infrastructureDisplayDetails, panoramaInfrastructureScope, publicSpaceSummary.byAlcaldia]
   );
   const infrastructureExecutive = useMemo(() => buildInfrastructureExecutiveSummary(infrastructureDisplayDetails), [infrastructureDisplayDetails]);
   const infraStacked = useMemo(() => buildInfrastructureStackedByAlcaldia(infrastructureDisplayDetails), [infrastructureDisplayDetails]);
@@ -474,8 +557,6 @@ export default function Dashboard() {
                 ? "Deportivos públicos"
                 : item.infrastructureType === "UTOPÍAs"
                   ? "UTOPÍAs"
-                : item.infrastructureType === "Parques / áreas verdes"
-                  ? "Parques"
                   : "PILARES";
       return category === selectedSpaceType;
     }) : infrastructureDisplayDetails),
@@ -504,6 +585,8 @@ export default function Dashboard() {
     if (selectedMapMetric === "publicInfrastructure") return record.publicInfrastructureCount;
     if (selectedMapMetric === "privateInfrastructure") return record.privateInfrastructureCount;
     if (selectedMapMetric === "totalInfrastructure") return record.totalInfrastructureCount;
+    if (selectedMapMetric === "greenAreas") return record.greenAreaCount;
+    if (selectedMapMetric === "greenAreaSurface") return record.greenAreaSurfaceSqM / 10000;
     if (selectedMapMetric === "obesity") return record.obesityRate * 100;
     if (selectedMapMetric === "diabetes") return record.diabetesRate * 100;
     return record.sedentaryRate * 100;
@@ -528,11 +611,11 @@ export default function Dashboard() {
     [filters.alcaldias, infrastructureDetails, mapYear]
   );
   const privateMapUnits = useMemo(
-    () => selectedMapInfrastructure.filter((item) => item.sourceDataset === "Directorio Estadístico de Unidades Económicas CDMX" && item.dataType === "real").reduce((sum, item) => sum + item.administrativeCount, 0),
+    () => selectedMapInfrastructure.filter((item) => item.sourceDataset === "Infraestructura privada DENUE" && item.dataType === "real").reduce((sum, item) => sum + item.administrativeCount, 0),
     [selectedMapInfrastructure]
   );
   const publicMapUnits = useMemo(
-    () => selectedMapInfrastructure.filter((item) => item.dataType === "real" && item.sourceDataset !== "Directorio Estadístico de Unidades Económicas CDMX").reduce((sum, item) => sum + item.administrativeCount, 0),
+    () => selectedMapInfrastructure.filter((item) => item.dataType === "real" && item.sourceDataset !== "Infraestructura privada DENUE").reduce((sum, item) => sum + item.administrativeCount, 0),
     [selectedMapInfrastructure]
   );
   const pilaresMapSites = useMemo(
@@ -560,10 +643,11 @@ export default function Dashboard() {
       pilares: mapScopedInfrastructureDetails.filter((item) => item.infrastructureType === "PILARES").reduce((sum, item) => sum + item.administrativeCount, 0),
       utopias: mapScopedInfrastructureDetails.filter((item) => item.infrastructureType === "UTOPÍAs").reduce((sum, item) => sum + item.administrativeCount, 0),
       publicSports: mapScopedInfrastructureDetails.filter((item) => item.infrastructureType === "Deportivos públicos").reduce((sum, item) => sum + item.administrativeCount, 0),
-      privateFacilities: mapScopedInfrastructureDetails.filter((item) => item.sourceDataset === "Directorio Estadístico de Unidades Económicas CDMX" && item.dataType === "real").reduce((sum, item) => sum + item.administrativeCount, 0),
+      privateFacilities: mapScopedInfrastructureDetails.filter((item) => item.sourceDataset === "Infraestructura privada DENUE" && item.dataType === "real").reduce((sum, item) => sum + item.administrativeCount, 0),
+      greenAreas: publicSpaceSummary.greenAreaRecordCount,
       canchas: canchasRecords.length
     }),
-    [canchasRecords.length, mapScopedInfrastructureDetails]
+    [canchasRecords.length, mapScopedInfrastructureDetails, publicSpaceSummary.greenAreaRecordCount]
   );
   const mapRows = useMemo(
     () =>
@@ -580,11 +664,118 @@ export default function Dashboard() {
           "Riesgo": record.riskScore.toFixed(1),
           "Semáforo": record.riskLevel,
           "Infra x100k": record.infraPer100k.toFixed(1),
+          "Áreas verdes": formatNumber(record.greenAreaCount),
+          "Superficie verde (ha)": (record.greenAreaSurfaceSqM / 10000).toFixed(1),
           "Tipo de dato": record.dataType,
           "Fuente": record.source,
           "Nota metodológica": record.methodologicalNote
         })) ?? [],
     [dataset, filters.alcaldias, filters.years]
+  );
+  const publicSpaceRecords = useMemo(() => publicSpaceLayer?.greenAreas.records ?? [], [publicSpaceLayer]);
+  const publicSpaceFilterConfig = useMemo(() => {
+    const unique = (values: string[]) => Array.from(new Set(values)).sort((a, b) => a.localeCompare(b, "es"));
+    return [
+      {
+        key: "alcaldias" as const,
+        title: "Alcaldía",
+        options: unique(publicSpaceRecords.map((record) => record.alcaldia).filter(Boolean) as string[]).map((value) => ({ label: value, value }))
+      },
+      {
+        key: "sourceLayers" as const,
+        title: "Fuente",
+        options: unique(publicSpaceRecords.map((record) => record.sourceDataset)).map((value) => ({ label: value, value }))
+      },
+      {
+        key: "normalizedCategories" as const,
+        title: "Tipo de espacio",
+        options: unique(publicSpaceRecords.map((record) => record.normalizedCategory)).map((value) => ({ label: value, value }))
+      },
+      {
+        key: "originalCategories" as const,
+        title: "Categoría original",
+        options: unique(publicSpaceRecords.map((record) => record.originalCategory).filter(Boolean) as string[]).map((value) => ({ label: value, value }))
+      },
+      {
+        key: "qualities" as const,
+        title: "Calidad",
+        options: unique(publicSpaceRecords.map((record) => record.qualityGrade)).map((value) => ({ label: value, value }))
+      },
+      {
+        key: "cutDates" as const,
+        title: "Fecha de corte",
+        options: unique(publicSpaceRecords.map((record) => record.sourceDate)).map((value) => ({ label: value, value }))
+      }
+    ];
+  }, [publicSpaceRecords]);
+  const filteredPublicSpaceRecords = useMemo(
+    () =>
+      publicSpaceRecords.filter((record) => {
+        if (publicSpaceFilters.alcaldias.length > 0 && !publicSpaceFilters.alcaldias.includes(record.alcaldia ?? "")) return false;
+        if (publicSpaceFilters.sourceLayers.length > 0 && !publicSpaceFilters.sourceLayers.includes(record.sourceDataset)) return false;
+        if (publicSpaceFilters.normalizedCategories.length > 0 && !publicSpaceFilters.normalizedCategories.includes(record.normalizedCategory)) return false;
+        if (publicSpaceFilters.originalCategories.length > 0 && !publicSpaceFilters.originalCategories.includes(record.originalCategory ?? "")) return false;
+        if (publicSpaceFilters.qualities.length > 0 && !publicSpaceFilters.qualities.includes(record.qualityGrade)) return false;
+        if (publicSpaceFilters.cutDates.length > 0 && !publicSpaceFilters.cutDates.includes(record.sourceDate)) return false;
+        return true;
+      }),
+    [publicSpaceFilters, publicSpaceRecords]
+  );
+  const publicSpaceSummaryLookup = useMemo(
+    () => new Map(publicSpaceSummary.byAlcaldia.map((item) => [item.alcaldia, item])),
+    [publicSpaceSummary.byAlcaldia]
+  );
+  const selectedMapPublicSpace = useMemo(
+    () => (selectedMapArea ? publicSpaceSummaryLookup.get(selectedMapArea.alcaldia) : undefined),
+    [publicSpaceSummaryLookup, selectedMapArea]
+  );
+  const publicSpaceCategoryDistribution = useMemo(
+    () =>
+      publicSpaceSummary.categorySummary
+        .filter((item) => item.sourceLayer === "greenAreas")
+        .map((item) => ({
+          name: item.category,
+          value: item.count,
+          percent: publicSpaceSummary.greenAreaRecordCount > 0 ? item.count / publicSpaceSummary.greenAreaRecordCount : 0,
+          denominator: publicSpaceSummary.greenAreaRecordCount || 1
+        })),
+    [publicSpaceSummary]
+  );
+  const publicSpaceTopAlcaldias = useMemo(
+    () =>
+      publicSpaceSummary.byAlcaldia
+        .map((item) => ({
+          name: item.alcaldia,
+          value: item.greenAreaRecords,
+          percent: publicSpaceSummary.greenAreaRecordCount > 0 ? item.greenAreaRecords / publicSpaceSummary.greenAreaRecordCount : 0,
+          denominator: publicSpaceSummary.greenAreaRecordCount || 1
+        }))
+        .sort((a, b) => b.value - a.value)
+        .slice(0, 10),
+    [publicSpaceSummary]
+  );
+  const publicSpaceTableRows = useMemo(
+    () =>
+      filteredPublicSpaceRecords.map((record) => ({
+        "Fuente": record.sourceDataset,
+        "Alcaldía": record.alcaldia ?? "Sin alcaldía derivada",
+        "Nombre original": record.originalName ?? "Sin nombre",
+        "Categoría original": record.originalCategory ?? "Sin categoría",
+        "Subcategoría": record.originalSubcategory ?? "",
+        "Categoría normalizada": record.normalizedCategory,
+        "Geometría": record.geometryType,
+        "Superficie m²": record.areaSquareMeters ? formatNumber(Math.round(record.areaSquareMeters)) : "",
+        "Tipo de dato": record.dataType,
+        "Calidad": record.qualityGrade,
+        "Verificación": record.verificationStatus,
+        "Fecha de corte": record.sourceDate,
+        "Nota": record.reconciliationNotes
+      })),
+    [filteredPublicSpaceRecords]
+  );
+  const publicSpaceColumns = useMemo<ColumnDef<Record<string, string>, string>[]>(
+    () => (publicSpaceTableRows[0] ? Object.keys(publicSpaceTableRows[0]).map((key) => ({ header: key, accessorKey: key })) : []),
+    [publicSpaceTableRows]
   );
   const canchasKpis = useMemo(() => buildCanchasKpis(canchasRecords), [canchasRecords]);
   const canchasAlerts = useMemo(() => buildCanchasAlerts(canchasRecords), [canchasRecords]);
@@ -675,13 +866,13 @@ export default function Dashboard() {
   const visibleInfrastructureAdministrative = scopedInfrastructureDetails.reduce((sum, item) => sum + item.administrativeCount, 0);
   const visibleInfrastructureOperational = scopedInfrastructureDetails.reduce((sum, item) => sum + item.operationalUnits, 0);
   const visiblePublicUnits = scopedInfrastructureDetails
-    .filter((item) => item.dataType === "real" && item.sourceDataset !== "Directorio Estadístico de Unidades Económicas CDMX")
+    .filter((item) => item.dataType === "real" && item.sourceDataset !== "Infraestructura privada DENUE")
     .reduce((sum, item) => sum + item.administrativeCount, 0);
   const visiblePrivateUnits = scopedInfrastructureDetails
-    .filter((item) => item.sourceDataset === "Directorio Estadístico de Unidades Económicas CDMX" && item.dataType === "real")
+    .filter((item) => item.sourceDataset === "Infraestructura privada DENUE" && item.dataType === "real")
     .reduce((sum, item) => sum + item.administrativeCount, 0);
   const visiblePrivateCandidates = scopedInfrastructureDetails
-    .filter((item) => item.sourceDataset === "Directorio Estadístico de Unidades Económicas CDMX" && item.dataType === "preparado")
+    .filter((item) => item.sourceDataset === "Infraestructura privada DENUE" && item.dataType === "preparado")
     .reduce((sum, item) => sum + item.administrativeCount, 0);
   const visiblePrivateShare = visibleInfrastructureAdministrative > 0 ? (visiblePrivateUnits / visibleInfrastructureAdministrative) * 100 : 0;
   const visiblePublicShare = visibleInfrastructureAdministrative > 0 ? (visiblePublicUnits / visibleInfrastructureAdministrative) * 100 : 0;
@@ -697,9 +888,8 @@ export default function Dashboard() {
   const publicSportsRealSites = scopedInfrastructureDetails
     .filter((item) => item.infrastructureType === "Deportivos públicos")
     .reduce((sum, item) => sum + item.administrativeCount, 0);
-  const parksVisible = scopedInfrastructureDetails
-    .filter((item) => item.infrastructureType === "Parques / áreas verdes")
-    .reduce((sum, item) => sum + item.administrativeCount, 0);
+  const parksVisible = filteredPublicSpaceRecords.length;
+  const greenAreaSurfaceVisible = filteredPublicSpaceRecords.reduce((sum, item) => sum + (item.areaSquareMeters ?? 0), 0);
   const topPilaresBySite = Array.from(
     scopedInfrastructureDetails
       .filter((item) => item.infrastructureType === "PILARES")
@@ -1071,19 +1261,19 @@ export default function Dashboard() {
           <div>
             <div className="section-kicker">3. Infraestructura</div>
             <div className="section-heading">Infraestructura deportiva y comunitaria</div>
-            <div className="section-copy">Separa espacios observables, capas institucionales reales y preparación privada. Las disciplinas solo se muestran cuando están documentadas; lo demás queda como no documentado o subrepresentado.</div>
+            <div className="section-copy">Separa infraestructura deportiva observable, capas institucionales reales, preparación privada y una nueva capa oficial de espacio público/áreas verdes. Las disciplinas solo se muestran cuando están documentadas; lo demás queda como no documentado o subrepresentado.</div>
           </div>
           <KpiGrid
             items={[
-              { label: "Infraestructura visible", value: formatNumber(infrastructure.reduce((sum, item) => sum + item.total, 0)), helper: "Conteos administrativos de sedes, instalaciones o establecimientos" },
+              { label: "Infraestructura deportiva visible", value: formatNumber(infrastructure.reduce((sum, item) => sum + item.total, 0)), helper: "Conteos administrativos de sedes, instalaciones o establecimientos deportivos" },
               { label: "Espacios operativos estimados", value: formatNumber(visibleInfrastructureOperational), helper: "Aproximación analítica para lectura de capacidad territorial" },
-              { label: "Densidad media", value: `${(infrastructure.reduce((sum, item) => sum + item.density, 0) / (infrastructure.length || 1)).toFixed(1)}`, helper: "Infraestructura administrativa por 100 mil habitantes" },
-              { label: "Capacidad estimada", value: formatNumber(infrastructureDetails.reduce((sum, item) => sum + item.capacity, 0)), helper: "Solo cuando no existe aforo oficial consolidado" }
+              { label: "Densidad media deportiva", value: `${(infrastructure.reduce((sum, item) => sum + item.density, 0) / (infrastructure.length || 1)).toFixed(1)}`, helper: "Infraestructura deportiva administrativa por 100 mil habitantes" },
+              { label: "Capacidad estimada", value: formatNumber(infrastructureDetails.reduce((sum, item) => sum + item.capacity, 0)), helper: "Solo cuando no existe aforo oficial consolidado para infraestructura deportiva" }
             ]}
           />
           <div className="grid gap-4 lg:grid-cols-2">
             <ChartCard title="Desglose por tipo" helper="Conteo administrativo separado entre infraestructura pública/comunitaria y privada" tooltip={chartMeta.infrastructure}>
-              <StackedBar data={infraStacked} categories={["PILARES", "UTOPÍAs", "Deportivos públicos", "Gimnasios privados", "Clubes deportivos", "Academias deportivas", "Parques"]} />
+              <StackedBar data={infraStacked} categories={["PILARES", "UTOPÍAs", "Deportivos públicos", "Gimnasios privados", "Clubes deportivos", "Academias deportivas"]} />
             </ChartCard>
             <ChartCard title="Disciplinas documentadas en infraestructura" helper="Solo se cuentan disciplinas explícitas en la fuente; el resto queda como no documentado o subrepresentado" tooltip={chartMeta.infrastructure}>
               <DistributionBar data={infrastructureSports.slice(0, 8)} />
@@ -1103,8 +1293,91 @@ export default function Dashboard() {
               UTOPÍAs se integran como capa institucional real por sede documentada. DENUE representa unidades económicas registradas, no capacidad ni uso real del espacio; mientras el extracto disponible no exponga SCIAN verificable en este proyecto, la capa privada se mantiene como preparada.
             </div>
             <div className="text-sm leading-6 text-ink-700">
+              La capa de espacio público y áreas verdes se publica aparte. Sus polígonos no equivalen por sí solos a infraestructura deportiva, amenidades, acceso, mantenimiento ni práctica física.
+            </div>
+            <div className="text-sm leading-6 text-ink-700">
               Si una disciplina aparece baja o ausente, no debe leerse como inexistencia automática: puede estar no documentada o subrepresentada en la fuente actual.
             </div>
+          </Card>
+          <Card className="space-y-5 p-6">
+            <div className="flex flex-wrap items-start justify-between gap-3">
+              <div>
+                <div className="text-base font-semibold text-ink-900">Espacio público y áreas verdes</div>
+                <div className="text-sm leading-6 text-ink-600">
+                  Capa oficial separada de la infraestructura deportiva. Usa el Inventario de Áreas Verdes como universo nominal activo y deja Espacio público como fuente conectada en espera de una conciliación adicional del recurso descargable.
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <LayerBadge layer="real" />
+                <LayerBadge layer="preparado" />
+              </div>
+            </div>
+            <KpiGrid
+              items={[
+                { label: "Polígonos de áreas verdes", value: formatNumber(publicSpaceSummary.greenAreaRecordCount), helper: "Registros nominales integrados desde IPDP" },
+                { label: "Superficie verde documentada", value: `${(publicSpaceSummary.greenAreaSurfaceSqMTotal / 10000).toFixed(1)} ha`, helper: "Área derivada de los polígonos oficiales integrados" },
+                { label: "Espacio público usable", value: publicSpaceSummary.publicSpaceIntegrated ? formatNumber(publicSpaceSummary.publicSpaceRecordCount) : "Pendiente", helper: "El recurso descargable actual no expone atributos suficientes para integración nominal" },
+                { label: "Sintéticos retirados", value: formatNumber(publicSpaceSummary.syntheticReplacementAudit.removedSyntheticRecords), helper: "Registros agregados legacy eliminados del bloque deportivo" }
+              ]}
+            />
+            <NoteBlock
+              title="Nota metodológica"
+              body={publicSpaceSummary.note}
+            />
+            <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+              {publicSpaceFilterConfig.map((filter) => (
+                <MultiSelect
+                  key={filter.key}
+                  title={filter.title}
+                  options={filter.options}
+                  selected={publicSpaceFilters[filter.key]}
+                  onChange={(values) => setPublicSpaceFilters((prev) => ({ ...prev, [filter.key]: values }))}
+                />
+              ))}
+            </div>
+            {publicSpaceError ? (
+              <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+                No fue posible cargar el detalle nominal de espacio público: {publicSpaceError}
+              </div>
+            ) : null}
+            <div className="grid gap-4 lg:grid-cols-2">
+              <ChartCard title="Áreas verdes por categoría normalizada" helper="Clasificación derivada solo de categorías explícitas de la fuente" tooltip={chartMeta.map}>
+                <DistributionBar data={publicSpaceCategoryDistribution.slice(0, 8)} />
+              </ChartCard>
+              <ChartCard title="Áreas verdes por alcaldía" helper="Conteo de polígonos oficiales integrados" tooltip={chartMeta.map}>
+                <DistributionBar data={publicSpaceTopAlcaldias} />
+              </ChartCard>
+            </div>
+            <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+              <div className="rounded-2xl border border-mist-200 bg-white px-4 py-4">
+                <div className="text-[11px] font-semibold uppercase tracking-wide text-ink-600">Fuente activa</div>
+                <div className="mt-2 text-sm font-semibold text-ink-900">Inventario de Áreas Verdes</div>
+                <div className="mt-2 text-xs text-ink-600">IPDP · publicación 15 de febrero de 2023</div>
+              </div>
+              <div className="rounded-2xl border border-mist-200 bg-white px-4 py-4">
+                <div className="text-[11px] font-semibold uppercase tracking-wide text-ink-600">Espacio público</div>
+                <div className="mt-2 text-sm font-semibold text-ink-900">Conectado, no integrado</div>
+                <div className="mt-2 text-xs text-ink-600">ZIP oficial descargado; corte auditado el 6 de agosto de 2026 con atributos insuficientes en el recurso disponible</div>
+              </div>
+              <div className="rounded-2xl border border-mist-200 bg-white px-4 py-4">
+                <div className="text-[11px] font-semibold uppercase tracking-wide text-ink-600">Sintéticos sustituidos</div>
+                <div className="mt-2 text-2xl font-semibold text-ink-900">{formatNumber(publicSpaceSummary.syntheticReplacementAudit.replacedSyntheticRecords)}</div>
+                <div className="mt-2 text-xs text-ink-600">Registros legacy 2025 sustituidos por capa nominal oficial</div>
+              </div>
+              <div className="rounded-2xl border border-mist-200 bg-white px-4 py-4">
+                <div className="text-[11px] font-semibold uppercase tracking-wide text-ink-600">Diferencia restante</div>
+                <div className="mt-2 text-2xl font-semibold text-ink-900">{formatNumber(publicSpaceSummary.syntheticReplacementAudit.remainingSyntheticDifference)}</div>
+                <div className="mt-2 text-xs text-ink-600">Brecha nominal frente al agregado seed histórico removido</div>
+              </div>
+            </div>
+            <ExportableTable
+              title="Detalle nominal de áreas verdes"
+              columns={publicSpaceColumns}
+              data={publicSpaceTableRows}
+              fileName="deporte-cdmx-areas-verdes.csv"
+              presentationMode={presentationMode}
+              pageSize={10}
+            />
           </Card>
           <div className="grid gap-4 xl:grid-cols-[1.1fr_0.9fr]">
             <Card className="space-y-5 p-6">
@@ -1139,9 +1412,9 @@ export default function Dashboard() {
                   <div className="mt-2 text-xs text-ink-600">Sedes institucionales reales documentadas</div>
                 </div>
                 <div className="rounded-2xl border border-mist-200 bg-white px-4 py-4">
-                  <div className="text-[11px] font-semibold uppercase tracking-wide text-ink-600">Parques y espacios</div>
+                  <div className="text-[11px] font-semibold uppercase tracking-wide text-ink-600">Áreas verdes visibles</div>
                   <div className="mt-2 text-2xl font-semibold text-ink-900">{formatNumber(parksVisible)}</div>
-                  <div className="mt-2 text-xs text-ink-600">Espacios abiertos visibles en la vista</div>
+                  <div className="mt-2 text-xs text-ink-600">{(greenAreaSurfaceVisible / 10000).toFixed(1)} ha filtradas en la capa oficial</div>
                 </div>
               </div>
               <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
@@ -1291,6 +1564,8 @@ export default function Dashboard() {
                     { key: "publicInfrastructure" as const, label: "Infra pública" },
                     { key: "privateInfrastructure" as const, label: "Infra privada" },
                     { key: "totalInfrastructure" as const, label: "Infra total" },
+                    { key: "greenAreas" as const, label: "Áreas verdes" },
+                    { key: "greenAreaSurface" as const, label: "Superficie verde" },
                     { key: "obesity" as const, label: "Obesidad" },
                     { key: "diabetes" as const, label: "Diabetes" },
                     { key: "sedentary" as const, label: "Sedentarismo" }
@@ -1330,6 +1605,14 @@ export default function Dashboard() {
                   </div>
                   <div className="mt-2 text-2xl font-semibold text-ink-900">{formatNumber(mapLayerTotals.publicSports)}</div>
                   <div className="mt-2 text-xs text-ink-600">Instalaciones visibles por alcaldía</div>
+                </div>
+                <div className="rounded-2xl border border-mist-200 bg-white px-4 py-4">
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="text-[11px] font-semibold uppercase tracking-wide text-ink-600">Áreas verdes</div>
+                    <LayerBadge layer="real" />
+                  </div>
+                  <div className="mt-2 text-2xl font-semibold text-ink-900">{formatNumber(mapLayerTotals.greenAreas)}</div>
+                  <div className="mt-2 text-xs text-ink-600">Polígonos oficiales integrados, separados de la infraestructura deportiva</div>
                 </div>
                 <div className="rounded-2xl border border-mist-200 bg-white px-4 py-4">
                   <div className="flex items-center justify-between gap-2">
@@ -1444,6 +1727,16 @@ export default function Dashboard() {
                           <div className="text-[11px] font-semibold uppercase tracking-wide text-ink-600">Infraestructura privada</div>
                           <div className="mt-2 text-2xl font-semibold text-ink-900">{privateMapUnits > 0 ? formatNumber(privateMapUnits) : "Pendiente"}</div>
                           <div className="mt-2 text-xs text-ink-600">Pendiente de validación SCIAN</div>
+                        </div>
+                        <div className="rounded-2xl border border-mist-200 bg-white px-4 py-4">
+                          <div className="text-[11px] font-semibold uppercase tracking-wide text-ink-600">Áreas verdes</div>
+                          <div className="mt-2 text-2xl font-semibold text-ink-900">{formatNumber(selectedMapPublicSpace?.greenAreaRecords ?? 0)}</div>
+                          <div className="mt-2 text-xs text-ink-600">Polígonos oficiales por alcaldía, fuera del total deportivo</div>
+                        </div>
+                        <div className="rounded-2xl border border-mist-200 bg-white px-4 py-4">
+                          <div className="text-[11px] font-semibold uppercase tracking-wide text-ink-600">Superficie verde</div>
+                          <div className="mt-2 text-2xl font-semibold text-ink-900">{((selectedMapPublicSpace?.greenAreaSurfaceSqM ?? 0) / 10000).toFixed(1)} ha</div>
+                          <div className="mt-2 text-xs text-ink-600">Superficie agregada derivada de polígonos oficiales</div>
                         </div>
                         <div className="rounded-2xl border border-mist-200 bg-white px-4 py-4">
                           <div className="text-[11px] font-semibold uppercase tracking-wide text-ink-600">Canchas</div>

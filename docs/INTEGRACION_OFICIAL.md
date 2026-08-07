@@ -1,12 +1,16 @@
 # Integración oficial de infraestructura
 
-## Estado al 2026-08-03
+## Estado al 2026-08-06
 
 El Dashboard Institucional integra hoy tres grupos de capas:
 
 1. Infraestructura nominal real
 2. Oferta programada agregada
 3. Capas preparadas o parciales pendientes de validación adicional
+
+Desde el Sprint D1.3 se agrega además una capa separada de:
+
+4. Espacio público y áreas verdes documentadas
 
 ## Fuentes conectadas
 
@@ -20,6 +24,19 @@ El Dashboard Institucional integra hoy tres grupos de capas:
   - GeoJSON oficial descargado en `data/raw/external/alcaldias.geojson`
   - Conversión a SVG path en `data/models/integration/build-map-geometry.ts`
   - Conectado al dashboard mediante `geoKey`
+- Áreas verdes
+  - GeoJSON oficial descargado en `data/raw/external/green_areas_cdmx.geojson`
+  - Diccionario descargado en `data/raw/external/green_areas_cdmx_dictionary.csv`
+  - Builder dedicado: `data/models/integration/build-public-space-layer.ts`
+  - Dataset procesado: `data/processed/infrastructure/public-space.json`
+  - Estatus: `real`, separado de infraestructura deportiva
+- Espacio público
+  - ZIP oficial descargado en `data/raw/external/public_space_cdmx.zip`
+  - Diccionario descargado en `data/raw/external/public_space_cdmx_dictionary.csv`
+  - Builder dedicado: `data/models/integration/build-public-space-layer.ts`
+  - Estatus: `conectado, no integrado`
+  - Regla crítica:
+    - no entra al dashboard nominal mientras el recurso descargable no exponga atributos defendibles por registro
 
 ## Oferta programada agregada conectada
 
@@ -99,3 +116,5 @@ Reglas vigentes:
 - DENUE ya entra al processed, pero debe seguir marcado como `preparado` hasta validar un extracto con SCIAN verificable.
 - La oferta programada se deriva de mallas operativas reales, pero solo se publica en forma agregada dentro del dashboard institucional.
 - El dashboard no expone nombres de personal ni otras columnas nominales de Operación para esta capa.
+- La capa de áreas verdes no se suma a totales administrativos de infraestructura deportiva.
+- El espacio público y las áreas verdes solo publican categorías explícitas de la fuente; no infieren canchas, amenidades ni práctica física.

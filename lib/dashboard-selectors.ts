@@ -7,6 +7,7 @@ import type {
   HealthProfileRecord,
   InfrastructureDetailRecord,
   MapAreaRecord,
+  PublicSpaceSummaryByAlcaldia,
   ProgrammedOfferRecord,
   SportsRecord,
   TerritorialRecord
@@ -368,7 +369,7 @@ export const buildInfrastructureByAlcaldia = (records: TerritorialRecord[], filt
     const clubesPrivados = includeAll || filters.infrastructureTypes.includes("Club deportivo privado") ? sample.privateClubs : 0;
     const academiasPrivadas = includeAll || filters.infrastructureTypes.includes("Academia deportiva privada") ? sample.privateSchools : 0;
     const parques = includeAll || filters.infrastructureTypes.includes("Parques / áreas verdes") ? sample.parks : 0;
-    const total = deportivos + pilares + utopias + gimnasiosPrivados + clubesPrivados + academiasPrivadas + parques;
+    const total = deportivos + pilares + utopias + gimnasiosPrivados + clubesPrivados + academiasPrivadas;
     return {
       name,
       deportivos,
@@ -391,7 +392,6 @@ const getInfrastructureCategoryLabel = (record: InfrastructureDetailRecord) => {
   if (record.infrastructureType === "Academia deportiva privada") return "Academias deportivas";
   if (record.infrastructureType === "Deportivos públicos") return "Deportivos públicos";
   if (record.infrastructureType === "UTOPÍAs") return "UTOPÍAs";
-  if (record.infrastructureType === "Parques / áreas verdes") return "Parques";
   return "PILARES";
 };
 
@@ -404,8 +404,7 @@ export const buildInfrastructureStackedByAlcaldia = (records: InfrastructureDeta
       "Deportivos públicos": 0,
       "Gimnasios privados": 0,
       "Clubes deportivos": 0,
-      "Academias deportivas": 0,
-      "Parques": 0
+      "Academias deportivas": 0
     };
     items.forEach((item) => {
       const label = getInfrastructureCategoryLabel(item);
@@ -419,16 +418,14 @@ export const buildInfrastructureStackedByAlcaldia = (records: InfrastructureDeta
       Number(a["Deportivos públicos"]) +
       Number(a["Gimnasios privados"]) +
       Number(a["Clubes deportivos"]) +
-      Number(a["Academias deportivas"]) +
-      Number(a["Parques"]);
+      Number(a["Academias deportivas"]);
     const totalB =
       Number(b["PILARES"]) +
       Number(b["UTOPÍAs"]) +
       Number(b["Deportivos públicos"]) +
       Number(b["Gimnasios privados"]) +
       Number(b["Clubes deportivos"]) +
-      Number(b["Academias deportivas"]) +
-      Number(b["Parques"]);
+      Number(b["Academias deportivas"]);
     return totalB - totalA;
   });
 };
@@ -612,7 +609,7 @@ export const buildPanoramaDeportivoAlcaldia = (
       infraestructuraPublica: infra.filter((item) => item.infrastructureType === "Deportivos públicos").reduce((acc, item) => acc + item.administrativeCount, 0),
       infraestructuraComunitaria:
         infra.filter((item) => item.infrastructureType === "PILARES" || item.infrastructureType === "UTOPÍAs").reduce((acc, item) => acc + item.administrativeCount, 0),
-      infraestructuraPrivadaFormal: infra.filter((item) => item.sourceDataset === "Directorio Estadístico de Unidades Económicas CDMX").reduce((acc, item) => acc + item.administrativeCount, 0),
+      infraestructuraPrivadaFormal: infra.filter((item) => item.sourceDataset === "Infraestructura privada DENUE").reduce((acc, item) => acc + item.administrativeCount, 0),
       utopias: infra.filter((item) => item.infrastructureType === "UTOPÍAs").reduce((acc, item) => acc + item.administrativeCount, 0),
       canchas: canchasRecords.filter((item) => item.alcaldia === alcaldia).length,
       coberturaProgramatica10k: population.total > 0 ? (programVenues / population.total) * 10000 : 0,
@@ -642,7 +639,8 @@ export const buildProgrammedOfferKpis = (records: ProgrammedOfferRecord[]) => {
 export const buildInfrastructureScopeKpi = (
   infrastructureDetails: InfrastructureDetailRecord[],
   canchasRecords: CanchaOperationalRecord[],
-  scope: PanoramaInfrastructureScope
+  scope: PanoramaInfrastructureScope,
+  publicSpaceSummaryByAlcaldia: PublicSpaceSummaryByAlcaldia[] = []
 ) => {
   if (scope === "publica") {
     const value = infrastructureDetails
@@ -696,14 +694,13 @@ export const buildInfrastructureScopeKpi = (
       helper: "Capa institucional real por sede documentada"
     };
   }
-  const value = infrastructureDetails
-    .filter((item) => item.infrastructureType === "Parques / áreas verdes")
-    .reduce((sum, item) => sum + item.administrativeCount, 0);
+  const value = publicSpaceSummaryByAlcaldia.reduce((sum, item) => sum + item.greenAreaRecords, 0);
+  const surfaceSqM = publicSpaceSummaryByAlcaldia.reduce((sum, item) => sum + item.greenAreaSurfaceSqM, 0);
   return {
-    label: "Parques y espacios abiertos visibles",
+    label: "Áreas verdes visibles",
     value,
-    unit: "espacios",
-    helper: "Espacios abiertos documentados en la vista activa"
+    unit: "polígonos",
+    helper: `${(surfaceSqM / 10000).toFixed(1)} ha documentadas en la capa oficial separada de espacio público`
   };
 };
 
@@ -784,7 +781,7 @@ export const buildInfrastructureExecutiveSummary = (records: InfrastructureDetai
     const administrativeTotal = sum(items.map((item) => item.administrativeCount));
     const operationalTotal = sum(items.map((item) => item.operationalUnits));
     const privateUnits = sum(
-      items.map((item) => (item.sourceDataset === "Directorio Estadístico de Unidades Económicas CDMX" ? item.administrativeCount : 0))
+      items.map((item) => (item.sourceDataset === "Infraestructura privada DENUE" ? item.administrativeCount : 0))
     );
     return {
       key: tipo,

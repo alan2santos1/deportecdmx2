@@ -9,6 +9,8 @@ export type TerritorialMetricKey =
   | "publicInfrastructure"
   | "privateInfrastructure"
   | "totalInfrastructure"
+  | "greenAreas"
+  | "greenAreaSurface"
   | "obesity"
   | "diabetes"
   | "sedentary";
@@ -35,6 +37,8 @@ const metricLabels: Record<TerritorialMetricKey, string> = {
   publicInfrastructure: "Infraestructura pública",
   privateInfrastructure: "Infraestructura privada",
   totalInfrastructure: "Infraestructura total",
+  greenAreas: "Áreas verdes",
+  greenAreaSurface: "Superficie verde",
   obesity: "Obesidad",
   diabetes: "Diabetes",
   sedentary: "Sedentarismo"
@@ -46,6 +50,8 @@ const metricDirection: Record<TerritorialMetricKey, "higher_is_better" | "higher
   publicInfrastructure: "higher_is_better",
   privateInfrastructure: "higher_is_better",
   totalInfrastructure: "higher_is_better",
+  greenAreas: "higher_is_better",
+  greenAreaSurface: "higher_is_better",
   obesity: "higher_is_worse",
   diabetes: "higher_is_worse",
   sedentary: "higher_is_worse"
@@ -57,6 +63,8 @@ const getMetricValue = (area: MapAreaRecord, metric: TerritorialMetricKey) => {
   if (metric === "publicInfrastructure") return area.publicInfrastructureCount;
   if (metric === "privateInfrastructure") return area.privateInfrastructureCount;
   if (metric === "totalInfrastructure") return area.totalInfrastructureCount;
+  if (metric === "greenAreas") return area.greenAreaCount;
+  if (metric === "greenAreaSurface") return area.greenAreaSurfaceSqM / 10000;
   if (metric === "obesity") return area.obesityRate * 100;
   if (metric === "diabetes") return area.diabetesRate * 100;
   return area.sedentaryRate * 100;
@@ -67,6 +75,9 @@ const formatMetricValue = (area: MapAreaRecord | undefined, metric: TerritorialM
   const value = getMetricValue(area, metric);
   if (metric === "activity" || metric === "obesity" || metric === "diabetes" || metric === "sedentary") {
     return `${value.toFixed(1)}%`;
+  }
+  if (metric === "greenAreaSurface") {
+    return `${value.toFixed(1)} ha`;
   }
   return Number.isInteger(value) ? String(value) : value.toFixed(1);
 };

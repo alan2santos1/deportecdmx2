@@ -2,7 +2,7 @@
 
 ## Estado del documento
 - Tipo: inventario vivo de capas de información
-- Fecha de actualización: 2026-08-03
+- Fecha de actualización: 2026-08-06
 - Alcance: documentación y estado real del repositorio sin modificar código
 
 ## Criterio
@@ -44,7 +44,8 @@ La columna `calidad` usa la escala institucional del proyecto:
 | Deportivos públicos nominales | [data/raw/external/deportivos_publicos.csv](/Users/alansantos/Proyectos%20web/deportecdmx2/data/raw/external/deportivos_publicos.csv) | Real | 265 instalaciones nominales | Sin fecha de corte explícita dentro del repo | No definida en repo | B | Sí | Sí | No | Sí | No | No | Sí | No | Alta |
 | Geometría oficial de alcaldías | [data/raw/external/alcaldias.geojson](/Users/alansantos/Proyectos%20web/deportecdmx2/data/raw/external/alcaldias.geojson) | Real para geometría | 16 alcaldías | Sin fecha de corte explícita en repo | Baja | B | Sí | Sí | No | Sí | No | No | Sí | No | Alta |
 | Infraestructura oficial consolidada | [data/processed/infrastructure/official-infrastructure.json](/Users/alansantos/Proyectos%20web/deportecdmx2/data/processed/infrastructure/official-infrastructure.json) | Mixto: real y preparado | Infraestructura pública/comunitaria y capa privada preparada | Snapshot generado 2026-08-03 | Snapshot por build | B | Parcial | Sí | Parcial | Sí | No | Sí | Sí | No | Alta |
-| Parques / espacios abiertos visibles | [public/data/dashboard.json](/Users/alansantos/Proyectos%20web/deportecdmx2/public/data/dashboard.json) `infrastructureDetails` | Real en código, pero agregado sin fuente nominal local integrada | Agregado territorial por alcaldía | 2025 visible en dashboard | Snapshot por build | D | Parcial | Parcial | No | Parcial | No | Sí en soporte | Sí | Sí, falta inventario nominal trazable | Alta |
+| Áreas verdes oficiales | [data/processed/infrastructure/public-space.json](/Users/alansantos/Proyectos%20web/deportecdmx2/data/processed/infrastructure/public-space.json) `greenAreas.records` | Real | 11739 polígonos oficiales | Descarga auditada 2026-08-06; publicación visible 2023-02-15 | Eventual | B | Sí | Sí | No | Sí | No | No | Sí | No | Alta |
+| Espacio público oficial | [data/processed/infrastructure/public-space.json](/Users/alansantos/Proyectos%20web/deportecdmx2/data/processed/infrastructure/public-space.json) `publicSpace` | Preparado | Fuente conectada, sin registros publicados | Descarga auditada 2026-08-06; publicación visible 2023-03-30 | Eventual | D | Sí | Sí | No | No | No | Sí | Parcial | Sí, falta integración nominal usable | Alta |
 | DENUE privada verificada por SCIAN | [data/raw/external/denue_cdmx.geojson](/Users/alansantos/Proyectos%20web/deportecdmx2/data/raw/external/denue_cdmx.geojson) + [data/models/integration/denue-normalizer.ts](/Users/alansantos/Proyectos%20web/deportecdmx2/data/models/integration/denue-normalizer.ts) | Real en diseño, no disponible en corte actual | Privado formal por establecimiento | No utilizable en corte local actual | Eventual | D | Sí en origen | Sí | Sí | No en este repo | No | Sí | No | Sí | Crítica |
 | DENUE privada preparada/candidata | [data/models/integration/build-official-infrastructure.ts](/Users/alansantos/Proyectos%20web/deportecdmx2/data/models/integration/build-official-infrastructure.ts) | Preparado | Privado formal candidato por establecimiento y alcaldía | 2026-08-03 snapshot, pero `recordCount = 0` | Snapshot por build | D | No como resultado integrado | Sí | Sí | No | No | Sí | Parcial, estructura lista | Sí | Crítica |
 | Mapa territorial por alcaldía | [public/data/dashboard.json](/Users/alansantos/Proyectos%20web/deportecdmx2/public/data/dashboard.json) `mapAreas` + `mapGeometry` | Insight con geometría real | 16 alcaldías × años soportados | Snapshot generado 2026-08-03 | Snapshot por build | C | Parcial | Sí | No | Parcial | Sí | Parcial | Sí | No | Alta |
@@ -103,13 +104,12 @@ La columna `calidad` usa la escala institucional del proyecto:
   - cualquier lectura privada debe seguir como preparada.
 - Prioridad: crítica.
 
-### 5. Parques y espacio público nominales
-- El dashboard sí muestra parques/espacios, pero el repo no expone una fuente nominal local integrada equivalente a PILARES o deportivos.
-- Estado actual:
-  - la capa visible es agregada y útil territorialmente;
-  - falta inventario nominal trazable dentro del ETL actual.
+### 5. Espacio público nominal completo
+- Ya existe una capa nominal integrada de áreas verdes oficiales.
+- Sigue faltando integrar nominalmente el dataset oficial de Espacio público de la Ciudad de México porque el recurso descargable auditado el 2026-08-06 no expone atributos suficientes para conciliación defendible.
 - Impacto:
-  - la capa no tiene el mismo nivel de defensa que PILARES o deportivos públicos.
+  - las áreas verdes ya tienen trazabilidad local;
+  - la capa de espacio público sigue incompleta como universo institucional separado.
 - Prioridad: alta.
 
 ### 6. PILARES actualizados operativamente

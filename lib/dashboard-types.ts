@@ -15,6 +15,7 @@ export type InstitutionalScope =
   | "espacio_publico"
   | "cdmx_general";
 export type CoverageLevel = "completa" | "parcial" | "agregada" | "no_representativa" | "no_disponible";
+export type VerificationStatus = "verificado" | "pendiente" | "fuente_limitada";
 
 export type InfrastructureType =
   | "PILARES"
@@ -395,6 +396,9 @@ export type MapAreaRecord = {
   privateInfrastructureCount: number;
   totalInfrastructureCount: number;
   utopiasCount: number;
+  greenAreaCount: number;
+  greenAreaSurfaceSqM: number;
+  publicSpaceCount: number;
   infraPer100k: number;
   dataType: DataLayer;
   source: string;
@@ -407,11 +411,120 @@ export type MapGeometryFeature = {
   path: string;
 };
 
+export type PublicSpaceSourceLayer = "publicSpace" | "greenAreas";
+export type PublicSpaceGeometryKind = "polygon" | "multipolygon" | "point" | "centroid_derived";
+export type PublicSpaceDeduplicationStatus = "unico" | "nombre_repetido" | "geometria_repetida" | "solapamiento_potencial";
+
+export type PublicSpaceRecord = {
+  id: string;
+  sourceLayer: PublicSpaceSourceLayer;
+  sourceId: string;
+  originalName: string | null;
+  normalizedName: string | null;
+  originalCategory: string | null;
+  normalizedCategory: string;
+  originalSubcategory?: string | null;
+  geometryType: PublicSpaceGeometryKind;
+  geometry: {
+    type: "Polygon" | "MultiPolygon" | "Point";
+    coordinates: any;
+  } | null;
+  centroid: { lat: number; lon: number } | null;
+  alcaldia: string | null;
+  colonia?: string | null;
+  areaSquareMeters: number | null;
+  sourceInstitution: string;
+  sourceDataset: string;
+  sourceDate: string;
+  publicationDate: string | null;
+  version: string;
+  license: string;
+  dataType: DataLayer;
+  qualityGrade: QualityGrade;
+  coverageLevel: CoverageLevel;
+  methodology: string;
+  provenance: string;
+  verificationStatus: VerificationStatus;
+  deduplicationStatus: PublicSpaceDeduplicationStatus;
+  duplicateGroupId: string | null;
+  spatialOverlapRatio: number | null;
+  reconciliationNotes: string;
+};
+
+export type PublicSpaceSummaryByAlcaldia = {
+  alcaldia: string;
+  geoKey: string;
+  greenAreaRecords: number;
+  greenAreaSurfaceSqM: number;
+  publicSpaceRecords: number;
+};
+
+export type PublicSpaceCategorySummary = {
+  category: string;
+  count: number;
+  sourceLayer: PublicSpaceSourceLayer;
+};
+
+export type DashboardPublicSpaceSummary = {
+  generatedAt: string;
+  greenAreasIntegrated: boolean;
+  publicSpaceIntegrated: boolean;
+  greenAreaRecordCount: number;
+  publicSpaceRecordCount: number;
+  greenAreaSurfaceSqMTotal: number;
+  sourceDate: string;
+  note: string;
+  byAlcaldia: PublicSpaceSummaryByAlcaldia[];
+  categorySummary: PublicSpaceCategorySummary[];
+  syntheticReplacementAudit: {
+    syntheticRecordsDetected: number;
+    syntheticAdministrativeUnitsDetected: number;
+    syntheticCategories: string[];
+    replacedSyntheticRecords: number;
+    frozenSyntheticRecords: number;
+    removedSyntheticRecords: number;
+    remainingSyntheticDifference: number;
+  };
+};
+
+export type PublicSpaceLayerDataset = {
+  meta: {
+    generatedAt: string;
+    version: string;
+    sourceDate: string;
+    methodology: string;
+    note: string;
+  };
+  publicSpace: {
+    integrated: boolean;
+    sourceDataset: string;
+    sourceInstitution: string;
+    sourceDate: string;
+    publicationDate: string;
+    license: string;
+    version: string;
+    records: PublicSpaceRecord[];
+    note: string;
+  };
+  greenAreas: {
+    integrated: boolean;
+    sourceDataset: string;
+    sourceInstitution: string;
+    sourceDate: string;
+    publicationDate: string;
+    license: string;
+    version: string;
+    records: PublicSpaceRecord[];
+  };
+  summary: DashboardPublicSpaceSummary;
+};
+
 export type DashboardDataset = {
   meta: DashboardMeta;
   territorialRecords: TerritorialRecord[];
   programmedOfferRecords: ProgrammedOfferRecord[];
   infrastructureDetails: InfrastructureDetailRecord[];
+  publicSpaceSummary: DashboardPublicSpaceSummary;
   canchasRecords: CanchaOperationalRecord[];
   canchasSummary: CanchasSummaryRecord[];
   sportsRecords: SportsRecord[];
