@@ -519,6 +519,186 @@ export type PublicSpaceLayerDataset = {
   summary: DashboardPublicSpaceSummary;
 };
 
+export type UtopiaProjectStatus =
+  | "anunciada"
+  | "planeacion"
+  | "construccion"
+  | "terminacion"
+  | "terminada"
+  | "sin_documentar";
+
+export type UtopiaOpeningStatus =
+  | "no_inaugurada"
+  | "inaugurada_confirmada"
+  | "fecha_anunciada"
+  | "sin_confirmacion"
+  | "contradiccion";
+
+export type UtopiaOperationalStatus =
+  | "operando_confirmado"
+  | "operacion_no_documentada"
+  | "temporalmente_cerrada"
+  | "cierre_confirmado"
+  | "desconocido";
+
+export type UtopiaEvidenceType =
+  | "directorio_operativo"
+  | "boletin_inauguracion"
+  | "boletin_construccion"
+  | "supervision_obra"
+  | "mensaje_institucional"
+  | "ficha_turistica"
+  | "nota_operativa";
+
+export type UtopiaAmenityCategory =
+  | "acuatica"
+  | "cancha"
+  | "gimnasio"
+  | "combate"
+  | "movilidad"
+  | "raqueta"
+  | "espacio_publico"
+  | "cuidados"
+  | "otras";
+
+export type UtopiaType =
+  | "territorial"
+  | "historica_iztapalapa"
+  | "espacio_publico_elevado"
+  | "proyecto_multisitio"
+  | "otro_documentado";
+
+export type UtopiaCoordinateStatus = "oficial" | "derivada" | "aproximada" | "sin_coordenada";
+
+export type UtopiaAmenityClaim = {
+  originalLabel: string;
+  normalizedAmenity: string;
+  category: UtopiaAmenityCategory;
+};
+
+export type UtopiaActivityClaim = {
+  originalLabel: string;
+  normalizedDiscipline: string;
+  context: "actividad" | "disciplina" | "oferta" | "servicio";
+};
+
+export type UtopiaEvidenceRecord = {
+  evidenceId: string;
+  utopiaId: string;
+  utopiaName: string;
+  sourceInstitution: string;
+  title: string;
+  sourceUrl: string;
+  publicationDate: string | null;
+  effectiveDate: string | null;
+  evidenceType: UtopiaEvidenceType;
+  statusSupported: {
+    projectStatus?: UtopiaProjectStatus | null;
+    openingStatus?: UtopiaOpeningStatus | null;
+    operationalStatus?: UtopiaOperationalStatus | null;
+  };
+  amenityClaims: UtopiaAmenityClaim[];
+  activityClaims: UtopiaActivityClaim[];
+  coordinates: { lat: number; lon: number } | null;
+  surfaceM2: number | null;
+  notes: string;
+  capturedAt: string;
+};
+
+export type UtopiaAmenityRecord = {
+  amenityId: string;
+  utopiaId: string;
+  originalLabel: string;
+  normalizedAmenity: string;
+  category: UtopiaAmenityCategory;
+  evidenceId: string;
+  verificationStatus: VerificationStatus;
+  sourceDate: string | null;
+};
+
+export type UtopiaActivityRecord = {
+  activityId: string;
+  utopiaId: string;
+  originalLabel: string;
+  normalizedDiscipline: string;
+  context: "actividad" | "disciplina" | "oferta" | "servicio";
+  evidenceId: string;
+  sourceDate: string | null;
+};
+
+export type UtopiaChangeLogEntry = {
+  evidenceId: string;
+  effectiveDate: string | null;
+  publicationDate: string | null;
+  title: string;
+  projectStatus: UtopiaProjectStatus | null;
+  openingStatus: UtopiaOpeningStatus | null;
+  operationalStatus: UtopiaOperationalStatus | null;
+  notes: string;
+};
+
+export type UtopiaRecord = {
+  utopiaId: string;
+  canonicalName: string;
+  sourceName: string;
+  aliases: string[];
+  alcaldia: string | null;
+  address: string | null;
+  coordinates: { lat: number; lon: number } | null;
+  coordinateStatus: UtopiaCoordinateStatus;
+  utopiaType: UtopiaType;
+  surfaceM2: number | null;
+  operator: string;
+  projectStatus: UtopiaProjectStatus;
+  openingStatus: UtopiaOpeningStatus;
+  operationalStatus: UtopiaOperationalStatus;
+  openingDate: string | null;
+  lastVerifiedAt: string | null;
+  sourceDate: string | null;
+  sourceInstitution: string;
+  evidenceIds: string[];
+  qualityGrade: QualityGrade;
+  coverageLevel: CoverageLevel;
+  verificationStatus: VerificationStatus;
+  countAsRealInfrastructure: boolean;
+  originalSourceFields: Record<string, unknown>;
+  changeHistory: UtopiaChangeLogEntry[];
+};
+
+export type UtopiaLayerDataset = {
+  meta: {
+    generatedAt: string;
+    version: string;
+    sourceDate: string;
+    methodology: string;
+    note: string;
+  };
+  summary: {
+    totalCatalogRecords: number;
+    territorialCount: number;
+    historicalIztapalapaCount: number;
+    newGenerationCount: number;
+    specialNonTerritorialCount: number;
+    multisiteProjectCount: number;
+    inauguratedConfirmed: number;
+    operatingConfirmed: number;
+    underConstruction: number;
+    announcedOrPlanning: number;
+    withVerifiedAmenities: number;
+    officialCoordinates: number;
+    derivedCoordinates: number;
+    approximateCoordinates: number;
+    withoutCoordinates: number;
+    withDocumentedSurface: number;
+    byAlcaldia: Array<{ alcaldia: string; total: number }>;
+    amenityTotals: Array<{ amenity: string; count: number; category: UtopiaAmenityCategory }>;
+  };
+  utopias: UtopiaRecord[];
+  amenities: UtopiaAmenityRecord[];
+  activities: UtopiaActivityRecord[];
+  evidences: UtopiaEvidenceRecord[];
+};
+
 export type DashboardDataset = {
   meta: DashboardMeta;
   territorialRecords: TerritorialRecord[];

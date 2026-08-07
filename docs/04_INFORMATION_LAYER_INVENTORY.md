@@ -2,7 +2,7 @@
 
 ## Estado del documento
 - Tipo: inventario vivo de capas de información
-- Fecha de actualización: 2026-08-06
+- Fecha de actualización: 2026-08-07
 - Alcance: documentación y estado real del repositorio sin modificar código
 
 ## Criterio
@@ -40,7 +40,8 @@ La columna `calidad` usa la escala institucional del proyecto:
 | Oferta programada Ponte Pila | [docs/fuentes-operativas/MALLA-HORARIA-DPP-PPP-JUL2026 SPPA.xlsx](/Users/alansantos/Proyectos%20web/deportecdmx2/docs/fuentes-operativas/MALLA-HORARIA-DPP-PPP-JUL2026%20SPPA.xlsx) hojas `MALLA HORARIA PUNTOS PONTE PILA` y `MALLA HORARIA GENERAL ESCUELAS` | Real, oferta programada | Ponte Pila, agregada por alcaldía, disciplina y horario | 2026-07-31 | Corte operativo ad hoc | A | Sí | No | No | Sí como programación | No | No | Sí | No | Alta |
 | Catálogo de disciplinas programadas | [data/models/integration/discipline-catalog.ts](/Users/alansantos/Proyectos%20web/deportecdmx2/data/models/integration/discipline-catalog.ts) | Preparado de normalización | Oferta programada PILARES y Ponte Pila | 2026-08-03 | Versionado por código | C | No | No | No | No | No | Sí | Sí | No | Alta |
 | PILARES nominal por sede | [data/raw/external/pilares.csv](/Users/alansantos/Proyectos%20web/deportecdmx2/data/raw/external/pilares.csv) | Real | 300 sedes nominales | Dataset con vigencia histórica 2021 según investigación | No definida en repo | B | Sí | Sí | No | Sí | No | No | Sí | No | Alta |
-| UTOPÍAs institucionales | [data/processed/infrastructure/utopias.json](/Users/alansantos/Proyectos%20web/deportecdmx2/data/processed/infrastructure/utopias.json) | Real | 28 sedes/proyectos institucionales | Snapshot procesado vigente 2026-08-03 | Ad hoc | B | Sí en evidencia institucional, no dataset open data único | Parcial | No | Sí | No | No | Sí | No | Alta |
+| UTOPÍAs institucionales | [data/processed/infrastructure/utopias.json](/Users/alansantos/Proyectos%20web/deportecdmx2/data/processed/infrastructure/utopias.json) | Real | 33 sedes/proyectos institucionales con historial y evidencia | Snapshot procesado vigente 2026-08-07 | Ad hoc | A | Sí en evidencia institucional, no dataset open data único | Parcial | No | Sí | No | No | Sí | No | Alta |
+| Evidencia oficial manual de UTOPÍAs | [data/raw/manual/utopias-evidencias-oficiales.json](/Users/alansantos/Proyectos%20web/deportecdmx2/data/raw/manual/utopias-evidencias-oficiales.json) | Documental curada con fuentes oficiales | Sedes UTOPÍAs conciliadas | 2026-08-07 | Ad hoc | B | Sí por origen institucional | No | No | Sí documental | No | No | Sí | No | Alta |
 | Deportivos públicos nominales | [data/raw/external/deportivos_publicos.csv](/Users/alansantos/Proyectos%20web/deportecdmx2/data/raw/external/deportivos_publicos.csv) | Real | 265 instalaciones nominales | Sin fecha de corte explícita dentro del repo | No definida en repo | B | Sí | Sí | No | Sí | No | No | Sí | No | Alta |
 | Geometría oficial de alcaldías | [data/raw/external/alcaldias.geojson](/Users/alansantos/Proyectos%20web/deportecdmx2/data/raw/external/alcaldias.geojson) | Real para geometría | 16 alcaldías | Sin fecha de corte explícita en repo | Baja | B | Sí | Sí | No | Sí | No | No | Sí | No | Alta |
 | Infraestructura oficial consolidada | [data/processed/infrastructure/official-infrastructure.json](/Users/alansantos/Proyectos%20web/deportecdmx2/data/processed/infrastructure/official-infrastructure.json) | Mixto: real y preparado | Infraestructura pública/comunitaria y capa privada preparada | Snapshot generado 2026-08-03 | Snapshot por build | B | Parcial | Sí | Parcial | Sí | No | Sí | Sí | No | Alta |
@@ -121,11 +122,15 @@ La columna `calidad` usa la escala institucional del proyecto:
 - Prioridad: alta.
 
 ### 7. UTOPÍAs con amenidades verificadas
-- Existe inventario institucional defendible por sede/estatus.
-- Falta:
-  - amenidades detalladas verificadas por sede;
+- Ya existe capa nominal por sede con:
+  - estatus separados;
+  - historial de evidencia;
+  - 4 sedes con amenidades verificadas;
+  - catálogo explícito de amenidades y actividades documentadas.
+- Sigue faltando:
+  - coordenadas verificadas por sede;
   - estado operativo de amenidades;
-  - catálogo estructurado de disciplinas/instalaciones internas.
+  - mayor cobertura de amenidades fuera de los boletines 2026.
 - Prioridad: media-alta.
 
 ### 8. Inventario público deportivo exhaustivo

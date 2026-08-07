@@ -50,7 +50,8 @@ import type {
   DashboardFilterState,
   DataLayer,
   MetricMetadata,
-  PublicSpaceLayerDataset
+  PublicSpaceLayerDataset,
+  UtopiaLayerDataset
 } from "../lib/dashboard-types";
 import { useDashboardStore } from "../store/useDashboardStore";
 import { formatNumber } from "../lib/utils";
@@ -97,6 +98,16 @@ const emptyPublicSpaceFilters = {
   originalCategories: [] as string[],
   qualities: [] as string[],
   cutDates: [] as string[]
+};
+
+const emptyUtopiaFilters = {
+  alcaldias: [] as string[],
+  projectStatuses: [] as string[],
+  openingStatuses: [] as string[],
+  operationalStatuses: [] as string[],
+  amenities: [] as string[],
+  qualities: [] as string[],
+  verificationDates: [] as string[]
 };
 
 const metadataValueLabels = {
@@ -206,6 +217,13 @@ const mapMetricMeta: Record<TerritorialMetricKey, { label: string; source: strin
     note: "Conteo administrativo visible de sedes e instalaciones deportivas públicas o comunitarias. No incluye polígonos de espacio público o áreas verdes para evitar mezcla de unidades incompatibles.",
     formatter: (value) => formatNumber(value)
   },
+  utopias: {
+    label: "UTOPÍAs territoriales",
+    source: "Capa institucional UTOPÍAs versionada por sede",
+    dataType: "real",
+    note: "Muestra solo UTOPÍAs de lectura territorial estándar con operación o apertura físicamente verificable. Los proyectos en anuncio, planeación, construcción o casos especiales como Tlallipan se mantienen fuera del KPI territorial principal.",
+    formatter: (value) => formatNumber(value)
+  },
   privateInfrastructure: {
     label: "Infraestructura privada",
     source: "DENUE CDMX",
@@ -261,6 +279,7 @@ const mapMetricTitle: Record<TerritorialMetricKey, string> = {
   activity: "Actividad física estimada por alcaldía",
   risk: "Riesgo físico territorial por alcaldía",
   publicInfrastructure: "Infraestructura deportiva pública por alcaldía",
+  utopias: "UTOPÍAs territoriales por alcaldía",
   privateInfrastructure: "Infraestructura deportiva privada por alcaldía",
   totalInfrastructure: "Infraestructura deportiva total por alcaldía",
   greenAreas: "Áreas verdes por alcaldía",
@@ -424,6 +443,9 @@ export default function Dashboard() {
   const [publicSpaceLayer, setPublicSpaceLayer] = useState<PublicSpaceLayerDataset | null>(null);
   const [publicSpaceError, setPublicSpaceError] = useState<string | null>(null);
   const [publicSpaceFilters, setPublicSpaceFilters] = useState(emptyPublicSpaceFilters);
+  const [utopiasLayer, setUtopiasLayer] = useState<UtopiaLayerDataset | null>(null);
+  const [utopiasError, setUtopiasError] = useState<string | null>(null);
+  const [utopiasFilters, setUtopiasFilters] = useState(emptyUtopiaFilters);
   const [canchasFilters, setCanchasFilters] = useState<CanchasFilterState>(emptyCanchasFilters);
   const [selectedCanchaId, setSelectedCanchaId] = useState<string | null>(null);
   const [canchasMapColorMode, setCanchasMapColorMode] = useState<CanchasMapColorMode>("opening");
@@ -456,6 +478,34 @@ export default function Dashboard() {
     };
   }, []);
 
+  useEffect(() => {
+    let cancelled = false;
+    const loadUtopias = async () => {
+      const basePath = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
+      const candidates = [`${basePath}/data/utopias.json`, "/data/utopias.json"];
+      for (const url of candidates) {
+        try {
+          const response = await fetch(url, { cache: "no-store" });
+          if (!response.ok) continue;
+          const payload = (await response.json()) as UtopiaLayerDataset;
+          if (!cancelled) {
+            setUtopiasLayer(payload);
+            setUtopiasError(null);
+          }
+          return;
+        } catch (error) {
+          if (!cancelled) {
+            setUtopiasError(error instanceof Error ? error.message : "No fue posible cargar la capa UTOPÍAs.");
+          }
+        }
+      }
+    };
+    loadUtopias();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   const filterConfig = useMemo(() => (dataset ? buildFilterConfig(dataset) : []), [dataset]);
   const territorialRecords = useMemo(() => (dataset ? filterTerritorialRecords(dataset.territorialRecords, filters) : []), [dataset, filters]);
   const programmedOfferRecords = useMemo(
@@ -479,6 +529,110 @@ export default function Dashboard() {
   const publicSpaceSummary = useMemo(
     () => dataset?.publicSpaceSummary ?? publicSpaceLayer?.summary ?? emptyPublicSpaceSummary,
     [dataset, publicSpaceLayer]
+  );
+  const utopiasRecords = useMemo(() => utopiasLayer?.utopias ?? [], [utopiasLayer]);
+  const utopiaAmenities = useMemo(() => utopiasLayer?.amenities ?? [], [utopiasLayer]);
+  const utopiaActivities = useMemo(() => utopiasLayer?.activities ?? [], [utopiasLayer]);
+  const utopiasFilterConfig = useMemo(() => {
+    const unique = (values: string[]) => Array.from(new Set(values)).sort((a, b) => a.localeCompare(b, "es"));
+    return [
+      {
+        key: "alcaldias" as const,
+        title: "Alcaldía",
+        options: unique(utopiasRecords.map((record) => record.alcaldia).filter(Boolean) as string[]).map((value) => ({ label: value, value }))
+      },
+      {
+        key: "projectStatuses" as const,
+        title: "Proyecto",
+        options: unique(utopiasRecords.map((record) => record.projectStatus)).map((value) => ({ label: value.replace("_", " "), value }))
+      },
+      {
+        key: "openingStatuses" as const,
+        title: "Apertura",
+        options: unique(utopiasRecords.map((record) => record.openingStatus)).map((value) => ({ label: value.replace("_", " "), value }))
+      },
+      {
+        key: "operationalStatuses" as const,
+        title: "Operación",
+        options: unique(utopiasRecords.map((record) => record.operationalStatus)).map((value) => ({ label: value.replace("_", " "), value }))
+      },
+      {
+        key: "amenities" as const,
+        title: "Amenidad",
+        options: unique(utopiaAmenities.map((record) => record.normalizedAmenity)).map((value) => ({ label: value, value }))
+      },
+      {
+        key: "qualities" as const,
+        title: "Calidad",
+        options: unique(utopiasRecords.map((record) => record.qualityGrade)).map((value) => ({ label: value, value }))
+      },
+      {
+        key: "verificationDates" as const,
+        title: "Verificación",
+        options: unique(utopiasRecords.map((record) => record.lastVerifiedAt).filter(Boolean) as string[]).map((value) => ({ label: value, value }))
+      }
+    ];
+  }, [utopiaAmenities, utopiasRecords]);
+  const filteredUtopias = useMemo(
+    () =>
+      utopiasRecords.filter((record) => {
+        const amenityNames = utopiaAmenities.filter((item) => item.utopiaId === record.utopiaId).map((item) => item.normalizedAmenity);
+        if (filters.alcaldias.length > 0 && !filters.alcaldias.includes(record.alcaldia ?? "")) return false;
+        if (utopiasFilters.alcaldias.length > 0 && !utopiasFilters.alcaldias.includes(record.alcaldia ?? "")) return false;
+        if (utopiasFilters.projectStatuses.length > 0 && !utopiasFilters.projectStatuses.includes(record.projectStatus)) return false;
+        if (utopiasFilters.openingStatuses.length > 0 && !utopiasFilters.openingStatuses.includes(record.openingStatus)) return false;
+        if (utopiasFilters.operationalStatuses.length > 0 && !utopiasFilters.operationalStatuses.includes(record.operationalStatus)) return false;
+        if (utopiasFilters.qualities.length > 0 && !utopiasFilters.qualities.includes(record.qualityGrade)) return false;
+        if (utopiasFilters.verificationDates.length > 0 && !utopiasFilters.verificationDates.includes(record.lastVerifiedAt ?? "")) return false;
+        if (utopiasFilters.amenities.length > 0 && !amenityNames.some((item) => utopiasFilters.amenities.includes(item))) return false;
+        return true;
+      }),
+    [filters.alcaldias, utopiaAmenities, utopiasFilters, utopiasRecords]
+  );
+  const filteredUtopiaAmenities = useMemo(
+    () => utopiaAmenities.filter((item) => filteredUtopias.some((record) => record.utopiaId === item.utopiaId)),
+    [filteredUtopias, utopiaAmenities]
+  );
+  const utopiasByProjectStatus = useMemo(
+    () =>
+      filteredUtopias.reduce<Record<string, number>>((acc, record) => {
+        acc[record.projectStatus] = (acc[record.projectStatus] ?? 0) + 1;
+        return acc;
+      }, {}),
+    [filteredUtopias]
+  );
+  const utopiasByOperationalStatus = useMemo(
+    () =>
+      filteredUtopias.reduce<Record<string, number>>((acc, record) => {
+        acc[record.operationalStatus] = (acc[record.operationalStatus] ?? 0) + 1;
+        return acc;
+      }, {}),
+    [filteredUtopias]
+  );
+  const utopiasByType = useMemo(
+    () =>
+      filteredUtopias.reduce<Record<string, number>>((acc, record) => {
+        acc[record.utopiaType] = (acc[record.utopiaType] ?? 0) + 1;
+        return acc;
+      }, {}),
+    [filteredUtopias]
+  );
+  const utopiasByCoordinateStatus = useMemo(
+    () =>
+      filteredUtopias.reduce<Record<string, number>>((acc, record) => {
+        acc[record.coordinateStatus] = (acc[record.coordinateStatus] ?? 0) + 1;
+        return acc;
+      }, {}),
+    [filteredUtopias]
+  );
+  const utopiaAmenitiesBySite = useMemo(
+    () =>
+      filteredUtopias.map((record) => ({
+        ...record,
+        amenities: filteredUtopiaAmenities.filter((item) => item.utopiaId === record.utopiaId).map((item) => item.normalizedAmenity),
+        activities: utopiaActivities.filter((item) => item.utopiaId === record.utopiaId).map((item) => item.normalizedDiscipline)
+      })),
+    [filteredUtopiaAmenities, filteredUtopias, utopiaActivities]
   );
 
   const overviewKpis = useMemo(() => buildOverviewKpis(territorialRecords), [territorialRecords]);
@@ -583,6 +737,7 @@ export default function Dashboard() {
     if (selectedMapMetric === "activity") return record.activityRate * 100;
     if (selectedMapMetric === "risk") return record.riskScore;
     if (selectedMapMetric === "publicInfrastructure") return record.publicInfrastructureCount;
+    if (selectedMapMetric === "utopias") return record.utopiasCount;
     if (selectedMapMetric === "privateInfrastructure") return record.privateInfrastructureCount;
     if (selectedMapMetric === "totalInfrastructure") return record.totalInfrastructureCount;
     if (selectedMapMetric === "greenAreas") return record.greenAreaCount;
@@ -728,6 +883,22 @@ export default function Dashboard() {
   const selectedMapPublicSpace = useMemo(
     () => (selectedMapArea ? publicSpaceSummaryLookup.get(selectedMapArea.alcaldia) : undefined),
     [publicSpaceSummaryLookup, selectedMapArea]
+  );
+  const selectedMapUtopias = useMemo(
+    () => (selectedMapArea ? filteredUtopias.filter((item) => item.alcaldia === selectedMapArea.alcaldia) : []),
+    [filteredUtopias, selectedMapArea]
+  );
+  const selectedMapUtopiaSummary = useMemo(
+    () => ({
+      operating: selectedMapUtopias.filter((item) => item.operationalStatus === "operando_confirmado").length,
+      inauguratedWithoutOperation: selectedMapUtopias.filter(
+        (item) => item.openingStatus === "inaugurada_confirmada" && item.operationalStatus !== "operando_confirmado"
+      ).length,
+      construction: selectedMapUtopias.filter((item) => item.projectStatus === "construccion" || item.projectStatus === "terminacion").length,
+      planning: selectedMapUtopias.filter((item) => item.projectStatus === "anunciada" || item.projectStatus === "planeacion").length,
+      special: selectedMapUtopias.filter((item) => item.utopiaType === "espacio_publico_elevado" || item.utopiaType === "otro_documentado").length
+    }),
+    [selectedMapUtopias]
   );
   const publicSpaceCategoryDistribution = useMemo(
     () =>
@@ -1544,6 +1715,153 @@ export default function Dashboard() {
               </div>
             </Card>
           </div>
+          <Card className="space-y-5 p-6">
+            <div className="flex flex-wrap items-start justify-between gap-3">
+              <div>
+                <div className="flex items-center gap-2">
+                  <div className="text-base font-semibold text-ink-900">Capa institucional UTOPÍAs</div>
+                  <LayerBadge layer="real" />
+                </div>
+                <div className="mt-1 text-sm leading-6 text-ink-600">
+                  Inventario nominal por sede con separación entre proyecto, inauguración y operación. Los proyectos anunciados o en obra no se suman como infraestructura actual disponible.
+                </div>
+              </div>
+              <div className="rounded-full border border-mist-200 bg-white px-3 py-2 text-xs font-medium text-ink-700">
+                {filteredUtopias.length} sedes / proyectos visibles
+              </div>
+            </div>
+            {utopiasError ? (
+              <div className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+                Error al cargar UTOPÍAs: {utopiasError}
+              </div>
+            ) : null}
+            <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+              {utopiasFilterConfig.map((filterGroup) => (
+                <div key={filterGroup.key}>
+                  <div className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-ink-600">{filterGroup.title}</div>
+                  <MultiSelect
+                    title={filterGroup.title}
+                    options={filterGroup.options}
+                    selected={utopiasFilters[filterGroup.key]}
+                    onChange={(next) => setUtopiasFilters((prev) => ({ ...prev, [filterGroup.key]: next }))}
+                  />
+                </div>
+              ))}
+            </div>
+            <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+              <div className="rounded-2xl border border-mist-200 bg-white px-4 py-4">
+                <div className="text-[11px] font-semibold uppercase tracking-wide text-ink-600">Registros de catálogo</div>
+                <div className="mt-2 text-2xl font-semibold text-ink-900">{formatNumber(filteredUtopias.length)}</div>
+                <div className="mt-2 text-xs text-ink-600">Sedes y proyectos conciliados nominalmente, sin asumir un único universo territorial</div>
+              </div>
+              <div className="rounded-2xl border border-mist-200 bg-white px-4 py-4">
+                <div className="text-[11px] font-semibold uppercase tracking-wide text-ink-600">UTOPÍAs territoriales</div>
+                <div className="mt-2 text-2xl font-semibold text-ink-900">{formatNumber(utopiasByType.territorial ?? 0)}</div>
+                <div className="mt-2 text-xs text-ink-600">Serie territorial estándar para KPIs y lectura comparativa</div>
+              </div>
+              <div className="rounded-2xl border border-mist-200 bg-white px-4 py-4">
+                <div className="text-[11px] font-semibold uppercase tracking-wide text-ink-600">Históricas Iztapalapa</div>
+                <div className="mt-2 text-2xl font-semibold text-ink-900">{formatNumber(utopiasByType.historica_iztapalapa ?? 0)}</div>
+                <div className="mt-2 text-xs text-ink-600">Bloque histórico operativo de Iztapalapa, separado de la nueva generación</div>
+              </div>
+              <div className="rounded-2xl border border-mist-200 bg-white px-4 py-4">
+                <div className="text-[11px] font-semibold uppercase tracking-wide text-ink-600">Nueva generación</div>
+                <div className="mt-2 text-2xl font-semibold text-ink-900">
+                  {formatNumber(filteredUtopias.filter((item) => item.utopiaType !== "historica_iztapalapa").length)}
+                </div>
+                <div className="mt-2 text-xs text-ink-600">Incluye territoriales nuevas, multisitio y casos especiales documentados</div>
+              </div>
+              <div className="rounded-2xl border border-mist-200 bg-white px-4 py-4">
+                <div className="text-[11px] font-semibold uppercase tracking-wide text-ink-600">Especiales no territoriales</div>
+                <div className="mt-2 text-2xl font-semibold text-ink-900">
+                  {formatNumber((utopiasByType.espacio_publico_elevado ?? 0) + (utopiasByType.otro_documentado ?? 0))}
+                </div>
+                <div className="mt-2 text-xs text-ink-600">Se documentan en catálogo y mapa cualitativo, pero fuera del KPI territorial estándar</div>
+              </div>
+              <div className="rounded-2xl border border-mist-200 bg-white px-4 py-4">
+                <div className="text-[11px] font-semibold uppercase tracking-wide text-ink-600">Operando confirmado</div>
+                <div className="mt-2 text-2xl font-semibold text-ink-900">{formatNumber(utopiasByOperationalStatus.operando_confirmado ?? 0)}</div>
+                <div className="mt-2 text-xs text-ink-600">Con evidencia vigente de uso institucional; no equivale a territorial estándar</div>
+              </div>
+              <div className="rounded-2xl border border-mist-200 bg-white px-4 py-4">
+                <div className="text-[11px] font-semibold uppercase tracking-wide text-ink-600">En construcción / terminación</div>
+                <div className="mt-2 text-2xl font-semibold text-ink-900">
+                  {formatNumber((utopiasByProjectStatus.construccion ?? 0) + (utopiasByProjectStatus.terminacion ?? 0))}
+                </div>
+                <div className="mt-2 text-xs text-ink-600">Proyectos con avance físico documentado al viernes 7 de agosto de 2026</div>
+              </div>
+              <div className="rounded-2xl border border-mist-200 bg-white px-4 py-4">
+                <div className="text-[11px] font-semibold uppercase tracking-wide text-ink-600">Amenidades verificadas</div>
+                <div className="mt-2 text-2xl font-semibold text-ink-900">{formatNumber(new Set(filteredUtopiaAmenities.map((item) => item.utopiaId)).size)}</div>
+                <div className="mt-2 text-xs text-ink-600">Sedes con amenidades deportivas explícitas</div>
+              </div>
+              <div className="rounded-2xl border border-mist-200 bg-white px-4 py-4">
+                <div className="text-[11px] font-semibold uppercase tracking-wide text-ink-600">Coordenadas oficiales</div>
+                <div className="mt-2 text-2xl font-semibold text-ink-900">{formatNumber(utopiasByCoordinateStatus.oficial ?? 0)}</div>
+                <div className="mt-2 text-xs text-ink-600">
+                  {formatNumber(utopiasByCoordinateStatus.derivada ?? 0)} derivadas · {formatNumber(utopiasByCoordinateStatus.aproximada ?? 0)} aproximadas · {formatNumber(utopiasByCoordinateStatus.sin_coordenada ?? 0)} sin coordenada
+                </div>
+              </div>
+            </div>
+            <div className="grid gap-4 xl:grid-cols-[0.9fr_1.1fr]">
+              <div className="space-y-3">
+                <NoteBlock
+                  title="Regla metodológica"
+                  body="La capa distingue proyecto, inauguración y operación. Una UTOPÍA inaugurada no se asume operando sin evidencia adicional, un proyecto anunciado no entra al total de infraestructura actual y Tlallipan se conserva como caso especial de espacio público elevado fuera del KPI territorial estándar."
+                />
+                <div className="rounded-2xl border border-mist-200 bg-white px-4 py-4">
+                  <div className="text-sm font-semibold text-ink-900">Amenidades con evidencia oficial</div>
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    {utopiasLayer?.summary.amenityTotals.slice(0, 10).map((item) => (
+                      <span key={item.amenity} className="rounded-full border border-mist-200 bg-mist-100 px-3 py-2 text-xs font-medium text-ink-700">
+                        {item.amenity} · {item.count}
+                      </span>
+                    )) ?? <span className="text-xs text-ink-600">Sin amenidades verificadas en el filtro actual.</span>}
+                  </div>
+                  <div className="mt-3 text-xs text-ink-600">
+                    Las disciplinas solo se publican cuando una fuente institucional las nombra explícitamente. Las amenidades físicas no se convierten automáticamente en oferta deportiva.
+                  </div>
+                </div>
+              </div>
+              <div className="rounded-2xl border border-mist-200 bg-white px-4 py-4">
+                <div className="flex items-center justify-between gap-3">
+                  <div className="text-sm font-semibold text-ink-900">Resumen por sede</div>
+                  <div className="text-xs text-ink-600">Top visible</div>
+                </div>
+                <div className="mt-4 space-y-3">
+                  {utopiaAmenitiesBySite.slice(0, 8).map((record) => (
+                    <div key={record.utopiaId} className="rounded-2xl border border-mist-200 bg-mist-100/50 px-4 py-4">
+                      <div className="flex flex-wrap items-start justify-between gap-3">
+                        <div>
+                          <div className="text-sm font-semibold text-ink-900">{record.canonicalName}</div>
+                          <div className="mt-1 text-xs text-ink-600">{record.alcaldia ?? "Sin alcaldía documentada"}</div>
+                        </div>
+                        <div className="flex flex-wrap gap-2">
+                          <span className="rounded-full bg-mist-100 px-3 py-1 text-[11px] font-semibold text-ink-700">{record.utopiaType.replace(/_/g, " ")}</span>
+                          <span className="rounded-full bg-slate-100 px-3 py-1 text-[11px] font-semibold text-slate-700">{record.projectStatus.replace("_", " ")}</span>
+                          <span className="rounded-full bg-sky-50 px-3 py-1 text-[11px] font-semibold text-sky-700">{record.openingStatus.replace("_", " ")}</span>
+                          <span className="rounded-full bg-emerald-50 px-3 py-1 text-[11px] font-semibold text-emerald-700">{record.operationalStatus.replace("_", " ")}</span>
+                        </div>
+                      </div>
+                      <div className="mt-3 text-xs text-ink-600">
+                        {record.address ?? "Sin dirección pública consolidada"}{record.lastVerifiedAt ? ` · Última verificación: ${record.lastVerifiedAt}` : ""}
+                      </div>
+                      <div className="mt-3 flex flex-wrap gap-2">
+                        {(record.amenities.length > 0 ? record.amenities : ["Sin amenidades verificadas"]).slice(0, 6).map((amenity) => (
+                          <span key={`${record.utopiaId}-${amenity}`} className="rounded-full border border-mist-200 bg-white px-3 py-1 text-[11px] font-medium text-ink-700">
+                            {amenity}
+                          </span>
+                        ))}
+                      </div>
+                      {record.activities.length > 0 ? (
+                        <div className="mt-3 text-xs text-ink-600">Disciplinas documentadas: {record.activities.join(", ")}</div>
+                      ) : null}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </Card>
           <div className="grid gap-4 xl:grid-cols-[1.2fr_0.8fr]">
             <Card className="space-y-5 p-6">
               <div className="flex flex-wrap items-start justify-between gap-3">
@@ -1562,6 +1880,7 @@ export default function Dashboard() {
                     { key: "activity" as const, label: "Actividad" },
                     { key: "risk" as const, label: "Riesgo" },
                     { key: "publicInfrastructure" as const, label: "Infra pública" },
+                    { key: "utopias" as const, label: "UTOPÍAs" },
                     { key: "privateInfrastructure" as const, label: "Infra privada" },
                     { key: "totalInfrastructure" as const, label: "Infra total" },
                     { key: "greenAreas" as const, label: "Áreas verdes" },
@@ -1711,7 +2030,9 @@ export default function Dashboard() {
                         <div className="rounded-2xl border border-mist-200 bg-white px-4 py-4">
                           <div className="text-[11px] font-semibold uppercase tracking-wide text-ink-600">UTOPÍAs</div>
                           <div className="mt-2 text-2xl font-semibold text-ink-900">{formatNumber(utopiasMapSites)}</div>
-                          <div className="mt-2 text-xs text-ink-600">Capa institucional real documentada</div>
+                          <div className="mt-2 text-xs text-ink-600">
+                            {selectedMapUtopiaSummary.operating} operando · {selectedMapUtopiaSummary.construction} en obra · {selectedMapUtopiaSummary.planning} en planeación{selectedMapUtopiaSummary.special > 0 ? ` · ${selectedMapUtopiaSummary.special} especial` : ""}
+                          </div>
                         </div>
                         <div className="rounded-2xl border border-mist-200 bg-white px-4 py-4">
                           <div className="text-[11px] font-semibold uppercase tracking-wide text-ink-600">Espacios PILARES</div>

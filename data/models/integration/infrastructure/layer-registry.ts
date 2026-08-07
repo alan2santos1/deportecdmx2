@@ -31,24 +31,27 @@ export const infrastructureLayerRegistry: InfrastructureLayerDescriptor[] = [
   {
     key: "utopias",
     label: "UTOPÍAs",
-    version: "infra-v1-2026-08-03",
+    version: "infra-v2-2026-08-07",
     enabledByDefault: true,
     status: "activa",
     dataType: "real",
-    qualityGrade: "B",
+    qualityGrade: "A",
     layerKind: "infraestructura_publica",
     coverageLevel: "parcial_cdmx",
-    methodology: "Inventario institucional curado por sede y estatus, sin inferir amenidades ni disciplinas internas.",
+    methodology:
+      "Inventario institucional nominal por sede con separación explícita entre proyecto, inauguración y operación. Solo integra amenidades o disciplinas cuando una evidencia oficial las documenta.",
     provenance: {
       institution: "Investigación institucional Deporte CDMX",
       sourceType: "investigacion_curada",
       localPath: "data/processed/infrastructure/utopias.json",
-      sourceDate: "2026-08-02",
-      asOfDate: "2026-08-03",
-      referencePeriod: "Verificación documental 2026",
-      methodology: "Consolidación curada de sedes defendibles con alias y estatus institucional.",
+      sourceDate: "2026-08-07",
+      asOfDate: "2026-08-07",
+      referencePeriod: "Verificación documental institucional con actualización al 7 de agosto de 2026",
+      methodology:
+        "Consolidación curada por sede con evidencia oficial, aliases, historial y exclusión de proyectos anunciados de los totales de infraestructura actual.",
       coverage: "Bloque institucional parcial por sede",
-      provenanceNote: "Capa real institucional por sede documentada, todavía no respaldada por un dataset abierto único canónico."
+      provenanceNote:
+        "Capa real institucional por sede documentada. Los proyectos en planeación o construcción se conservan en la capa UTOPÍAs, pero no ingresan a los totales de infraestructura disponible hasta tener evidencia de apertura u operación."
     }
   },
   {

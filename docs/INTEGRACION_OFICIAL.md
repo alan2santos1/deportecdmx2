@@ -1,6 +1,6 @@
 # Integración oficial de infraestructura
 
-## Estado al 2026-08-06
+## Estado al 2026-08-07
 
 El Dashboard Institucional integra hoy tres grupos de capas:
 
@@ -37,6 +37,18 @@ Desde el Sprint D1.3 se agrega además una capa separada de:
   - Estatus: `conectado, no integrado`
   - Regla crítica:
     - no entra al dashboard nominal mientras el recurso descargable no exponga atributos defendibles por registro
+- UTOPÍAs
+  - Catálogo base manual: `data/raw/manual/utopias-base-catalog.json`
+  - Evidencia oficial manual: `data/raw/manual/utopias-evidencias-oficiales.json`
+  - Builder dedicado: `data/models/integration/build-utopias-layer.ts`
+  - Dataset procesado: `data/processed/infrastructure/utopias.json`
+  - Dataset público UI: `public/data/utopias.json`
+  - Estatus: `real`
+  - Reglas críticas:
+    - separar `projectStatus`, `openingStatus` y `operationalStatus`
+    - no contar proyectos anunciados o en construcción como infraestructura actual disponible
+    - no inferir amenidades ni disciplinas sin evidencia oficial explícita
+    - conservar aliases, historial y evidencia por sede
 
 ## Oferta programada agregada conectada
 
@@ -104,6 +116,7 @@ Reglas vigentes:
 ## Salidas generadas
 
 - `data/processed/infrastructure/official-infrastructure.json`
+- `data/processed/infrastructure/utopias.json`
 - `data/processed/operacion/operacion-asistencia.json`
 - `public/data/dashboard.json`
 
@@ -114,6 +127,7 @@ Reglas vigentes:
 - PILARES y Deportivos Públicos entran hoy como integración nominal real.
 - La geometría oficial ya entra al mapa institucional sin depender de APIs externas.
 - DENUE ya entra al processed, pero debe seguir marcado como `preparado` hasta validar un extracto con SCIAN verificable.
+- UTOPÍAs ya cuentan con una capa nominal versionada por sede; el dashboard territorial solo suma como infraestructura actual las sedes con apertura u operación físicamente verificable al viernes 7 de agosto de 2026.
 - La oferta programada se deriva de mallas operativas reales, pero solo se publica en forma agregada dentro del dashboard institucional.
 - El dashboard no expone nombres de personal ni otras columnas nominales de Operación para esta capa.
 - La capa de áreas verdes no se suma a totales administrativos de infraestructura deportiva.

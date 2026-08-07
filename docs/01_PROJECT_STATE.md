@@ -2,7 +2,7 @@
 
 ## Estado del documento
 - Tipo: documento vivo del estado actual del proyecto
-- Fecha de actualización: 2026-08-06
+- Fecha de actualización: 2026-08-07
 - Rama actual auditada: `sprint/denue-utopias`
 
 ## Documentos fuente y jerarquía de autoridad
@@ -135,6 +135,7 @@ Responsabilidades actuales:
 - `public/data/dashboard.json`
 - `data/processed/infrastructure/official-infrastructure.json`
 - `data/processed/infrastructure/public-space.json`
+- `data/processed/infrastructure/utopias.json`
 - `data/processed/canchas/canchas-operativas.json`
 - `data/processed/operacion/operacion-asistencia.json` como fuente curada para derivar oferta programada agregada sin exponer nominales en el dashboard
 
@@ -152,6 +153,8 @@ Responsabilidades actuales:
 - `data/models/integration/build-public-space-layer.ts`
   - integra áreas verdes oficiales como capa separada
   - mantiene espacio público oficial como fuente conectada, pero no publicada nominalmente mientras el recurso descargable no exponga atributos suficientes
+- `data/models/integration/build-utopias-layer.ts`
+  - integra inventario nominal UTOPÍAs con evidencia, amenidades y separación entre proyecto, inauguración y operación
 - `data/models/integration/build-canchas-operativas.ts`
   - integra el Excel de canchas
   - separa estado administrativo, documental, de obra y de apertura
@@ -189,6 +192,7 @@ npm run build:deporte
 - Espacio público: `data/raw/external/public_space_cdmx.zip`
 - DENUE: `data/raw/external/denue_cdmx.geojson`
 - UTOPÍAs: `data/processed/infrastructure/utopias.json`
+- Evidencia oficial manual de UTOPÍAs: `data/raw/manual/utopias-evidencias-oficiales.json`
 - Canchas: `docs/fuentes-operativas/13-03-2026-Proyecto_500_canchas_PILARES_ASIGNADO 315 mallas arquitecto.xlsx`
 - Evidencia oficial manual de Canchas: `data/raw/manual/canchas-evidencias-oficiales.json`
 - Operación:
@@ -197,11 +201,11 @@ npm run build:deporte
   - `docs/fuentes-operativas/MALLA-HORARIA-DPP-PPP-JUL2026 SPPA.xlsx`
 
 ## Cifras actuales del Dashboard
-Del corte auditado en `public/data/dashboard.json` del 2026-08-06:
+Del corte auditado en `public/data/dashboard.json` del 2026-08-07:
 
 - `territorialRecords`: 1120
 - `programmedOfferRecords`: 24636
-- `infrastructureDetails`: 881
+- `infrastructureDetails`: 872
 - `sportsRecords`: 0
 - `healthProfiles`: 70
 - `mapAreas`: 112
@@ -209,6 +213,18 @@ Del corte auditado en `public/data/dashboard.json` del 2026-08-06:
 - `publicSpaceSummary.greenAreaRecordCount`: 11739
 - `publicSpaceSummary.publicSpaceRecordCount`: 0
 - `publicSpaceSummary.greenAreaSurfaceSqMTotal`: 67713932.74
+- Corte vigente de UTOPÍAs en `public/data/utopias.json`:
+  - `totalCatalogRecords`: 33
+  - `territorialCount`: 17
+  - `historicalIztapalapaCount`: 14
+  - `newGenerationCount`: 19
+  - `specialNonTerritorialCount`: 1
+  - `operatingConfirmed`: 19
+  - `inauguratedConfirmed`: 5
+  - `underConstruction`: 5
+  - `announcedOrPlanning`: 9
+  - `withVerifiedAmenities`: 4
+  - `officialCoordinates`: 0
 - Corte vigente de Canchas tras conciliación D1.1:
   - `openingStatus.inaugurada_confirmada`: 0
   - `openingStatus.probable`: 0

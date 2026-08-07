@@ -7,6 +7,7 @@ export type TerritorialMetricKey =
   | "activity"
   | "risk"
   | "publicInfrastructure"
+  | "utopias"
   | "privateInfrastructure"
   | "totalInfrastructure"
   | "greenAreas"
@@ -35,6 +36,7 @@ const metricLabels: Record<TerritorialMetricKey, string> = {
   activity: "Actividad",
   risk: "Riesgo",
   publicInfrastructure: "Infraestructura pública",
+  utopias: "UTOPÍAs territoriales",
   privateInfrastructure: "Infraestructura privada",
   totalInfrastructure: "Infraestructura total",
   greenAreas: "Áreas verdes",
@@ -48,6 +50,7 @@ const metricDirection: Record<TerritorialMetricKey, "higher_is_better" | "higher
   activity: "higher_is_better",
   risk: "higher_is_worse",
   publicInfrastructure: "higher_is_better",
+  utopias: "higher_is_better",
   privateInfrastructure: "higher_is_better",
   totalInfrastructure: "higher_is_better",
   greenAreas: "higher_is_better",
@@ -61,6 +64,7 @@ const getMetricValue = (area: MapAreaRecord, metric: TerritorialMetricKey) => {
   if (metric === "activity") return area.activityRate * 100;
   if (metric === "risk") return area.riskScore;
   if (metric === "publicInfrastructure") return area.publicInfrastructureCount;
+  if (metric === "utopias") return area.utopiasCount;
   if (metric === "privateInfrastructure") return area.privateInfrastructureCount;
   if (metric === "totalInfrastructure") return area.totalInfrastructureCount;
   if (metric === "greenAreas") return area.greenAreaCount;

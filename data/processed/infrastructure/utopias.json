@@ -1,30 +1,3035 @@
-[
-  { "id": "utopia-atzintli", "nombre": "Utopía Atzintli", "alcaldia": "Iztapalapa", "lat": null, "lon": null, "status": "operando", "fuente": "docs/investigacion_actual.md", "nota": "Parte del bloque defendible de 12 UTOPÍAs operando en Iztapalapa descrito en la investigación actual." },
-  { "id": "utopia-cuauhtlicalli-aculco", "nombre": "Utopía Cuauhtlicalli Aculco", "alcaldia": "Iztapalapa", "lat": null, "lon": null, "status": "operando", "fuente": "docs/investigacion_actual.md", "nota": "Parte del bloque defendible de 12 UTOPÍAs operando en Iztapalapa descrito en la investigación actual." },
-  { "id": "utopia-cascada", "nombre": "Utopía Cascada", "alcaldia": "Iztapalapa", "lat": null, "lon": null, "status": "operando", "fuente": "docs/investigacion_actual.md", "nota": "Parte del bloque defendible de 12 UTOPÍAs operando en Iztapalapa descrito en la investigación actual." },
-  { "id": "utopia-libertad", "nombre": "Utopía Libertad", "alcaldia": "Iztapalapa", "lat": null, "lon": null, "status": "operando", "fuente": "docs/investigacion_actual.md", "nota": "Parte del bloque defendible de 12 UTOPÍAs operando en Iztapalapa descrito en la investigación actual." },
-  { "id": "utopia-meyehualco", "nombre": "Utopía Meyehualco", "alcaldia": "Iztapalapa", "lat": null, "lon": null, "status": "operando", "fuente": "docs/investigacion_actual.md", "nota": "Parte del bloque defendible de 12 UTOPÍAs operando en Iztapalapa descrito en la investigación actual." },
-  { "id": "utopia-olini", "nombre": "Utopía Olini", "alcaldia": "Iztapalapa", "lat": null, "lon": null, "status": "operando", "fuente": "docs/investigacion_actual.md", "nota": "Parte del bloque defendible de 12 UTOPÍAs operando en Iztapalapa descrito en la investigación actual." },
-  { "id": "utopia-papalotl", "nombre": "Utopía Papalotl", "alcaldia": "Iztapalapa", "lat": null, "lon": null, "status": "operando", "fuente": "docs/investigacion_actual.md", "nota": "Parte del bloque defendible de 12 UTOPÍAs operando en Iztapalapa descrito en la investigación actual." },
-  { "id": "utopia-quetzalcoatl", "nombre": "Utopía Quetzalcóatl", "alcaldia": "Iztapalapa", "lat": null, "lon": null, "status": "operando", "fuente": "docs/investigacion_actual.md", "nota": "Parte del bloque defendible de 12 UTOPÍAs operando en Iztapalapa descrito en la investigación actual." },
-  { "id": "utopia-tecoloxtitlan", "nombre": "Utopía Tecóloxtitlan", "alcaldia": "Iztapalapa", "lat": null, "lon": null, "status": "operando", "fuente": "docs/investigacion_actual.md", "nota": "Parte del bloque defendible de 12 UTOPÍAs operando en Iztapalapa descrito en la investigación actual." },
-  { "id": "utopia-teotongo", "nombre": "Utopía Teotongo", "alcaldia": "Iztapalapa", "lat": null, "lon": null, "status": "operando", "fuente": "docs/investigacion_actual.md", "nota": "Parte del bloque defendible de 12 UTOPÍAs operando en Iztapalapa descrito en la investigación actual." },
-  { "id": "utopia-tezontli", "nombre": "Utopía Tezontli", "alcaldia": "Iztapalapa", "lat": null, "lon": null, "status": "operando", "fuente": "docs/investigacion_actual.md", "nota": "Parte del bloque defendible de 12 UTOPÍAs operando en Iztapalapa descrito en la investigación actual." },
-  { "id": "barco-utopia", "nombre": "Barco Utopía", "alcaldia": "Iztapalapa", "lat": null, "lon": null, "status": "operando", "fuente": "docs/investigacion_actual.md", "nota": "Parte del bloque defendible de 12 UTOPÍAs operando en Iztapalapa descrito en la investigación actual." },
-  { "id": "utopia-parque-japon", "nombre": "Utopía Parque Japón", "alcaldia": "Álvaro Obregón", "lat": null, "lon": null, "status": "anunciada", "fuente": "docs/investigacion_actual.md", "nota": "Territorializada por coincidencia nominal con 'Parque Ecológico Japón' en el inventario local de deportivos públicos de Álvaro Obregón." },
-  { "id": "utopia-deportivo-ceylan", "nombre": "Utopía Deportivo Ceylán", "alcaldia": "Azcapotzalco", "lat": null, "lon": null, "status": "anunciada", "fuente": "docs/investigacion_actual.md", "nota": "Territorializada por coincidencia nominal con 'Parque Deportivo Ceylán' y con la sede PILARES Ceylán en Azcapotzalco dentro de las fuentes locales del proyecto." },
-  { "id": "utopia-centro-scop", "nombre": "Utopía Centro SCOP", "alcaldia": null, "lat": null, "lon": null, "status": "anunciada", "fuente": "docs/investigacion_actual.md", "nota": "Sin alcaldía documentada de forma suficiente en las fuentes locales del proyecto. Se conserva sin territorializar." },
-  { "id": "utopia-el-parian", "nombre": "Utopía El Parián", "alcaldia": null, "lat": null, "lon": null, "status": "anunciada", "fuente": "docs/investigacion_actual.md", "nota": "Sin alcaldía documentada de forma suficiente en las fuentes locales del proyecto. Se conserva sin territorializar." },
-  { "id": "utopia-modulo-deportivo-cuajimalpa", "nombre": "Utopía Módulo Deportivo Cuajimalpa", "alcaldia": "Cuajimalpa", "lat": null, "lon": null, "status": "anunciada", "fuente": "docs/investigacion_actual.md", "nota": "La alcaldía está explícita en el nombre del proyecto." },
-  { "id": "utopia-tepito-cuauhtemoc", "nombre": "Utopía Tepito / Utopía Cuauhtémoc", "alcaldia": "Cuauhtémoc", "lat": null, "lon": null, "status": "anunciada", "fuente": "docs/investigacion_actual.md", "nota": "La alcaldía es defendible por el alias territorial 'Utopía Cuauhtémoc' y la referencia explícita a Tepito." },
-  { "id": "utopia-deportivo-hermanos-galeana", "nombre": "Utopía Deportivo Hermanos Galeana", "alcaldia": "Gustavo A. Madero", "lat": null, "lon": null, "status": "anunciada", "fuente": "docs/investigacion_actual.md", "nota": "Territorializada por coincidencia nominal con el Deportivo Hermanos Galeana en la capa local de deportivos públicos y en registros operativos de canchas." },
-  { "id": "utopia-cetram-acatitla", "nombre": "Utopía CETRAM Acatitla", "alcaldia": "Iztapalapa", "lat": null, "lon": null, "status": "anunciada", "fuente": "docs/investigacion_actual.md", "nota": "Territorializada por referencia textual a Acatitla y su coincidencia con registros locales de Santa Martha Acatitla en Iztapalapa." },
-  { "id": "utopia-ninas-ninos-mixhuca", "nombre": "Utopía de las Niñas y los Niños (Magdalena Mixhuca)", "alcaldia": "Iztacalco", "lat": null, "lon": null, "status": "anunciada", "fuente": "docs/investigacion_actual.md", "nota": "Territorializada por referencia explícita a Magdalena Mixhuca y su coincidencia con registros locales en Iztacalco." },
-  { "id": "utopia-deportivo-oyamel", "nombre": "Utopía Deportivo Oyamel", "alcaldia": null, "lat": null, "lon": null, "status": "anunciada", "fuente": "docs/investigacion_actual.md", "nota": "La referencia 'Oyamel' aparece en más de una alcaldía dentro de fuentes locales, por lo que no se territorializa sin evidencia adicional." },
-  { "id": "utopia-un-hogar-para-nosotros", "nombre": "Utopía Un Hogar Para Nosotros", "alcaldia": null, "lat": null, "lon": null, "status": "anunciada", "fuente": "docs/investigacion_actual.md", "nota": "Sin alcaldía documentada de forma suficiente en las fuentes locales del proyecto. Se conserva sin territorializar." },
-  { "id": "utopia-deportivo-tecomitl", "nombre": "Utopía Deportivo Tecómitl", "alcaldia": "Milpa Alta", "lat": null, "lon": null, "status": "anunciada", "fuente": "docs/investigacion_actual.md", "nota": "Territorializada por coincidencia con registros operativos locales del módulo de canchas que ubican UTOPIA TECOMITL en Milpa Alta." },
-  { "id": "utopia-deportivo-el-triangulo", "nombre": "Utopía Deportivo El Triángulo", "alcaldia": "Tláhuac", "lat": null, "lon": null, "status": "anunciada", "fuente": "docs/investigacion_actual.md", "nota": "Territorializada por registros operativos locales del módulo de canchas con el alias 'CETRAM Tláhuac / Utopía El Triángulo'." },
-  { "id": "utopia-topilejo-maiz", "nombre": "Utopía Topilejo / Utopía del Maíz", "alcaldia": "Tlalpan", "lat": null, "lon": null, "status": "anunciada", "fuente": "docs/investigacion_actual.md", "nota": "Territorializada por coincidencia textual con registros locales de UTOPIA TOPILEJO y con la sede PILARES Topilejo en Tlalpan." },
-  { "id": "utopia-deportivo-eduardo-molina", "nombre": "Utopía Deportivo Eduardo Molina", "alcaldia": "Venustiano Carranza", "lat": null, "lon": null, "status": "anunciada", "fuente": "docs/investigacion_actual.md", "nota": "Territorializada por coincidencia con registros operativos locales del módulo de canchas para UTOPIA EDUARDO MOLINA en Venustiano Carranza." },
-  { "id": "utopia-deportivo-xochimilco", "nombre": "Utopía Deportivo Xochimilco", "alcaldia": "Xochimilco", "lat": null, "lon": null, "status": "anunciada", "fuente": "docs/investigacion_actual.md", "nota": "La alcaldía está explícita en el nombre del proyecto." }
-]
+{
+  "meta": {
+    "generatedAt": "2026-08-07T03:45:08.274Z",
+    "version": "utopias-v2-2026-08-07",
+    "sourceDate": "2026-08-07",
+    "methodology": "Conciliación nominal por sede a partir de evidencia oficial institucional. Se separan proyecto, inauguración y operación; las amenidades se registran solo cuando una fuente oficial las documenta explícitamente.",
+    "note": "La capa distingue UTOPÍAs operando, inauguradas, en construcción y solo anunciadas. No se infieren disciplinas desde amenidades ni se cuentan proyectos anunciados como infraestructura actual disponible."
+  },
+  "summary": {
+    "totalCatalogRecords": 33,
+    "territorialCount": 17,
+    "historicalIztapalapaCount": 14,
+    "newGenerationCount": 19,
+    "specialNonTerritorialCount": 1,
+    "multisiteProjectCount": 1,
+    "inauguratedConfirmed": 5,
+    "operatingConfirmed": 19,
+    "underConstruction": 5,
+    "announcedOrPlanning": 9,
+    "withVerifiedAmenities": 4,
+    "officialCoordinates": 0,
+    "derivedCoordinates": 0,
+    "approximateCoordinates": 0,
+    "withoutCoordinates": 33,
+    "withDocumentedSurface": 12,
+    "byAlcaldia": [
+      {
+        "alcaldia": "Iztapalapa",
+        "total": 15
+      },
+      {
+        "alcaldia": "Azcapotzalco",
+        "total": 2
+      },
+      {
+        "alcaldia": "Cuauhtémoc",
+        "total": 2
+      },
+      {
+        "alcaldia": "Iztacalco",
+        "total": 2
+      },
+      {
+        "alcaldia": "Álvaro Obregón",
+        "total": 1
+      },
+      {
+        "alcaldia": "Benito Juárez",
+        "total": 1
+      },
+      {
+        "alcaldia": "Coyoacán",
+        "total": 1
+      },
+      {
+        "alcaldia": "Cuajimalpa",
+        "total": 1
+      },
+      {
+        "alcaldia": "Gustavo A. Madero",
+        "total": 1
+      },
+      {
+        "alcaldia": "Magdalena Contreras",
+        "total": 1
+      },
+      {
+        "alcaldia": "Miguel Hidalgo",
+        "total": 1
+      },
+      {
+        "alcaldia": "Milpa Alta",
+        "total": 1
+      },
+      {
+        "alcaldia": "Tláhuac",
+        "total": 1
+      },
+      {
+        "alcaldia": "Tlalpan",
+        "total": 1
+      },
+      {
+        "alcaldia": "Venustiano Carranza",
+        "total": 1
+      },
+      {
+        "alcaldia": "Xochimilco",
+        "total": 1
+      }
+    ],
+    "amenityTotals": [
+      {
+        "amenity": "alberca semiolímpica",
+        "count": 3,
+        "category": "acuatica"
+      },
+      {
+        "amenity": "squash",
+        "count": 3,
+        "category": "raqueta"
+      },
+      {
+        "amenity": "cancha de fútbol",
+        "count": 2,
+        "category": "cancha"
+      },
+      {
+        "amenity": "cancha de pádel",
+        "count": 2,
+        "category": "raqueta"
+      },
+      {
+        "amenity": "cancha de voleibol",
+        "count": 2,
+        "category": "cancha"
+      },
+      {
+        "amenity": "pista de tartán",
+        "count": 2,
+        "category": "movilidad"
+      },
+      {
+        "amenity": "pump track",
+        "count": 2,
+        "category": "movilidad"
+      },
+      {
+        "amenity": "alberca olímpica",
+        "count": 1,
+        "category": "acuatica"
+      },
+      {
+        "amenity": "áreas de cuidados",
+        "count": 1,
+        "category": "cuidados"
+      },
+      {
+        "amenity": "box",
+        "count": 1,
+        "category": "combate"
+      },
+      {
+        "amenity": "cancha de básquetbol",
+        "count": 1,
+        "category": "cancha"
+      },
+      {
+        "amenity": "cancha de tenis",
+        "count": 1,
+        "category": "raqueta"
+      },
+      {
+        "amenity": "cancha multiusos",
+        "count": 1,
+        "category": "cancha"
+      },
+      {
+        "amenity": "gimnasio",
+        "count": 1,
+        "category": "gimnasio"
+      },
+      {
+        "amenity": "jaulas de bateo",
+        "count": 1,
+        "category": "otras"
+      },
+      {
+        "amenity": "muro de escalada",
+        "count": 1,
+        "category": "otras"
+      },
+      {
+        "amenity": "petanca",
+        "count": 1,
+        "category": "otras"
+      },
+      {
+        "amenity": "pista de patinaje",
+        "count": 1,
+        "category": "movilidad"
+      },
+      {
+        "amenity": "skatepark",
+        "count": 1,
+        "category": "movilidad"
+      }
+    ]
+  },
+  "utopias": [
+    {
+      "utopiaId": "utopia-parque-japon",
+      "canonicalName": "UTOPÍA Parque Japón",
+      "sourceName": "Utopía Parque Japón",
+      "aliases": [
+        "Utopía Parque Japón"
+      ],
+      "alcaldia": "Álvaro Obregón",
+      "address": "Parque Japón, Alcaldía Álvaro Obregón, Ciudad de México",
+      "coordinates": null,
+      "coordinateStatus": "sin_coordenada",
+      "utopiaType": "territorial",
+      "surfaceM2": null,
+      "operator": "Gobierno de la Ciudad de México",
+      "projectStatus": "anunciada",
+      "openingStatus": "no_inaugurada",
+      "operationalStatus": "desconocido",
+      "openingDate": null,
+      "lastVerifiedAt": "2024-12-18",
+      "sourceDate": "2024-12-18",
+      "sourceInstitution": "Jefatura de Gobierno CDMX",
+      "evidenceIds": [
+        "ev-jefatura-2024-12-18-parque-japon"
+      ],
+      "qualityGrade": "B",
+      "coverageLevel": "parcial",
+      "verificationStatus": "fuente_limitada",
+      "countAsRealInfrastructure": false,
+      "originalSourceFields": {
+        "legacyName": "Utopía Parque Japón",
+        "legacyStatus": "anunciada"
+      },
+      "changeHistory": [
+        {
+          "evidenceId": "ev-jefatura-2024-12-18-parque-japon",
+          "effectiveDate": "2024-12-18",
+          "publicationDate": "2024-12-18",
+          "title": "Presentación de las Utopías 2025-2026",
+          "projectStatus": "anunciada",
+          "openingStatus": "no_inaugurada",
+          "operationalStatus": "desconocido",
+          "notes": "La sede aparece en la lista oficial inicial por alcaldía."
+        }
+      ]
+    },
+    {
+      "utopiaId": "utopia-azcapotzalco",
+      "canonicalName": "UTOPÍA Azcapotzalco",
+      "sourceName": "Utopía Deportivo Ceylán",
+      "aliases": [
+        "Utopía Deportivo Ceylán",
+        "Utopía Ceylán",
+        "UTOPÍA Azcapotzalco"
+      ],
+      "alcaldia": "Azcapotzalco",
+      "address": "Deportivo Ceylán, colonia Euzkadi, Alcaldía Azcapotzalco, Ciudad de México",
+      "coordinates": null,
+      "coordinateStatus": "sin_coordenada",
+      "utopiaType": "territorial",
+      "surfaceM2": 30000,
+      "operator": "Gobierno de la Ciudad de México",
+      "projectStatus": "terminada",
+      "openingStatus": "inaugurada_confirmada",
+      "operationalStatus": "operando_confirmado",
+      "openingDate": "2026-04-30",
+      "lastVerifiedAt": "2026-04-30",
+      "sourceDate": "2026-04-30",
+      "sourceInstitution": "SOBSE CDMX",
+      "evidenceIds": [
+        "ev-sobse-2026-04-30-azcapotzalco"
+      ],
+      "qualityGrade": "B",
+      "coverageLevel": "parcial",
+      "verificationStatus": "verificado",
+      "countAsRealInfrastructure": true,
+      "originalSourceFields": {
+        "legacyName": "Utopía Deportivo Ceylán",
+        "legacyStatus": "anunciada"
+      },
+      "changeHistory": [
+        {
+          "evidenceId": "ev-sobse-2026-04-30-azcapotzalco",
+          "effectiveDate": "2026-04-30",
+          "publicationDate": "2026-04-30",
+          "title": "Inaugura Clara Brugada la primera Utopía de Azcapotzalco",
+          "projectStatus": "terminada",
+          "openingStatus": "inaugurada_confirmada",
+          "operationalStatus": "operando_confirmado",
+          "notes": "Boletín oficial de inauguración con mención de 46 disciplinas y más de 50 espacios."
+        }
+      ]
+    },
+    {
+      "utopiaId": "utopia-xochinahuac",
+      "canonicalName": "UTOPÍA Xochináhuac",
+      "sourceName": "UTOPÍA Xochináhuac",
+      "aliases": [
+        "UTOPÍA Xochináhuac",
+        "Utopía Deportivo Xochináhuac"
+      ],
+      "alcaldia": "Azcapotzalco",
+      "address": "Deportivo Xochináhuac, Alcaldía Azcapotzalco, Ciudad de México",
+      "coordinates": null,
+      "coordinateStatus": "sin_coordenada",
+      "utopiaType": "territorial",
+      "surfaceM2": null,
+      "operator": "Gobierno de la Ciudad de México",
+      "projectStatus": "anunciada",
+      "openingStatus": "no_inaugurada",
+      "operationalStatus": "desconocido",
+      "openingDate": null,
+      "lastVerifiedAt": null,
+      "sourceDate": null,
+      "sourceInstitution": "Jefatura de Gobierno CDMX",
+      "evidenceIds": [
+        "ev-jefatura-xochinahuac-anuncio"
+      ],
+      "qualityGrade": "B",
+      "coverageLevel": "parcial",
+      "verificationStatus": "fuente_limitada",
+      "countAsRealInfrastructure": false,
+      "originalSourceFields": {
+        "legacyName": null,
+        "legacyStatus": null
+      },
+      "changeHistory": [
+        {
+          "evidenceId": "ev-jefatura-xochinahuac-anuncio",
+          "effectiveDate": null,
+          "publicationDate": null,
+          "title": "Entrega de obras y acciones Gobierno Casa por Casa en Azcapotzalco",
+          "projectStatus": "anunciada",
+          "openingStatus": "no_inaugurada",
+          "operationalStatus": "desconocido",
+          "notes": "La jefa de Gobierno anuncia que se iniciará la otra Utopía de Azcapotzalco en el Deportivo Xochináhuac."
+        }
+      ]
+    },
+    {
+      "utopiaId": "utopia-centro-scop",
+      "canonicalName": "UTOPÍA Centro SCOP",
+      "sourceName": "Utopía Centro SCOP",
+      "aliases": [
+        "Utopía Centro SCOP"
+      ],
+      "alcaldia": "Benito Juárez",
+      "address": "Centro SCOP, colonia Narvarte, Alcaldía Benito Juárez, Ciudad de México",
+      "coordinates": null,
+      "coordinateStatus": "sin_coordenada",
+      "utopiaType": "territorial",
+      "surfaceM2": 25000,
+      "operator": "Gobierno de la Ciudad de México",
+      "projectStatus": "planeacion",
+      "openingStatus": "no_inaugurada",
+      "operationalStatus": "desconocido",
+      "openingDate": null,
+      "lastVerifiedAt": "2025-06-24",
+      "sourceDate": "2025-06-24",
+      "sourceInstitution": "Jefatura de Gobierno CDMX",
+      "evidenceIds": [
+        "ev-jefatura-2024-12-18-centro-scop",
+        "ev-jefatura-2025-06-24-centro-scop-planeacion"
+      ],
+      "qualityGrade": "B",
+      "coverageLevel": "parcial",
+      "verificationStatus": "fuente_limitada",
+      "countAsRealInfrastructure": false,
+      "originalSourceFields": {
+        "legacyName": "Utopía Centro SCOP",
+        "legacyStatus": "anunciada"
+      },
+      "changeHistory": [
+        {
+          "evidenceId": "ev-jefatura-2024-12-18-centro-scop",
+          "effectiveDate": "2024-12-18",
+          "publicationDate": "2024-12-18",
+          "title": "Presentación de las Utopías 2025-2026",
+          "projectStatus": "anunciada",
+          "openingStatus": "no_inaugurada",
+          "operationalStatus": "desconocido",
+          "notes": "Se anuncia para el Centro SCOP en Narvarte."
+        },
+        {
+          "evidenceId": "ev-jefatura-2025-06-24-centro-scop-planeacion",
+          "effectiveDate": "2025-06-24",
+          "publicationDate": "2025-06-24",
+          "title": "Conferencia de prensa sobre Utopías",
+          "projectStatus": "planeacion",
+          "openingStatus": null,
+          "operationalStatus": null,
+          "notes": "Se informa prolongación del proyecto por coordinación federal y restauración de murales."
+        }
+      ]
+    },
+    {
+      "utopiaId": "utopia-el-parian",
+      "canonicalName": "UTOPÍA El Parián",
+      "sourceName": "Utopía El Parián",
+      "aliases": [
+        "Utopía El Parián",
+        "El Parián"
+      ],
+      "alcaldia": "Coyoacán",
+      "address": "Av. Miguel Hidalgo 128, Barrio San Lucas, Alcaldía Coyoacán, Ciudad de México",
+      "coordinates": null,
+      "coordinateStatus": "sin_coordenada",
+      "utopiaType": "territorial",
+      "surfaceM2": 9156,
+      "operator": "Gobierno de la Ciudad de México",
+      "projectStatus": "planeacion",
+      "openingStatus": "no_inaugurada",
+      "operationalStatus": "desconocido",
+      "openingDate": null,
+      "lastVerifiedAt": "2025-06-24",
+      "sourceDate": "2025-06-24",
+      "sourceInstitution": "Jefatura de Gobierno CDMX",
+      "evidenceIds": [
+        "ev-jefatura-2024-12-18-parian",
+        "ev-jefatura-2025-06-24-parian-planeacion"
+      ],
+      "qualityGrade": "B",
+      "coverageLevel": "parcial",
+      "verificationStatus": "fuente_limitada",
+      "countAsRealInfrastructure": false,
+      "originalSourceFields": {
+        "legacyName": "Utopía El Parián",
+        "legacyStatus": "anunciada"
+      },
+      "changeHistory": [
+        {
+          "evidenceId": "ev-jefatura-2024-12-18-parian",
+          "effectiveDate": "2024-12-18",
+          "publicationDate": "2024-12-18",
+          "title": "Presentación de las Utopías 2025-2026",
+          "projectStatus": "anunciada",
+          "openingStatus": "no_inaugurada",
+          "operationalStatus": "desconocido",
+          "notes": "Se anuncia El Parián para Coyoacán, barrio San Lucas."
+        },
+        {
+          "evidenceId": "ev-jefatura-2025-06-24-parian-planeacion",
+          "effectiveDate": "2025-06-24",
+          "publicationDate": "2025-06-24",
+          "title": "Conferencia de prensa sobre Utopías",
+          "projectStatus": "planeacion",
+          "openingStatus": null,
+          "operationalStatus": null,
+          "notes": "Se describe como proyecto por iniciar en próximas semanas y con vocación turística."
+        }
+      ]
+    },
+    {
+      "utopiaId": "utopia-modulo-deportivo-cuajimalpa",
+      "canonicalName": "UTOPÍA Módulo Deportivo Cuajimalpa",
+      "sourceName": "Utopía Módulo Deportivo Cuajimalpa",
+      "aliases": [
+        "Utopía Módulo Deportivo Cuajimalpa"
+      ],
+      "alcaldia": "Cuajimalpa",
+      "address": "Módulo Deportivo Cuajimalpa / Deportivo Morelos, Alcaldía Cuajimalpa, Ciudad de México",
+      "coordinates": null,
+      "coordinateStatus": "sin_coordenada",
+      "utopiaType": "proyecto_multisitio",
+      "surfaceM2": 5000,
+      "operator": "Gobierno de la Ciudad de México",
+      "projectStatus": "anunciada",
+      "openingStatus": "no_inaugurada",
+      "operationalStatus": "desconocido",
+      "openingDate": null,
+      "lastVerifiedAt": "2024-12-18",
+      "sourceDate": "2024-12-18",
+      "sourceInstitution": "Jefatura de Gobierno CDMX",
+      "evidenceIds": [
+        "ev-jefatura-2024-12-18-cuajimalpa"
+      ],
+      "qualityGrade": "B",
+      "coverageLevel": "parcial",
+      "verificationStatus": "fuente_limitada",
+      "countAsRealInfrastructure": false,
+      "originalSourceFields": {
+        "legacyName": "Utopía Módulo Deportivo Cuajimalpa",
+        "legacyStatus": "anunciada"
+      },
+      "changeHistory": [
+        {
+          "evidenceId": "ev-jefatura-2024-12-18-cuajimalpa",
+          "effectiveDate": "2024-12-18",
+          "publicationDate": "2024-12-18",
+          "title": "Presentación de las Utopías 2025-2026",
+          "projectStatus": "anunciada",
+          "openingStatus": "no_inaugurada",
+          "operationalStatus": "desconocido",
+          "notes": "Se describe como Utopía modular en dos inmuebles de Deportivo Morelos."
+        }
+      ]
+    },
+    {
+      "utopiaId": "utopia-tepito-cuauhtemoc",
+      "canonicalName": "UTOPÍA Tepito",
+      "sourceName": "Utopía Tepito / Utopía Cuauhtémoc",
+      "aliases": [
+        "Utopía Tepito",
+        "Utopía Cuauhtémoc",
+        "Utopía Tepito / Utopía Cuauhtémoc"
+      ],
+      "alcaldia": "Cuauhtémoc",
+      "address": "Tepito, tres predios en Alcaldía Cuauhtémoc, Ciudad de México",
+      "coordinates": null,
+      "coordinateStatus": "sin_coordenada",
+      "utopiaType": "territorial",
+      "surfaceM2": null,
+      "operator": "Gobierno de la Ciudad de México",
+      "projectStatus": "planeacion",
+      "openingStatus": "no_inaugurada",
+      "operationalStatus": "desconocido",
+      "openingDate": null,
+      "lastVerifiedAt": "2024-12-18",
+      "sourceDate": "2024-12-18",
+      "sourceInstitution": "Jefatura de Gobierno CDMX",
+      "evidenceIds": [
+        "ev-jefatura-2024-12-18-tepito"
+      ],
+      "qualityGrade": "B",
+      "coverageLevel": "parcial",
+      "verificationStatus": "fuente_limitada",
+      "countAsRealInfrastructure": false,
+      "originalSourceFields": {
+        "legacyName": "Utopía Tepito / Utopía Cuauhtémoc",
+        "legacyStatus": "anunciada"
+      },
+      "changeHistory": [
+        {
+          "evidenceId": "ev-jefatura-2024-12-18-tepito",
+          "effectiveDate": "2024-12-18",
+          "publicationDate": "2024-12-18",
+          "title": "Presentación de las Utopías 2025-2026",
+          "projectStatus": "planeacion",
+          "openingStatus": "no_inaugurada",
+          "operationalStatus": "desconocido",
+          "notes": "La sede se plantea sobre tres espacios en Tepito."
+        }
+      ]
+    },
+    {
+      "utopiaId": "utopia-tlallipan",
+      "canonicalName": "UTOPÍA Tlallipan",
+      "sourceName": "UTOPÍA Tlallipan",
+      "aliases": [
+        "UTOPÍA Tlallipan",
+        "Jardín Flotante Tlallipan"
+      ],
+      "alcaldia": "Cuauhtémoc",
+      "address": "San Antonio Abad, Col. Centro, Alcaldía Cuauhtémoc, CP 06820 CDMX",
+      "coordinates": null,
+      "coordinateStatus": "sin_coordenada",
+      "utopiaType": "espacio_publico_elevado",
+      "surfaceM2": 6200,
+      "operator": "Gobierno de la Ciudad de México",
+      "projectStatus": "terminada",
+      "openingStatus": "inaugurada_confirmada",
+      "operationalStatus": "operando_confirmado",
+      "openingDate": "2026-06-07",
+      "lastVerifiedAt": "2026-08-06",
+      "sourceDate": "2026-08-06",
+      "sourceInstitution": "Cine en la Ciudad CDMX",
+      "evidenceIds": [
+        "ev-sobse-2026-06-07-tlallipan",
+        "ev-cine-2026-08-06-tlallipan-operacion"
+      ],
+      "qualityGrade": "A",
+      "coverageLevel": "parcial",
+      "verificationStatus": "verificado",
+      "countAsRealInfrastructure": false,
+      "originalSourceFields": {
+        "legacyName": null,
+        "legacyStatus": null
+      },
+      "changeHistory": [
+        {
+          "evidenceId": "ev-sobse-2026-06-07-tlallipan",
+          "effectiveDate": "2026-06-07",
+          "publicationDate": "2026-06-07",
+          "title": "Inaugura Clara Brugada Jardín Flotante Tlallipan",
+          "projectStatus": "terminada",
+          "openingStatus": "inaugurada_confirmada",
+          "operationalStatus": "operando_confirmado",
+          "notes": "Primera Utopía elevada de la ciudad; el boletín no documenta amenidades deportivas específicas."
+        },
+        {
+          "evidenceId": "ev-cine-2026-08-06-tlallipan-operacion",
+          "effectiveDate": "2026-08-06",
+          "publicationDate": null,
+          "title": "Directorio operativo de sedes: UTOPÍA Tlallipan",
+          "projectStatus": null,
+          "openingStatus": null,
+          "operationalStatus": "operando_confirmado",
+          "notes": "Directorio institucional con sede activa en Cuauhtémoc."
+        }
+      ]
+    },
+    {
+      "utopiaId": "utopia-hermanos-galeana",
+      "canonicalName": "UTOPÍA Hermanos Galeana",
+      "sourceName": "Utopía Deportivo Hermanos Galeana",
+      "aliases": [
+        "Utopía Deportivo Hermanos Galeana",
+        "UTOPÍA Hermanos Galeana"
+      ],
+      "alcaldia": "Gustavo A. Madero",
+      "address": "Deportivo Hermanos Galeana, San Juan de Aragón, Alcaldía Gustavo A. Madero, Ciudad de México",
+      "coordinates": null,
+      "coordinateStatus": "sin_coordenada",
+      "utopiaType": "territorial",
+      "surfaceM2": 200000,
+      "operator": "Gobierno de la Ciudad de México",
+      "projectStatus": "construccion",
+      "openingStatus": "no_inaugurada",
+      "operationalStatus": "desconocido",
+      "openingDate": null,
+      "lastVerifiedAt": "2025-05-14",
+      "sourceDate": "2025-05-14",
+      "sourceInstitution": "Jefatura de Gobierno CDMX",
+      "evidenceIds": [
+        "ev-sobse-2025-05-14-hermanos-galeana"
+      ],
+      "qualityGrade": "B",
+      "coverageLevel": "parcial",
+      "verificationStatus": "verificado",
+      "countAsRealInfrastructure": false,
+      "originalSourceFields": {
+        "legacyName": "Utopía Deportivo Hermanos Galeana",
+        "legacyStatus": "anunciada"
+      },
+      "changeHistory": [
+        {
+          "evidenceId": "ev-sobse-2025-05-14-hermanos-galeana",
+          "effectiveDate": "2025-05-14",
+          "publicationDate": "2025-05-14",
+          "title": "Arranca SOBSE construcción de las primeras 6 UTOPÍAs en CDMX",
+          "projectStatus": "construccion",
+          "openingStatus": "no_inaugurada",
+          "operationalStatus": "desconocido",
+          "notes": "El boletín ubica a Hermanos Galeana entre las primeras seis Utopías en construcción."
+        }
+      ]
+    },
+    {
+      "utopiaId": "utopia-infancias-mixiuhca",
+      "canonicalName": "UTOPÍA de las Niñas y los Niños",
+      "sourceName": "Utopía de las Niñas y los Niños (Magdalena Mixhuca)",
+      "aliases": [
+        "Utopía de las Niñas y los Niños",
+        "Utopía de las Infancias",
+        "Utopía de las Niñas y los Niños (Magdalena Mixhuca)"
+      ],
+      "alcaldia": "Iztacalco",
+      "address": "Ciudad Deportiva Magdalena Mixiuhca, Alcaldía Iztacalco, Ciudad de México",
+      "coordinates": null,
+      "coordinateStatus": "sin_coordenada",
+      "utopiaType": "territorial",
+      "surfaceM2": 120000,
+      "operator": "Gobierno de la Ciudad de México",
+      "projectStatus": "construccion",
+      "openingStatus": "sin_confirmacion",
+      "operationalStatus": "desconocido",
+      "openingDate": null,
+      "lastVerifiedAt": "2025-10-15",
+      "sourceDate": "2025-10-15",
+      "sourceInstitution": "Jefatura de Gobierno CDMX",
+      "evidenceIds": [
+        "ev-jefatura-2025-10-15-infancias"
+      ],
+      "qualityGrade": "B",
+      "coverageLevel": "parcial",
+      "verificationStatus": "verificado",
+      "countAsRealInfrastructure": false,
+      "originalSourceFields": {
+        "legacyName": "Utopía de las Niñas y los Niños (Magdalena Mixhuca)",
+        "legacyStatus": "anunciada"
+      },
+      "changeHistory": [
+        {
+          "evidenceId": "ev-jefatura-2025-10-15-infancias",
+          "effectiveDate": "2025-10-15",
+          "publicationDate": "2025-10-15",
+          "title": "Supervisa avance de obra de Utopía de las Niñas y los Niños en Iztacalco",
+          "projectStatus": "construccion",
+          "openingStatus": "fecha_anunciada",
+          "operationalStatus": "desconocido",
+          "notes": "La nota prevé inauguración en enero de 2026, pero sin confirmación posterior integrada en esta iteración."
+        }
+      ]
+    },
+    {
+      "utopiaId": "utopia-mixiuhca",
+      "canonicalName": "UTOPÍA Mixiuhca",
+      "sourceName": "Utopía Mixiuhca",
+      "aliases": [
+        "Utopía Mixiuhca",
+        "UTOPÍA Mixiuhca",
+        "Utopía Magdalena Mixiuhca"
+      ],
+      "alcaldia": "Iztacalco",
+      "address": "Ciudad Deportiva Magdalena Mixiuhca, Alcaldía Iztacalco, Ciudad de México",
+      "coordinates": null,
+      "coordinateStatus": "sin_coordenada",
+      "utopiaType": "territorial",
+      "surfaceM2": 80000,
+      "operator": "Gobierno de la Ciudad de México",
+      "projectStatus": "terminada",
+      "openingStatus": "inaugurada_confirmada",
+      "operationalStatus": "operando_confirmado",
+      "openingDate": "2026-03-22",
+      "lastVerifiedAt": "2026-08-06",
+      "sourceDate": "2026-08-06",
+      "sourceInstitution": "Mexico City / CDMX",
+      "evidenceIds": [
+        "ev-jefatura-2026-03-22-mixiuhca",
+        "ev-turismo-2026-08-06-mixiuhca-amenidades"
+      ],
+      "qualityGrade": "A",
+      "coverageLevel": "parcial",
+      "verificationStatus": "verificado",
+      "countAsRealInfrastructure": true,
+      "originalSourceFields": {
+        "legacyName": null,
+        "legacyStatus": null
+      },
+      "changeHistory": [
+        {
+          "evidenceId": "ev-jefatura-2026-03-22-mixiuhca",
+          "effectiveDate": "2026-03-22",
+          "publicationDate": "2026-03-22",
+          "title": "Inauguración de Utopía Mixiuhca",
+          "projectStatus": "terminada",
+          "openingStatus": "inaugurada_confirmada",
+          "operationalStatus": "operando_confirmado",
+          "notes": "Boletín oficial de inauguración de la primera Utopía del gobierno capitalino."
+        },
+        {
+          "evidenceId": "ev-turismo-2026-08-06-mixiuhca-amenidades",
+          "effectiveDate": "2026-08-06",
+          "publicationDate": null,
+          "title": "Ficha institucional de Utopía Mixiuhca",
+          "projectStatus": null,
+          "openingStatus": null,
+          "operationalStatus": "operando_confirmado",
+          "notes": "La ficha pública documenta amenidades y la inauguración en marzo de 2026."
+        }
+      ]
+    },
+    {
+      "utopiaId": "barco-utopia",
+      "canonicalName": "Barco UTOPÍA",
+      "sourceName": "Barco Utopía",
+      "aliases": [
+        "Barco Utopía",
+        "Barco UTOPÍA"
+      ],
+      "alcaldia": "Iztapalapa",
+      "address": "Anillo Periférico Oriente y Eje 6 Sur, U.H. Vicente Guerrero, Alcaldía Iztapalapa, CP 09200 CDMX",
+      "coordinates": null,
+      "coordinateStatus": "sin_coordenada",
+      "utopiaType": "historica_iztapalapa",
+      "surfaceM2": null,
+      "operator": "Gobierno de la Ciudad de México",
+      "projectStatus": "terminada",
+      "openingStatus": "sin_confirmacion",
+      "operationalStatus": "operando_confirmado",
+      "openingDate": null,
+      "lastVerifiedAt": "2026-08-06",
+      "sourceDate": "2026-08-06",
+      "sourceInstitution": "Cine en la Ciudad CDMX",
+      "evidenceIds": [
+        "ev-cine-2026-08-06-barco"
+      ],
+      "qualityGrade": "B",
+      "coverageLevel": "parcial",
+      "verificationStatus": "verificado",
+      "countAsRealInfrastructure": true,
+      "originalSourceFields": {
+        "legacyName": "Barco Utopía",
+        "legacyStatus": "operando"
+      },
+      "changeHistory": [
+        {
+          "evidenceId": "ev-cine-2026-08-06-barco",
+          "effectiveDate": "2026-08-06",
+          "publicationDate": null,
+          "title": "Directorio operativo de sedes: Barco UTOPÍA",
+          "projectStatus": "terminada",
+          "openingStatus": null,
+          "operationalStatus": "operando_confirmado",
+          "notes": "Directorio institucional con sede activa."
+        }
+      ]
+    },
+    {
+      "utopiaId": "utopia-acatitla",
+      "canonicalName": "UTOPÍA Acatitla",
+      "sourceName": "Utopía CETRAM Acatitla",
+      "aliases": [
+        "Utopía CETRAM Acatitla",
+        "UTOPÍA Acatitla"
+      ],
+      "alcaldia": "Iztapalapa",
+      "address": "CETRAM Acatitla, Santa Martha Acatitla, Alcaldía Iztapalapa, Ciudad de México",
+      "coordinates": null,
+      "coordinateStatus": "sin_coordenada",
+      "utopiaType": "territorial",
+      "surfaceM2": 16000,
+      "operator": "Gobierno de la Ciudad de México",
+      "projectStatus": "terminada",
+      "openingStatus": "inaugurada_confirmada",
+      "operationalStatus": "operando_confirmado",
+      "openingDate": "2026-07-12",
+      "lastVerifiedAt": "2026-07-12",
+      "sourceDate": "2026-07-12",
+      "sourceInstitution": "Capital 21 CDMX",
+      "evidenceIds": [
+        "ev-capital21-2026-07-12-acatitla"
+      ],
+      "qualityGrade": "B",
+      "coverageLevel": "parcial",
+      "verificationStatus": "verificado",
+      "countAsRealInfrastructure": true,
+      "originalSourceFields": {
+        "legacyName": "Utopía CETRAM Acatitla",
+        "legacyStatus": "anunciada"
+      },
+      "changeHistory": [
+        {
+          "evidenceId": "ev-capital21-2026-07-12-acatitla",
+          "effectiveDate": "2026-07-12",
+          "publicationDate": "2026-07-12",
+          "title": "Brugada inaugura Utopía Acatitla",
+          "projectStatus": "terminada",
+          "openingStatus": "inaugurada_confirmada",
+          "operationalStatus": "operando_confirmado",
+          "notes": "Nota institucional con fecha de inauguración y amenidades verificadas."
+        }
+      ]
+    },
+    {
+      "utopiaId": "utopia-atzintli",
+      "canonicalName": "UTOPÍA Atzintli",
+      "sourceName": "Utopía Atzintli",
+      "aliases": [
+        "Utopía Atzintli"
+      ],
+      "alcaldia": "Iztapalapa",
+      "address": "Av Ermita Iztapalapa s/n Local 4 Xalapa, Col. Xalpa, Alcaldía Iztapalapa, CP 09640 CDMX",
+      "coordinates": null,
+      "coordinateStatus": "sin_coordenada",
+      "utopiaType": "historica_iztapalapa",
+      "surfaceM2": null,
+      "operator": "Gobierno de la Ciudad de México",
+      "projectStatus": "terminada",
+      "openingStatus": "sin_confirmacion",
+      "operationalStatus": "operando_confirmado",
+      "openingDate": null,
+      "lastVerifiedAt": "2026-08-06",
+      "sourceDate": "2026-08-06",
+      "sourceInstitution": "Cine en la Ciudad CDMX",
+      "evidenceIds": [
+        "ev-cine-2026-08-06-atzintli"
+      ],
+      "qualityGrade": "B",
+      "coverageLevel": "parcial",
+      "verificationStatus": "verificado",
+      "countAsRealInfrastructure": true,
+      "originalSourceFields": {
+        "legacyName": "Utopía Atzintli",
+        "legacyStatus": "operando"
+      },
+      "changeHistory": [
+        {
+          "evidenceId": "ev-cine-2026-08-06-atzintli",
+          "effectiveDate": "2026-08-06",
+          "publicationDate": null,
+          "title": "Directorio operativo de sedes: UTOPÍA Atzintli",
+          "projectStatus": "terminada",
+          "openingStatus": null,
+          "operationalStatus": "operando_confirmado",
+          "notes": "Directorio institucional con sede activa y dirección pública."
+        }
+      ]
+    },
+    {
+      "utopiaId": "utopia-cihuacoatl",
+      "canonicalName": "UTOPÍA Cihuacóatl",
+      "sourceName": "UTOPÍA Cihuacóatl",
+      "aliases": [
+        "Utopía Cihuacóatl"
+      ],
+      "alcaldia": "Iztapalapa",
+      "address": "La Purísima 230, entre Calle 10 y Calle 12, Col. Leyes de Reforma 1ra Secc, Alcaldía Iztapalapa, CP 09310 CDMX",
+      "coordinates": null,
+      "coordinateStatus": "sin_coordenada",
+      "utopiaType": "historica_iztapalapa",
+      "surfaceM2": null,
+      "operator": "Gobierno de la Ciudad de México",
+      "projectStatus": "terminada",
+      "openingStatus": "sin_confirmacion",
+      "operationalStatus": "operando_confirmado",
+      "openingDate": null,
+      "lastVerifiedAt": "2026-08-06",
+      "sourceDate": "2026-08-06",
+      "sourceInstitution": "Cine en la Ciudad CDMX",
+      "evidenceIds": [
+        "ev-cine-2026-08-06-cihuacoatl"
+      ],
+      "qualityGrade": "B",
+      "coverageLevel": "parcial",
+      "verificationStatus": "verificado",
+      "countAsRealInfrastructure": true,
+      "originalSourceFields": {
+        "legacyName": null,
+        "legacyStatus": null
+      },
+      "changeHistory": [
+        {
+          "evidenceId": "ev-cine-2026-08-06-cihuacoatl",
+          "effectiveDate": "2026-08-06",
+          "publicationDate": null,
+          "title": "Directorio operativo de sedes: UTOPÍA Cihuacóatl",
+          "projectStatus": "terminada",
+          "openingStatus": null,
+          "operationalStatus": "operando_confirmado",
+          "notes": "La ficha de sede publica funciones próximas y dirección de la UTOPÍA."
+        }
+      ]
+    },
+    {
+      "utopiaId": "utopia-cuauhtlicalli",
+      "canonicalName": "UTOPÍA Cuauhtlicalli",
+      "sourceName": "Utopía Cuauhtlicalli Aculco",
+      "aliases": [
+        "Utopía Cuauhtlicalli Aculco",
+        "UTOPÍA Cuauhtlicalli"
+      ],
+      "alcaldia": "Iztapalapa",
+      "address": "C. Alfonso Toro 1856, Col. Escuadrón 201, Iztapalapa, CP 09060 CDMX",
+      "coordinates": null,
+      "coordinateStatus": "sin_coordenada",
+      "utopiaType": "historica_iztapalapa",
+      "surfaceM2": null,
+      "operator": "Gobierno de la Ciudad de México",
+      "projectStatus": "terminada",
+      "openingStatus": "sin_confirmacion",
+      "operationalStatus": "operando_confirmado",
+      "openingDate": null,
+      "lastVerifiedAt": "2026-08-06",
+      "sourceDate": "2026-08-06",
+      "sourceInstitution": "Cine en la Ciudad CDMX",
+      "evidenceIds": [
+        "ev-cine-2026-08-06-cuauhtlicalli"
+      ],
+      "qualityGrade": "B",
+      "coverageLevel": "parcial",
+      "verificationStatus": "verificado",
+      "countAsRealInfrastructure": true,
+      "originalSourceFields": {
+        "legacyName": "Utopía Cuauhtlicalli Aculco",
+        "legacyStatus": "operando"
+      },
+      "changeHistory": [
+        {
+          "evidenceId": "ev-cine-2026-08-06-cuauhtlicalli",
+          "effectiveDate": "2026-08-06",
+          "publicationDate": null,
+          "title": "Directorio operativo de sedes: UTOPÍA Cuauhtlicalli",
+          "projectStatus": "terminada",
+          "openingStatus": null,
+          "operationalStatus": "operando_confirmado",
+          "notes": "La sede aparece listada con dirección en Iztapalapa."
+        }
+      ]
+    },
+    {
+      "utopiaId": "utopia-huizachtepetl",
+      "canonicalName": "UTOPÍA Huizachtépetl",
+      "sourceName": "UTOPÍA Huizachtépetl",
+      "aliases": [
+        "Utopía Huizachtépetl"
+      ],
+      "alcaldia": "Iztapalapa",
+      "address": "Av. San Lorenzo N°312, Col. San Juan Xalapa, Alcaldía Iztapalapa, CP 09850 CDMX",
+      "coordinates": null,
+      "coordinateStatus": "sin_coordenada",
+      "utopiaType": "historica_iztapalapa",
+      "surfaceM2": null,
+      "operator": "Gobierno de la Ciudad de México",
+      "projectStatus": "terminada",
+      "openingStatus": "sin_confirmacion",
+      "operationalStatus": "operando_confirmado",
+      "openingDate": null,
+      "lastVerifiedAt": "2026-08-06",
+      "sourceDate": "2026-08-06",
+      "sourceInstitution": "Cine en la Ciudad CDMX",
+      "evidenceIds": [
+        "ev-cine-2026-08-06-huizachtepetl"
+      ],
+      "qualityGrade": "B",
+      "coverageLevel": "parcial",
+      "verificationStatus": "verificado",
+      "countAsRealInfrastructure": true,
+      "originalSourceFields": {
+        "legacyName": null,
+        "legacyStatus": null
+      },
+      "changeHistory": [
+        {
+          "evidenceId": "ev-cine-2026-08-06-huizachtepetl",
+          "effectiveDate": "2026-08-06",
+          "publicationDate": null,
+          "title": "Directorio operativo de sedes: UTOPÍA Huizachtépetl",
+          "projectStatus": "terminada",
+          "openingStatus": null,
+          "operationalStatus": "operando_confirmado",
+          "notes": "La sede aparece listada con dirección en Iztapalapa."
+        }
+      ]
+    },
+    {
+      "utopiaId": "utopia-la-cascada-xicotencatl",
+      "canonicalName": "UTOPÍA La Cascada Xicoténcatl",
+      "sourceName": "Utopía Cascada",
+      "aliases": [
+        "Utopía Cascada",
+        "UTOPÍA La Cascada Xicoténcatl"
+      ],
+      "alcaldia": "Iztapalapa",
+      "address": "Zona Urbana Ejidal Santa Martha Acatitla Nte., Alcaldía Iztapalapa, CP 09140 CDMX",
+      "coordinates": null,
+      "coordinateStatus": "sin_coordenada",
+      "utopiaType": "historica_iztapalapa",
+      "surfaceM2": null,
+      "operator": "Gobierno de la Ciudad de México",
+      "projectStatus": "terminada",
+      "openingStatus": "sin_confirmacion",
+      "operationalStatus": "operando_confirmado",
+      "openingDate": null,
+      "lastVerifiedAt": "2026-08-06",
+      "sourceDate": "2026-08-06",
+      "sourceInstitution": "Cine en la Ciudad CDMX",
+      "evidenceIds": [
+        "ev-cine-2026-08-06-cascada"
+      ],
+      "qualityGrade": "B",
+      "coverageLevel": "parcial",
+      "verificationStatus": "verificado",
+      "countAsRealInfrastructure": true,
+      "originalSourceFields": {
+        "legacyName": "Utopía Cascada",
+        "legacyStatus": "operando"
+      },
+      "changeHistory": [
+        {
+          "evidenceId": "ev-cine-2026-08-06-cascada",
+          "effectiveDate": "2026-08-06",
+          "publicationDate": null,
+          "title": "Directorio operativo de sedes: UTOPÍA La Cascada Xicoténcatl",
+          "projectStatus": "terminada",
+          "openingStatus": null,
+          "operationalStatus": "operando_confirmado",
+          "notes": "Directorio institucional con sede activa."
+        }
+      ]
+    },
+    {
+      "utopiaId": "utopia-libertad",
+      "canonicalName": "UTOPÍA Libertad",
+      "sourceName": "Utopía Libertad",
+      "aliases": [
+        "Utopía Libertad",
+        "UTOPÍA Libertad"
+      ],
+      "alcaldia": "Iztapalapa",
+      "address": "Río Nilo, Col. Lomas de San Lorenzo, Alcaldía Iztapalapa, CP 09780 CDMX",
+      "coordinates": null,
+      "coordinateStatus": "sin_coordenada",
+      "utopiaType": "historica_iztapalapa",
+      "surfaceM2": null,
+      "operator": "Gobierno de la Ciudad de México",
+      "projectStatus": "terminada",
+      "openingStatus": "sin_confirmacion",
+      "operationalStatus": "operando_confirmado",
+      "openingDate": null,
+      "lastVerifiedAt": "2026-08-06",
+      "sourceDate": "2026-08-06",
+      "sourceInstitution": "Cine en la Ciudad CDMX",
+      "evidenceIds": [
+        "ev-cine-2026-08-06-libertad"
+      ],
+      "qualityGrade": "B",
+      "coverageLevel": "parcial",
+      "verificationStatus": "verificado",
+      "countAsRealInfrastructure": true,
+      "originalSourceFields": {
+        "legacyName": "Utopía Libertad",
+        "legacyStatus": "operando"
+      },
+      "changeHistory": [
+        {
+          "evidenceId": "ev-cine-2026-08-06-libertad",
+          "effectiveDate": "2026-08-06",
+          "publicationDate": null,
+          "title": "Directorio operativo de sedes: UTOPÍA Libertad",
+          "projectStatus": "terminada",
+          "openingStatus": null,
+          "operationalStatus": "operando_confirmado",
+          "notes": "Directorio institucional con sede activa."
+        }
+      ]
+    },
+    {
+      "utopiaId": "utopia-meyehualco",
+      "canonicalName": "UTOPÍA Meyehualco",
+      "sourceName": "Utopía Meyehualco",
+      "aliases": [
+        "Utopía Meyehualco",
+        "UTOPÍA Meyehualco"
+      ],
+      "alcaldia": "Iztapalapa",
+      "address": "Avenida Genaro Estrada, C. 71 s/n, Col. Santa Cruz Meyehualco, Alcaldía Iztapalapa, CP 09290 CDMX",
+      "coordinates": null,
+      "coordinateStatus": "sin_coordenada",
+      "utopiaType": "historica_iztapalapa",
+      "surfaceM2": null,
+      "operator": "Gobierno de la Ciudad de México",
+      "projectStatus": "terminada",
+      "openingStatus": "sin_confirmacion",
+      "operationalStatus": "operando_confirmado",
+      "openingDate": null,
+      "lastVerifiedAt": "2026-08-06",
+      "sourceDate": "2026-08-06",
+      "sourceInstitution": "Cine en la Ciudad CDMX",
+      "evidenceIds": [
+        "ev-cine-2026-08-06-meyehualco"
+      ],
+      "qualityGrade": "B",
+      "coverageLevel": "parcial",
+      "verificationStatus": "verificado",
+      "countAsRealInfrastructure": true,
+      "originalSourceFields": {
+        "legacyName": "Utopía Meyehualco",
+        "legacyStatus": "operando"
+      },
+      "changeHistory": [
+        {
+          "evidenceId": "ev-cine-2026-08-06-meyehualco",
+          "effectiveDate": "2026-08-06",
+          "publicationDate": null,
+          "title": "Ficha de sede: UTOPÍA Meyehualco",
+          "projectStatus": "terminada",
+          "openingStatus": null,
+          "operationalStatus": "operando_confirmado",
+          "notes": "La ficha pública confirma dirección y uso institucional vigente."
+        }
+      ]
+    },
+    {
+      "utopiaId": "utopia-olini",
+      "canonicalName": "UTOPÍA Olini",
+      "sourceName": "Utopía Olini",
+      "aliases": [
+        "Utopía Olini",
+        "UTOPÍA Olini"
+      ],
+      "alcaldia": "Iztapalapa",
+      "address": "Calz. Ignacio Zaragoza 1715, Ejército Constitucionalista I II y III, Alcaldía Iztapalapa, CP 09220 CDMX",
+      "coordinates": null,
+      "coordinateStatus": "sin_coordenada",
+      "utopiaType": "historica_iztapalapa",
+      "surfaceM2": null,
+      "operator": "Gobierno de la Ciudad de México",
+      "projectStatus": "terminada",
+      "openingStatus": "sin_confirmacion",
+      "operationalStatus": "operando_confirmado",
+      "openingDate": null,
+      "lastVerifiedAt": "2026-08-06",
+      "sourceDate": "2026-08-06",
+      "sourceInstitution": "Cine en la Ciudad CDMX",
+      "evidenceIds": [
+        "ev-cine-2026-08-06-olini"
+      ],
+      "qualityGrade": "B",
+      "coverageLevel": "parcial",
+      "verificationStatus": "verificado",
+      "countAsRealInfrastructure": true,
+      "originalSourceFields": {
+        "legacyName": "Utopía Olini",
+        "legacyStatus": "operando"
+      },
+      "changeHistory": [
+        {
+          "evidenceId": "ev-cine-2026-08-06-olini",
+          "effectiveDate": "2026-08-06",
+          "publicationDate": null,
+          "title": "Directorio operativo de sedes: UTOPÍA Olini",
+          "projectStatus": "terminada",
+          "openingStatus": null,
+          "operationalStatus": "operando_confirmado",
+          "notes": "Directorio institucional con sede activa."
+        }
+      ]
+    },
+    {
+      "utopiaId": "utopia-papalotl",
+      "canonicalName": "UTOPÍA Papalotl",
+      "sourceName": "Utopía Papalotl",
+      "aliases": [
+        "Utopía Papalotl",
+        "UTOPÍA Papalotl"
+      ],
+      "alcaldia": "Iztapalapa",
+      "address": "Datsun (3er. Retorno), Reforma Económica 52, Reforma Política, Alcaldía Iztapalapa, CP 09730 CDMX",
+      "coordinates": null,
+      "coordinateStatus": "sin_coordenada",
+      "utopiaType": "historica_iztapalapa",
+      "surfaceM2": null,
+      "operator": "Gobierno de la Ciudad de México",
+      "projectStatus": "terminada",
+      "openingStatus": "sin_confirmacion",
+      "operationalStatus": "operando_confirmado",
+      "openingDate": null,
+      "lastVerifiedAt": "2026-08-06",
+      "sourceDate": "2026-08-06",
+      "sourceInstitution": "Cine en la Ciudad CDMX",
+      "evidenceIds": [
+        "ev-cine-2026-08-06-papalotl"
+      ],
+      "qualityGrade": "B",
+      "coverageLevel": "parcial",
+      "verificationStatus": "verificado",
+      "countAsRealInfrastructure": true,
+      "originalSourceFields": {
+        "legacyName": "Utopía Papalotl",
+        "legacyStatus": "operando"
+      },
+      "changeHistory": [
+        {
+          "evidenceId": "ev-cine-2026-08-06-papalotl",
+          "effectiveDate": "2026-08-06",
+          "publicationDate": null,
+          "title": "Directorio operativo de sedes: UTOPÍA Papalotl",
+          "projectStatus": "terminada",
+          "openingStatus": null,
+          "operationalStatus": "operando_confirmado",
+          "notes": "Directorio institucional con sede activa."
+        }
+      ]
+    },
+    {
+      "utopiaId": "utopia-quetzalcoatl",
+      "canonicalName": "UTOPÍA Quetzalcóatl",
+      "sourceName": "Utopía Quetzalcóatl",
+      "aliases": [
+        "Utopía Quetzalcóatl",
+        "UTOPÍA Quetzalcóatl"
+      ],
+      "alcaldia": "Iztapalapa",
+      "address": "Manuel Cañas 2864, Col. Desarrollo Urbano Quetzalcóatl, Alcaldía Iztapalapa, CP 09700 CDMX",
+      "coordinates": null,
+      "coordinateStatus": "sin_coordenada",
+      "utopiaType": "historica_iztapalapa",
+      "surfaceM2": null,
+      "operator": "Gobierno de la Ciudad de México",
+      "projectStatus": "terminada",
+      "openingStatus": "sin_confirmacion",
+      "operationalStatus": "operando_confirmado",
+      "openingDate": null,
+      "lastVerifiedAt": "2026-08-06",
+      "sourceDate": "2026-08-06",
+      "sourceInstitution": "Cine en la Ciudad CDMX",
+      "evidenceIds": [
+        "ev-cine-2026-08-06-quetzalcoatl"
+      ],
+      "qualityGrade": "B",
+      "coverageLevel": "parcial",
+      "verificationStatus": "verificado",
+      "countAsRealInfrastructure": true,
+      "originalSourceFields": {
+        "legacyName": "Utopía Quetzalcóatl",
+        "legacyStatus": "operando"
+      },
+      "changeHistory": [
+        {
+          "evidenceId": "ev-cine-2026-08-06-quetzalcoatl",
+          "effectiveDate": "2026-08-06",
+          "publicationDate": null,
+          "title": "Directorio operativo de sedes: UTOPÍA Quetzalcóatl",
+          "projectStatus": "terminada",
+          "openingStatus": null,
+          "operationalStatus": "operando_confirmado",
+          "notes": "Directorio institucional con sede activa."
+        }
+      ]
+    },
+    {
+      "utopiaId": "utopia-tecoloxtitlan",
+      "canonicalName": "UTOPÍA Tecoloxtitlán",
+      "sourceName": "Utopía Tecóloxtitlan",
+      "aliases": [
+        "Utopía Tecóloxtitlan",
+        "UTOPÍA Tecoloxtitlán"
+      ],
+      "alcaldia": "Iztapalapa",
+      "address": "Calle Colima S/N, Col. San Sebastián, Alcaldía Iztapalapa CP 09520 CDMX",
+      "coordinates": null,
+      "coordinateStatus": "sin_coordenada",
+      "utopiaType": "historica_iztapalapa",
+      "surfaceM2": null,
+      "operator": "Gobierno de la Ciudad de México",
+      "projectStatus": "terminada",
+      "openingStatus": "sin_confirmacion",
+      "operationalStatus": "operando_confirmado",
+      "openingDate": null,
+      "lastVerifiedAt": "2026-08-06",
+      "sourceDate": "2026-08-06",
+      "sourceInstitution": "Cine en la Ciudad CDMX",
+      "evidenceIds": [
+        "ev-cine-2026-08-06-tecoloxtitlan"
+      ],
+      "qualityGrade": "B",
+      "coverageLevel": "parcial",
+      "verificationStatus": "verificado",
+      "countAsRealInfrastructure": true,
+      "originalSourceFields": {
+        "legacyName": "Utopía Tecóloxtitlan",
+        "legacyStatus": "operando"
+      },
+      "changeHistory": [
+        {
+          "evidenceId": "ev-cine-2026-08-06-tecoloxtitlan",
+          "effectiveDate": "2026-08-06",
+          "publicationDate": null,
+          "title": "Directorio operativo de sedes: UTOPÍA Tecoloxtitlán",
+          "projectStatus": "terminada",
+          "openingStatus": null,
+          "operationalStatus": "operando_confirmado",
+          "notes": "Directorio institucional con sede activa."
+        }
+      ]
+    },
+    {
+      "utopiaId": "utopia-teotongo",
+      "canonicalName": "UTOPÍA Teotongo",
+      "sourceName": "Utopía Teotongo",
+      "aliases": [
+        "Utopía Teotongo",
+        "UTOPÍA Teotongo"
+      ],
+      "alcaldia": "Iztapalapa",
+      "address": "Fernando Villegas S/N, Col. San Miguel Teotongo, Alcaldía Iztapalapa, CP 09630 CDMX",
+      "coordinates": null,
+      "coordinateStatus": "sin_coordenada",
+      "utopiaType": "historica_iztapalapa",
+      "surfaceM2": null,
+      "operator": "Gobierno de la Ciudad de México",
+      "projectStatus": "terminada",
+      "openingStatus": "sin_confirmacion",
+      "operationalStatus": "operando_confirmado",
+      "openingDate": null,
+      "lastVerifiedAt": "2026-08-06",
+      "sourceDate": "2026-08-06",
+      "sourceInstitution": "Cine en la Ciudad CDMX",
+      "evidenceIds": [
+        "ev-cine-2026-08-06-teotongo"
+      ],
+      "qualityGrade": "B",
+      "coverageLevel": "parcial",
+      "verificationStatus": "verificado",
+      "countAsRealInfrastructure": true,
+      "originalSourceFields": {
+        "legacyName": "Utopía Teotongo",
+        "legacyStatus": "operando"
+      },
+      "changeHistory": [
+        {
+          "evidenceId": "ev-cine-2026-08-06-teotongo",
+          "effectiveDate": "2026-08-06",
+          "publicationDate": null,
+          "title": "Directorio operativo de sedes: UTOPÍA Teotongo",
+          "projectStatus": "terminada",
+          "openingStatus": null,
+          "operationalStatus": "operando_confirmado",
+          "notes": "Directorio institucional con sede activa."
+        }
+      ]
+    },
+    {
+      "utopiaId": "utopia-tezontli",
+      "canonicalName": "UTOPÍA Tezontli",
+      "sourceName": "Utopía Tezontli",
+      "aliases": [
+        "Utopía Tezontli",
+        "UTOPÍA Tezontli"
+      ],
+      "alcaldia": "Iztapalapa",
+      "address": "Miguel Lerdo de Tejada, Col. San Antonio, Alcaldía Iztapalapa, CP 09900 CDMX",
+      "coordinates": null,
+      "coordinateStatus": "sin_coordenada",
+      "utopiaType": "historica_iztapalapa",
+      "surfaceM2": null,
+      "operator": "Gobierno de la Ciudad de México",
+      "projectStatus": "terminada",
+      "openingStatus": "sin_confirmacion",
+      "operationalStatus": "operando_confirmado",
+      "openingDate": null,
+      "lastVerifiedAt": "2026-08-06",
+      "sourceDate": "2026-08-06",
+      "sourceInstitution": "Cine en la Ciudad CDMX",
+      "evidenceIds": [
+        "ev-cine-2026-08-06-tezontli"
+      ],
+      "qualityGrade": "B",
+      "coverageLevel": "parcial",
+      "verificationStatus": "verificado",
+      "countAsRealInfrastructure": true,
+      "originalSourceFields": {
+        "legacyName": "Utopía Tezontli",
+        "legacyStatus": "operando"
+      },
+      "changeHistory": [
+        {
+          "evidenceId": "ev-cine-2026-08-06-tezontli",
+          "effectiveDate": "2026-08-06",
+          "publicationDate": null,
+          "title": "Directorio operativo de sedes: UTOPÍA Tezontli",
+          "projectStatus": "terminada",
+          "openingStatus": null,
+          "operationalStatus": "operando_confirmado",
+          "notes": "Directorio institucional con sede activa."
+        }
+      ]
+    },
+    {
+      "utopiaId": "utopia-oyamel",
+      "canonicalName": "UTOPÍA Oyamel",
+      "sourceName": "Utopía Deportivo Oyamel",
+      "aliases": [
+        "Utopía Deportivo Oyamel",
+        "Utopía Oyamel"
+      ],
+      "alcaldia": "Magdalena Contreras",
+      "address": "El Oyamel / Ampliación Lomas de San Bernabé, Alcaldía Magdalena Contreras, Ciudad de México",
+      "coordinates": null,
+      "coordinateStatus": "sin_coordenada",
+      "utopiaType": "territorial",
+      "surfaceM2": 34000,
+      "operator": "Gobierno de la Ciudad de México",
+      "projectStatus": "terminacion",
+      "openingStatus": "sin_confirmacion",
+      "operationalStatus": "desconocido",
+      "openingDate": null,
+      "lastVerifiedAt": "2026-03-26",
+      "sourceDate": "2026-03-26",
+      "sourceInstitution": "Jefatura de Gobierno CDMX",
+      "evidenceIds": [
+        "ev-jefatura-2026-03-26-oyamel"
+      ],
+      "qualityGrade": "B",
+      "coverageLevel": "parcial",
+      "verificationStatus": "verificado",
+      "countAsRealInfrastructure": false,
+      "originalSourceFields": {
+        "legacyName": "Utopía Deportivo Oyamel",
+        "legacyStatus": "anunciada"
+      },
+      "changeHistory": [
+        {
+          "evidenceId": "ev-jefatura-2026-03-26-oyamel",
+          "effectiveDate": "2026-03-26",
+          "publicationDate": "2026-03-26",
+          "title": "Supervisa avance de la primera Utopía en la Magdalena Contreras",
+          "projectStatus": "terminacion",
+          "openingStatus": "sin_confirmacion",
+          "operationalStatus": "desconocido",
+          "notes": "La nota reporta avance y prevé inauguración en menos de dos meses, sin confirmación posterior integrada."
+        }
+      ]
+    },
+    {
+      "utopiaId": "utopia-un-hogar-para-nosotros",
+      "canonicalName": "UTOPÍA Un Hogar para Nosotros",
+      "sourceName": "Utopía Un Hogar Para Nosotros",
+      "aliases": [
+        "Utopía Un Hogar Para Nosotros",
+        "UTOPÍA Un Hogar para Nosotros"
+      ],
+      "alcaldia": "Miguel Hidalgo",
+      "address": "Colonia Un Hogar para Nosotros, cerca del Metro Colegio Militar, Alcaldía Miguel Hidalgo, Ciudad de México",
+      "coordinates": null,
+      "coordinateStatus": "sin_coordenada",
+      "utopiaType": "territorial",
+      "surfaceM2": null,
+      "operator": "Gobierno de la Ciudad de México",
+      "projectStatus": "anunciada",
+      "openingStatus": "no_inaugurada",
+      "operationalStatus": "desconocido",
+      "openingDate": null,
+      "lastVerifiedAt": "2024-12-18",
+      "sourceDate": "2024-12-18",
+      "sourceInstitution": "Jefatura de Gobierno CDMX",
+      "evidenceIds": [
+        "ev-jefatura-2024-12-18-un-hogar"
+      ],
+      "qualityGrade": "B",
+      "coverageLevel": "parcial",
+      "verificationStatus": "fuente_limitada",
+      "countAsRealInfrastructure": false,
+      "originalSourceFields": {
+        "legacyName": "Utopía Un Hogar Para Nosotros",
+        "legacyStatus": "anunciada"
+      },
+      "changeHistory": [
+        {
+          "evidenceId": "ev-jefatura-2024-12-18-un-hogar",
+          "effectiveDate": "2024-12-18",
+          "publicationDate": "2024-12-18",
+          "title": "Presentación de las Utopías 2025-2026",
+          "projectStatus": "anunciada",
+          "openingStatus": "no_inaugurada",
+          "operationalStatus": "desconocido",
+          "notes": "Se identifica cerca del Metro Colegio Militar en Miguel Hidalgo."
+        }
+      ]
+    },
+    {
+      "utopiaId": "utopia-tecomitl",
+      "canonicalName": "UTOPÍA Tecómitl",
+      "sourceName": "Utopía Deportivo Tecómitl",
+      "aliases": [
+        "Utopía Deportivo Tecómitl",
+        "UTOPÍA Tecómitl"
+      ],
+      "alcaldia": "Milpa Alta",
+      "address": "Deportivo Tecómitl de San Juan Ixtayopan, Alcaldía Milpa Alta, Ciudad de México",
+      "coordinates": null,
+      "coordinateStatus": "sin_coordenada",
+      "utopiaType": "territorial",
+      "surfaceM2": null,
+      "operator": "Gobierno de la Ciudad de México",
+      "projectStatus": "anunciada",
+      "openingStatus": "no_inaugurada",
+      "operationalStatus": "desconocido",
+      "openingDate": null,
+      "lastVerifiedAt": "2024-12-18",
+      "sourceDate": "2024-12-18",
+      "sourceInstitution": "Jefatura de Gobierno CDMX",
+      "evidenceIds": [
+        "ev-jefatura-2024-12-18-tecomitl"
+      ],
+      "qualityGrade": "B",
+      "coverageLevel": "parcial",
+      "verificationStatus": "fuente_limitada",
+      "countAsRealInfrastructure": false,
+      "originalSourceFields": {
+        "legacyName": "Utopía Deportivo Tecómitl",
+        "legacyStatus": "anunciada"
+      },
+      "changeHistory": [
+        {
+          "evidenceId": "ev-jefatura-2024-12-18-tecomitl",
+          "effectiveDate": "2024-12-18",
+          "publicationDate": "2024-12-18",
+          "title": "Presentación de las Utopías 2025-2026",
+          "projectStatus": "anunciada",
+          "openingStatus": "no_inaugurada",
+          "operationalStatus": "desconocido",
+          "notes": "Se identifica en Deportivo Tecómitl de San Juan Ixtayopan."
+        }
+      ]
+    },
+    {
+      "utopiaId": "utopia-el-triangulo",
+      "canonicalName": "UTOPÍA El Triángulo",
+      "sourceName": "Utopía Deportivo El Triángulo",
+      "aliases": [
+        "Utopía Deportivo El Triángulo",
+        "UTOPÍA El Triángulo"
+      ],
+      "alcaldia": "Tláhuac",
+      "address": "Deportivo El Triángulo, colonia El Triángulo, Alcaldía Tláhuac, Ciudad de México",
+      "coordinates": null,
+      "coordinateStatus": "sin_coordenada",
+      "utopiaType": "territorial",
+      "surfaceM2": 20350,
+      "operator": "Gobierno de la Ciudad de México",
+      "projectStatus": "construccion",
+      "openingStatus": "no_inaugurada",
+      "operationalStatus": "desconocido",
+      "openingDate": null,
+      "lastVerifiedAt": "2025-06-24",
+      "sourceDate": "2025-06-24",
+      "sourceInstitution": "Jefatura de Gobierno CDMX",
+      "evidenceIds": [
+        "ev-jefatura-2025-06-24-el-triangulo"
+      ],
+      "qualityGrade": "B",
+      "coverageLevel": "parcial",
+      "verificationStatus": "verificado",
+      "countAsRealInfrastructure": false,
+      "originalSourceFields": {
+        "legacyName": "Utopía Deportivo El Triángulo",
+        "legacyStatus": "anunciada"
+      },
+      "changeHistory": [
+        {
+          "evidenceId": "ev-jefatura-2025-06-24-el-triangulo",
+          "effectiveDate": "2025-06-24",
+          "publicationDate": "2025-06-24",
+          "title": "Conferencia de prensa sobre Utopías",
+          "projectStatus": "construccion",
+          "openingStatus": "no_inaugurada",
+          "operationalStatus": "desconocido",
+          "notes": "La conferencia señala que la Utopía Tláhuac ya había arrancado formalmente en el predio El Triángulo."
+        }
+      ]
+    },
+    {
+      "utopiaId": "utopia-madre-tierra-topilejo",
+      "canonicalName": "UTOPÍA del Maíz",
+      "sourceName": "Utopía Topilejo / Utopía del Maíz",
+      "aliases": [
+        "Utopía Topilejo",
+        "Utopía del Maíz",
+        "UTOPÍA de la Madre Tierra",
+        "Utopía Topilejo / Utopía del Maíz"
+      ],
+      "alcaldia": "Tlalpan",
+      "address": "Deportivo Topilejo, San Miguel Topilejo, Alcaldía Tlalpan, Ciudad de México",
+      "coordinates": null,
+      "coordinateStatus": "sin_coordenada",
+      "utopiaType": "territorial",
+      "surfaceM2": null,
+      "operator": "Gobierno de la Ciudad de México",
+      "projectStatus": "construccion",
+      "openingStatus": "no_inaugurada",
+      "operationalStatus": "desconocido",
+      "openingDate": null,
+      "lastVerifiedAt": "2025-05-14",
+      "sourceDate": "2025-05-14",
+      "sourceInstitution": "Jefatura de Gobierno CDMX",
+      "evidenceIds": [
+        "ev-sobse-2025-05-14-maiz",
+        "ev-jefatura-2024-04-22-maiz-presentacion"
+      ],
+      "qualityGrade": "B",
+      "coverageLevel": "parcial",
+      "verificationStatus": "verificado",
+      "countAsRealInfrastructure": false,
+      "originalSourceFields": {
+        "legacyName": "Utopía Topilejo / Utopía del Maíz",
+        "legacyStatus": "anunciada"
+      },
+      "changeHistory": [
+        {
+          "evidenceId": "ev-jefatura-2024-04-22-maiz-presentacion",
+          "effectiveDate": "2025-04-22",
+          "publicationDate": "2025-04-22",
+          "title": "Presentación del proyecto UTOPÍA de la Madre Tierra",
+          "projectStatus": "anunciada",
+          "openingStatus": null,
+          "operationalStatus": null,
+          "notes": "Presentación temática de la Utopía del Maíz en Topilejo."
+        },
+        {
+          "evidenceId": "ev-sobse-2025-05-14-maiz",
+          "effectiveDate": "2025-05-14",
+          "publicationDate": "2025-05-14",
+          "title": "Arranca SOBSE construcción de las primeras 6 UTOPÍAs en CDMX",
+          "projectStatus": "construccion",
+          "openingStatus": "no_inaugurada",
+          "operationalStatus": "desconocido",
+          "notes": "El boletín ubica a Utopía del Maíz entre las primeras seis obras en construcción."
+        }
+      ]
+    },
+    {
+      "utopiaId": "utopia-la-heroica",
+      "canonicalName": "UTOPÍA La Heroica",
+      "sourceName": "Utopía Deportivo Eduardo Molina",
+      "aliases": [
+        "Utopía Deportivo Eduardo Molina",
+        "UTOPÍA La Heroica"
+      ],
+      "alcaldia": "Venustiano Carranza",
+      "address": "Deportivo Eduardo Molina, colonia 20 de Noviembre, Alcaldía Venustiano Carranza, Ciudad de México",
+      "coordinates": null,
+      "coordinateStatus": "sin_coordenada",
+      "utopiaType": "territorial",
+      "surfaceM2": 100000,
+      "operator": "Gobierno de la Ciudad de México",
+      "projectStatus": "terminada",
+      "openingStatus": "inaugurada_confirmada",
+      "operationalStatus": "operando_confirmado",
+      "openingDate": "2026-05-24",
+      "lastVerifiedAt": "2026-05-24",
+      "sourceDate": "2026-05-24",
+      "sourceInstitution": "SOBSE CDMX",
+      "evidenceIds": [
+        "ev-sobse-2026-05-24-la-heroica"
+      ],
+      "qualityGrade": "B",
+      "coverageLevel": "parcial",
+      "verificationStatus": "verificado",
+      "countAsRealInfrastructure": true,
+      "originalSourceFields": {
+        "legacyName": "Utopía Deportivo Eduardo Molina",
+        "legacyStatus": "anunciada"
+      },
+      "changeHistory": [
+        {
+          "evidenceId": "ev-sobse-2026-05-24-la-heroica",
+          "effectiveDate": "2026-05-24",
+          "publicationDate": "2026-05-24",
+          "title": "Clara Brugada inaugura Utopía La Heroica",
+          "projectStatus": "terminada",
+          "openingStatus": "inaugurada_confirmada",
+          "operationalStatus": "operando_confirmado",
+          "notes": "Boletín oficial con casi 100 mil metros cuadrados y amenidades deportivas verificadas."
+        }
+      ]
+    },
+    {
+      "utopiaId": "utopia-deportivo-xochimilco",
+      "canonicalName": "UTOPÍA Deportivo Xochimilco",
+      "sourceName": "Utopía Deportivo Xochimilco",
+      "aliases": [
+        "Utopía Deportivo Xochimilco"
+      ],
+      "alcaldia": "Xochimilco",
+      "address": "Deportivo Xochimilco, Alcaldía Xochimilco, Ciudad de México",
+      "coordinates": null,
+      "coordinateStatus": "sin_coordenada",
+      "utopiaType": "territorial",
+      "surfaceM2": null,
+      "operator": "Gobierno de la Ciudad de México",
+      "projectStatus": "anunciada",
+      "openingStatus": "no_inaugurada",
+      "operationalStatus": "desconocido",
+      "openingDate": null,
+      "lastVerifiedAt": "2024-12-18",
+      "sourceDate": "2024-12-18",
+      "sourceInstitution": "Jefatura de Gobierno CDMX",
+      "evidenceIds": [
+        "ev-jefatura-2024-12-18-xochimilco"
+      ],
+      "qualityGrade": "B",
+      "coverageLevel": "parcial",
+      "verificationStatus": "fuente_limitada",
+      "countAsRealInfrastructure": false,
+      "originalSourceFields": {
+        "legacyName": "Utopía Deportivo Xochimilco",
+        "legacyStatus": "anunciada"
+      },
+      "changeHistory": [
+        {
+          "evidenceId": "ev-jefatura-2024-12-18-xochimilco",
+          "effectiveDate": "2024-12-18",
+          "publicationDate": "2024-12-18",
+          "title": "Presentación de las Utopías 2025-2026",
+          "projectStatus": "anunciada",
+          "openingStatus": "no_inaugurada",
+          "operationalStatus": "desconocido",
+          "notes": "La sede aparece en el listado por alcaldía para Xochimilco."
+        }
+      ]
+    }
+  ],
+  "amenities": [
+    {
+      "amenityId": "ev-turismo-2026-08-06-mixiuhca-amenidades-amenity-2-1",
+      "utopiaId": "utopia-mixiuhca",
+      "originalLabel": "semi-Olympic pool",
+      "normalizedAmenity": "alberca semiolímpica",
+      "category": "acuatica",
+      "evidenceId": "ev-turismo-2026-08-06-mixiuhca-amenidades",
+      "verificationStatus": "verificado",
+      "sourceDate": "2026-08-06"
+    },
+    {
+      "amenityId": "ev-turismo-2026-08-06-mixiuhca-amenidades-amenity-2-2",
+      "utopiaId": "utopia-mixiuhca",
+      "originalLabel": "pump tracks for cyclists",
+      "normalizedAmenity": "pump track",
+      "category": "movilidad",
+      "evidenceId": "ev-turismo-2026-08-06-mixiuhca-amenidades",
+      "verificationStatus": "verificado",
+      "sourceDate": "2026-08-06"
+    },
+    {
+      "amenityId": "ev-turismo-2026-08-06-mixiuhca-amenidades-amenity-2-3",
+      "utopiaId": "utopia-mixiuhca",
+      "originalLabel": "batting cages",
+      "normalizedAmenity": "jaulas de bateo",
+      "category": "otras",
+      "evidenceId": "ev-turismo-2026-08-06-mixiuhca-amenidades",
+      "verificationStatus": "verificado",
+      "sourceDate": "2026-08-06"
+    },
+    {
+      "amenityId": "ev-turismo-2026-08-06-mixiuhca-amenidades-amenity-2-4",
+      "utopiaId": "utopia-mixiuhca",
+      "originalLabel": "padel",
+      "normalizedAmenity": "cancha de pádel",
+      "category": "raqueta",
+      "evidenceId": "ev-turismo-2026-08-06-mixiuhca-amenidades",
+      "verificationStatus": "verificado",
+      "sourceDate": "2026-08-06"
+    },
+    {
+      "amenityId": "ev-turismo-2026-08-06-mixiuhca-amenidades-amenity-2-5",
+      "utopiaId": "utopia-mixiuhca",
+      "originalLabel": "tennis",
+      "normalizedAmenity": "cancha de tenis",
+      "category": "raqueta",
+      "evidenceId": "ev-turismo-2026-08-06-mixiuhca-amenidades",
+      "verificationStatus": "verificado",
+      "sourceDate": "2026-08-06"
+    },
+    {
+      "amenityId": "ev-turismo-2026-08-06-mixiuhca-amenidades-amenity-2-6",
+      "utopiaId": "utopia-mixiuhca",
+      "originalLabel": "squash",
+      "normalizedAmenity": "squash",
+      "category": "raqueta",
+      "evidenceId": "ev-turismo-2026-08-06-mixiuhca-amenidades",
+      "verificationStatus": "verificado",
+      "sourceDate": "2026-08-06"
+    },
+    {
+      "amenityId": "ev-turismo-2026-08-06-mixiuhca-amenidades-amenity-2-7",
+      "utopiaId": "utopia-mixiuhca",
+      "originalLabel": "beach volleyball",
+      "normalizedAmenity": "cancha de voleibol",
+      "category": "cancha",
+      "evidenceId": "ev-turismo-2026-08-06-mixiuhca-amenidades",
+      "verificationStatus": "verificado",
+      "sourceDate": "2026-08-06"
+    },
+    {
+      "amenityId": "ev-sobse-2026-04-30-azcapotzalco-amenity-1-1",
+      "utopiaId": "utopia-azcapotzalco",
+      "originalLabel": "alberca semiolímpica",
+      "normalizedAmenity": "alberca semiolímpica",
+      "category": "acuatica",
+      "evidenceId": "ev-sobse-2026-04-30-azcapotzalco",
+      "verificationStatus": "verificado",
+      "sourceDate": "2026-04-30"
+    },
+    {
+      "amenityId": "ev-sobse-2026-04-30-azcapotzalco-amenity-1-2",
+      "utopiaId": "utopia-azcapotzalco",
+      "originalLabel": "canchas de fútbol",
+      "normalizedAmenity": "cancha de fútbol",
+      "category": "cancha",
+      "evidenceId": "ev-sobse-2026-04-30-azcapotzalco",
+      "verificationStatus": "verificado",
+      "sourceDate": "2026-04-30"
+    },
+    {
+      "amenityId": "ev-sobse-2026-04-30-azcapotzalco-amenity-1-3",
+      "utopiaId": "utopia-azcapotzalco",
+      "originalLabel": "squash",
+      "normalizedAmenity": "squash",
+      "category": "raqueta",
+      "evidenceId": "ev-sobse-2026-04-30-azcapotzalco",
+      "verificationStatus": "verificado",
+      "sourceDate": "2026-04-30"
+    },
+    {
+      "amenityId": "ev-sobse-2026-04-30-azcapotzalco-amenity-1-4",
+      "utopiaId": "utopia-azcapotzalco",
+      "originalLabel": "gimnasio",
+      "normalizedAmenity": "gimnasio",
+      "category": "gimnasio",
+      "evidenceId": "ev-sobse-2026-04-30-azcapotzalco",
+      "verificationStatus": "verificado",
+      "sourceDate": "2026-04-30"
+    },
+    {
+      "amenityId": "ev-sobse-2026-04-30-azcapotzalco-amenity-1-5",
+      "utopiaId": "utopia-azcapotzalco",
+      "originalLabel": "pista de patinaje",
+      "normalizedAmenity": "pista de patinaje",
+      "category": "movilidad",
+      "evidenceId": "ev-sobse-2026-04-30-azcapotzalco",
+      "verificationStatus": "verificado",
+      "sourceDate": "2026-04-30"
+    },
+    {
+      "amenityId": "ev-sobse-2026-04-30-azcapotzalco-amenity-1-6",
+      "utopiaId": "utopia-azcapotzalco",
+      "originalLabel": "pista de tartán",
+      "normalizedAmenity": "pista de tartán",
+      "category": "movilidad",
+      "evidenceId": "ev-sobse-2026-04-30-azcapotzalco",
+      "verificationStatus": "verificado",
+      "sourceDate": "2026-04-30"
+    },
+    {
+      "amenityId": "ev-sobse-2026-05-24-la-heroica-amenity-1-1",
+      "utopiaId": "utopia-la-heroica",
+      "originalLabel": "alberca olímpica",
+      "normalizedAmenity": "alberca olímpica",
+      "category": "acuatica",
+      "evidenceId": "ev-sobse-2026-05-24-la-heroica",
+      "verificationStatus": "verificado",
+      "sourceDate": "2026-05-24"
+    },
+    {
+      "amenityId": "ev-sobse-2026-05-24-la-heroica-amenity-1-2",
+      "utopiaId": "utopia-la-heroica",
+      "originalLabel": "gimnasio de box",
+      "normalizedAmenity": "box",
+      "category": "combate",
+      "evidenceId": "ev-sobse-2026-05-24-la-heroica",
+      "verificationStatus": "verificado",
+      "sourceDate": "2026-05-24"
+    },
+    {
+      "amenityId": "ev-sobse-2026-05-24-la-heroica-amenity-1-3",
+      "utopiaId": "utopia-la-heroica",
+      "originalLabel": "skatepark",
+      "normalizedAmenity": "skatepark",
+      "category": "movilidad",
+      "evidenceId": "ev-sobse-2026-05-24-la-heroica",
+      "verificationStatus": "verificado",
+      "sourceDate": "2026-05-24"
+    },
+    {
+      "amenityId": "ev-sobse-2026-05-24-la-heroica-amenity-1-4",
+      "utopiaId": "utopia-la-heroica",
+      "originalLabel": "canchas de fútbol",
+      "normalizedAmenity": "cancha de fútbol",
+      "category": "cancha",
+      "evidenceId": "ev-sobse-2026-05-24-la-heroica",
+      "verificationStatus": "verificado",
+      "sourceDate": "2026-05-24"
+    },
+    {
+      "amenityId": "ev-sobse-2026-05-24-la-heroica-amenity-1-5",
+      "utopiaId": "utopia-la-heroica",
+      "originalLabel": "voleibol",
+      "normalizedAmenity": "cancha de voleibol",
+      "category": "cancha",
+      "evidenceId": "ev-sobse-2026-05-24-la-heroica",
+      "verificationStatus": "verificado",
+      "sourceDate": "2026-05-24"
+    },
+    {
+      "amenityId": "ev-sobse-2026-05-24-la-heroica-amenity-1-6",
+      "utopiaId": "utopia-la-heroica",
+      "originalLabel": "squash",
+      "normalizedAmenity": "squash",
+      "category": "raqueta",
+      "evidenceId": "ev-sobse-2026-05-24-la-heroica",
+      "verificationStatus": "verificado",
+      "sourceDate": "2026-05-24"
+    },
+    {
+      "amenityId": "ev-sobse-2026-05-24-la-heroica-amenity-1-7",
+      "utopiaId": "utopia-la-heroica",
+      "originalLabel": "pádel",
+      "normalizedAmenity": "cancha de pádel",
+      "category": "raqueta",
+      "evidenceId": "ev-sobse-2026-05-24-la-heroica",
+      "verificationStatus": "verificado",
+      "sourceDate": "2026-05-24"
+    },
+    {
+      "amenityId": "ev-sobse-2026-05-24-la-heroica-amenity-1-8",
+      "utopiaId": "utopia-la-heroica",
+      "originalLabel": "básquetbol",
+      "normalizedAmenity": "cancha de básquetbol",
+      "category": "cancha",
+      "evidenceId": "ev-sobse-2026-05-24-la-heroica",
+      "verificationStatus": "verificado",
+      "sourceDate": "2026-05-24"
+    },
+    {
+      "amenityId": "ev-sobse-2026-05-24-la-heroica-amenity-1-9",
+      "utopiaId": "utopia-la-heroica",
+      "originalLabel": "petanca",
+      "normalizedAmenity": "petanca",
+      "category": "otras",
+      "evidenceId": "ev-sobse-2026-05-24-la-heroica",
+      "verificationStatus": "verificado",
+      "sourceDate": "2026-05-24"
+    },
+    {
+      "amenityId": "ev-sobse-2026-05-24-la-heroica-amenity-1-10",
+      "utopiaId": "utopia-la-heroica",
+      "originalLabel": "Casa de Vida",
+      "normalizedAmenity": "áreas de cuidados",
+      "category": "cuidados",
+      "evidenceId": "ev-sobse-2026-05-24-la-heroica",
+      "verificationStatus": "verificado",
+      "sourceDate": "2026-05-24"
+    },
+    {
+      "amenityId": "ev-capital21-2026-07-12-acatitla-amenity-1-1",
+      "utopiaId": "utopia-acatitla",
+      "originalLabel": "alberca semiolímpica",
+      "normalizedAmenity": "alberca semiolímpica",
+      "category": "acuatica",
+      "evidenceId": "ev-capital21-2026-07-12-acatitla",
+      "verificationStatus": "verificado",
+      "sourceDate": "2026-07-12"
+    },
+    {
+      "amenityId": "ev-capital21-2026-07-12-acatitla-amenity-1-2",
+      "utopiaId": "utopia-acatitla",
+      "originalLabel": "cancha multiusos",
+      "normalizedAmenity": "cancha multiusos",
+      "category": "cancha",
+      "evidenceId": "ev-capital21-2026-07-12-acatitla",
+      "verificationStatus": "verificado",
+      "sourceDate": "2026-07-12"
+    },
+    {
+      "amenityId": "ev-capital21-2026-07-12-acatitla-amenity-1-3",
+      "utopiaId": "utopia-acatitla",
+      "originalLabel": "pump track",
+      "normalizedAmenity": "pump track",
+      "category": "movilidad",
+      "evidenceId": "ev-capital21-2026-07-12-acatitla",
+      "verificationStatus": "verificado",
+      "sourceDate": "2026-07-12"
+    },
+    {
+      "amenityId": "ev-capital21-2026-07-12-acatitla-amenity-1-4",
+      "utopiaId": "utopia-acatitla",
+      "originalLabel": "muro de escalada",
+      "normalizedAmenity": "muro de escalada",
+      "category": "otras",
+      "evidenceId": "ev-capital21-2026-07-12-acatitla",
+      "verificationStatus": "verificado",
+      "sourceDate": "2026-07-12"
+    },
+    {
+      "amenityId": "ev-capital21-2026-07-12-acatitla-amenity-1-5",
+      "utopiaId": "utopia-acatitla",
+      "originalLabel": "trotapista",
+      "normalizedAmenity": "pista de tartán",
+      "category": "movilidad",
+      "evidenceId": "ev-capital21-2026-07-12-acatitla",
+      "verificationStatus": "verificado",
+      "sourceDate": "2026-07-12"
+    }
+  ],
+  "activities": [
+    {
+      "activityId": "ev-sobse-2026-04-30-azcapotzalco-activity-1-1",
+      "utopiaId": "utopia-azcapotzalco",
+      "originalLabel": "box",
+      "normalizedDiscipline": "Box",
+      "context": "disciplina",
+      "evidenceId": "ev-sobse-2026-04-30-azcapotzalco",
+      "sourceDate": "2026-04-30"
+    },
+    {
+      "activityId": "ev-sobse-2026-04-30-azcapotzalco-activity-1-2",
+      "utopiaId": "utopia-azcapotzalco",
+      "originalLabel": "crossfit",
+      "normalizedDiscipline": "CrossFit",
+      "context": "disciplina",
+      "evidenceId": "ev-sobse-2026-04-30-azcapotzalco",
+      "sourceDate": "2026-04-30"
+    }
+  ],
+  "evidences": [
+    {
+      "evidenceId": "ev-cine-2026-08-06-atzintli",
+      "utopiaId": "utopia-atzintli",
+      "utopiaName": "UTOPÍA Atzintli",
+      "sourceInstitution": "Cine en la Ciudad CDMX",
+      "title": "Directorio operativo de sedes: UTOPÍA Atzintli",
+      "sourceUrl": "https://cineenlaciudad.cdmx.gob.mx/sedes/",
+      "publicationDate": null,
+      "effectiveDate": "2026-08-06",
+      "evidenceType": "directorio_operativo",
+      "statusSupported": {
+        "projectStatus": "terminada",
+        "operationalStatus": "operando_confirmado"
+      },
+      "amenityClaims": [],
+      "activityClaims": [],
+      "coordinates": null,
+      "surfaceM2": null,
+      "notes": "Directorio institucional con sede activa y dirección pública.",
+      "capturedAt": "2026-08-06"
+    },
+    {
+      "evidenceId": "ev-cine-2026-08-06-cihuacoatl",
+      "utopiaId": "utopia-cihuacoatl",
+      "utopiaName": "UTOPÍA Cihuacóatl",
+      "sourceInstitution": "Cine en la Ciudad CDMX",
+      "title": "Directorio operativo de sedes: UTOPÍA Cihuacóatl",
+      "sourceUrl": "https://cineenlaciudad.cdmx.gob.mx/sede/utopia-cihuacoatl/",
+      "publicationDate": null,
+      "effectiveDate": "2026-08-06",
+      "evidenceType": "directorio_operativo",
+      "statusSupported": {
+        "projectStatus": "terminada",
+        "operationalStatus": "operando_confirmado"
+      },
+      "amenityClaims": [],
+      "activityClaims": [],
+      "coordinates": null,
+      "surfaceM2": null,
+      "notes": "La ficha de sede publica funciones próximas y dirección de la UTOPÍA.",
+      "capturedAt": "2026-08-06"
+    },
+    {
+      "evidenceId": "ev-cine-2026-08-06-cuauhtlicalli",
+      "utopiaId": "utopia-cuauhtlicalli",
+      "utopiaName": "UTOPÍA Cuauhtlicalli",
+      "sourceInstitution": "Cine en la Ciudad CDMX",
+      "title": "Directorio operativo de sedes: UTOPÍA Cuauhtlicalli",
+      "sourceUrl": "https://cineenlaciudad.cdmx.gob.mx/sedes/",
+      "publicationDate": null,
+      "effectiveDate": "2026-08-06",
+      "evidenceType": "directorio_operativo",
+      "statusSupported": {
+        "projectStatus": "terminada",
+        "operationalStatus": "operando_confirmado"
+      },
+      "amenityClaims": [],
+      "activityClaims": [],
+      "coordinates": null,
+      "surfaceM2": null,
+      "notes": "La sede aparece listada con dirección en Iztapalapa.",
+      "capturedAt": "2026-08-06"
+    },
+    {
+      "evidenceId": "ev-cine-2026-08-06-huizachtepetl",
+      "utopiaId": "utopia-huizachtepetl",
+      "utopiaName": "UTOPÍA Huizachtépetl",
+      "sourceInstitution": "Cine en la Ciudad CDMX",
+      "title": "Directorio operativo de sedes: UTOPÍA Huizachtépetl",
+      "sourceUrl": "https://cineenlaciudad.cdmx.gob.mx/sedes/",
+      "publicationDate": null,
+      "effectiveDate": "2026-08-06",
+      "evidenceType": "directorio_operativo",
+      "statusSupported": {
+        "projectStatus": "terminada",
+        "operationalStatus": "operando_confirmado"
+      },
+      "amenityClaims": [],
+      "activityClaims": [],
+      "coordinates": null,
+      "surfaceM2": null,
+      "notes": "La sede aparece listada con dirección en Iztapalapa.",
+      "capturedAt": "2026-08-06"
+    },
+    {
+      "evidenceId": "ev-cine-2026-08-06-cascada",
+      "utopiaId": "utopia-la-cascada-xicotencatl",
+      "utopiaName": "UTOPÍA La Cascada Xicoténcatl",
+      "sourceInstitution": "Cine en la Ciudad CDMX",
+      "title": "Directorio operativo de sedes: UTOPÍA La Cascada Xicoténcatl",
+      "sourceUrl": "https://cineenlaciudad.cdmx.gob.mx/sedes/",
+      "publicationDate": null,
+      "effectiveDate": "2026-08-06",
+      "evidenceType": "directorio_operativo",
+      "statusSupported": {
+        "projectStatus": "terminada",
+        "operationalStatus": "operando_confirmado"
+      },
+      "amenityClaims": [],
+      "activityClaims": [],
+      "coordinates": null,
+      "surfaceM2": null,
+      "notes": "Directorio institucional con sede activa.",
+      "capturedAt": "2026-08-06"
+    },
+    {
+      "evidenceId": "ev-cine-2026-08-06-libertad",
+      "utopiaId": "utopia-libertad",
+      "utopiaName": "UTOPÍA Libertad",
+      "sourceInstitution": "Cine en la Ciudad CDMX",
+      "title": "Directorio operativo de sedes: UTOPÍA Libertad",
+      "sourceUrl": "https://cineenlaciudad.cdmx.gob.mx/sedes/",
+      "publicationDate": null,
+      "effectiveDate": "2026-08-06",
+      "evidenceType": "directorio_operativo",
+      "statusSupported": {
+        "projectStatus": "terminada",
+        "operationalStatus": "operando_confirmado"
+      },
+      "amenityClaims": [],
+      "activityClaims": [],
+      "coordinates": null,
+      "surfaceM2": null,
+      "notes": "Directorio institucional con sede activa.",
+      "capturedAt": "2026-08-06"
+    },
+    {
+      "evidenceId": "ev-cine-2026-08-06-meyehualco",
+      "utopiaId": "utopia-meyehualco",
+      "utopiaName": "UTOPÍA Meyehualco",
+      "sourceInstitution": "Cine en la Ciudad CDMX",
+      "title": "Ficha de sede: UTOPÍA Meyehualco",
+      "sourceUrl": "https://cineenlaciudad.cdmx.gob.mx/sede/utopia-meyehualco/",
+      "publicationDate": null,
+      "effectiveDate": "2026-08-06",
+      "evidenceType": "directorio_operativo",
+      "statusSupported": {
+        "projectStatus": "terminada",
+        "operationalStatus": "operando_confirmado"
+      },
+      "amenityClaims": [],
+      "activityClaims": [],
+      "coordinates": null,
+      "surfaceM2": null,
+      "notes": "La ficha pública confirma dirección y uso institucional vigente.",
+      "capturedAt": "2026-08-06"
+    },
+    {
+      "evidenceId": "ev-cine-2026-08-06-olini",
+      "utopiaId": "utopia-olini",
+      "utopiaName": "UTOPÍA Olini",
+      "sourceInstitution": "Cine en la Ciudad CDMX",
+      "title": "Directorio operativo de sedes: UTOPÍA Olini",
+      "sourceUrl": "https://cineenlaciudad.cdmx.gob.mx/sedes/",
+      "publicationDate": null,
+      "effectiveDate": "2026-08-06",
+      "evidenceType": "directorio_operativo",
+      "statusSupported": {
+        "projectStatus": "terminada",
+        "operationalStatus": "operando_confirmado"
+      },
+      "amenityClaims": [],
+      "activityClaims": [],
+      "coordinates": null,
+      "surfaceM2": null,
+      "notes": "Directorio institucional con sede activa.",
+      "capturedAt": "2026-08-06"
+    },
+    {
+      "evidenceId": "ev-cine-2026-08-06-papalotl",
+      "utopiaId": "utopia-papalotl",
+      "utopiaName": "UTOPÍA Papalotl",
+      "sourceInstitution": "Cine en la Ciudad CDMX",
+      "title": "Directorio operativo de sedes: UTOPÍA Papalotl",
+      "sourceUrl": "https://cineenlaciudad.cdmx.gob.mx/sedes/",
+      "publicationDate": null,
+      "effectiveDate": "2026-08-06",
+      "evidenceType": "directorio_operativo",
+      "statusSupported": {
+        "projectStatus": "terminada",
+        "operationalStatus": "operando_confirmado"
+      },
+      "amenityClaims": [],
+      "activityClaims": [],
+      "coordinates": null,
+      "surfaceM2": null,
+      "notes": "Directorio institucional con sede activa.",
+      "capturedAt": "2026-08-06"
+    },
+    {
+      "evidenceId": "ev-cine-2026-08-06-quetzalcoatl",
+      "utopiaId": "utopia-quetzalcoatl",
+      "utopiaName": "UTOPÍA Quetzalcóatl",
+      "sourceInstitution": "Cine en la Ciudad CDMX",
+      "title": "Directorio operativo de sedes: UTOPÍA Quetzalcóatl",
+      "sourceUrl": "https://cineenlaciudad.cdmx.gob.mx/sedes/",
+      "publicationDate": null,
+      "effectiveDate": "2026-08-06",
+      "evidenceType": "directorio_operativo",
+      "statusSupported": {
+        "projectStatus": "terminada",
+        "operationalStatus": "operando_confirmado"
+      },
+      "amenityClaims": [],
+      "activityClaims": [],
+      "coordinates": null,
+      "surfaceM2": null,
+      "notes": "Directorio institucional con sede activa.",
+      "capturedAt": "2026-08-06"
+    },
+    {
+      "evidenceId": "ev-cine-2026-08-06-tecoloxtitlan",
+      "utopiaId": "utopia-tecoloxtitlan",
+      "utopiaName": "UTOPÍA Tecoloxtitlán",
+      "sourceInstitution": "Cine en la Ciudad CDMX",
+      "title": "Directorio operativo de sedes: UTOPÍA Tecoloxtitlán",
+      "sourceUrl": "https://cineenlaciudad.cdmx.gob.mx/sedes/",
+      "publicationDate": null,
+      "effectiveDate": "2026-08-06",
+      "evidenceType": "directorio_operativo",
+      "statusSupported": {
+        "projectStatus": "terminada",
+        "operationalStatus": "operando_confirmado"
+      },
+      "amenityClaims": [],
+      "activityClaims": [],
+      "coordinates": null,
+      "surfaceM2": null,
+      "notes": "Directorio institucional con sede activa.",
+      "capturedAt": "2026-08-06"
+    },
+    {
+      "evidenceId": "ev-cine-2026-08-06-teotongo",
+      "utopiaId": "utopia-teotongo",
+      "utopiaName": "UTOPÍA Teotongo",
+      "sourceInstitution": "Cine en la Ciudad CDMX",
+      "title": "Directorio operativo de sedes: UTOPÍA Teotongo",
+      "sourceUrl": "https://cineenlaciudad.cdmx.gob.mx/sedes/",
+      "publicationDate": null,
+      "effectiveDate": "2026-08-06",
+      "evidenceType": "directorio_operativo",
+      "statusSupported": {
+        "projectStatus": "terminada",
+        "operationalStatus": "operando_confirmado"
+      },
+      "amenityClaims": [],
+      "activityClaims": [],
+      "coordinates": null,
+      "surfaceM2": null,
+      "notes": "Directorio institucional con sede activa.",
+      "capturedAt": "2026-08-06"
+    },
+    {
+      "evidenceId": "ev-cine-2026-08-06-tezontli",
+      "utopiaId": "utopia-tezontli",
+      "utopiaName": "UTOPÍA Tezontli",
+      "sourceInstitution": "Cine en la Ciudad CDMX",
+      "title": "Directorio operativo de sedes: UTOPÍA Tezontli",
+      "sourceUrl": "https://cineenlaciudad.cdmx.gob.mx/sedes/",
+      "publicationDate": null,
+      "effectiveDate": "2026-08-06",
+      "evidenceType": "directorio_operativo",
+      "statusSupported": {
+        "projectStatus": "terminada",
+        "operationalStatus": "operando_confirmado"
+      },
+      "amenityClaims": [],
+      "activityClaims": [],
+      "coordinates": null,
+      "surfaceM2": null,
+      "notes": "Directorio institucional con sede activa.",
+      "capturedAt": "2026-08-06"
+    },
+    {
+      "evidenceId": "ev-cine-2026-08-06-barco",
+      "utopiaId": "barco-utopia",
+      "utopiaName": "Barco UTOPÍA",
+      "sourceInstitution": "Cine en la Ciudad CDMX",
+      "title": "Directorio operativo de sedes: Barco UTOPÍA",
+      "sourceUrl": "https://cineenlaciudad.cdmx.gob.mx/sedes/",
+      "publicationDate": null,
+      "effectiveDate": "2026-08-06",
+      "evidenceType": "directorio_operativo",
+      "statusSupported": {
+        "projectStatus": "terminada",
+        "operationalStatus": "operando_confirmado"
+      },
+      "amenityClaims": [],
+      "activityClaims": [],
+      "coordinates": null,
+      "surfaceM2": null,
+      "notes": "Directorio institucional con sede activa.",
+      "capturedAt": "2026-08-06"
+    },
+    {
+      "evidenceId": "ev-jefatura-2026-03-22-mixiuhca",
+      "utopiaId": "utopia-mixiuhca",
+      "utopiaName": "UTOPÍA Mixiuhca",
+      "sourceInstitution": "Jefatura de Gobierno CDMX",
+      "title": "Inauguración de Utopía Mixiuhca",
+      "sourceUrl": "https://www.jefaturadegobierno.cdmx.gob.mx/comunicacion/nota/inaugura-clara-brigada-utopia-mixiuhca-primera-del-gobierno-de-la-capital-una-nueva-forma-de-repensar-y-hacer-ciudad-y-combatir-desigualdades-aseguro",
+      "publicationDate": "2026-03-22",
+      "effectiveDate": "2026-03-22",
+      "evidenceType": "boletin_inauguracion",
+      "statusSupported": {
+        "projectStatus": "terminada",
+        "openingStatus": "inaugurada_confirmada",
+        "operationalStatus": "operando_confirmado"
+      },
+      "amenityClaims": [],
+      "activityClaims": [],
+      "coordinates": null,
+      "surfaceM2": 80000,
+      "notes": "Boletín oficial de inauguración de la primera Utopía del gobierno capitalino.",
+      "capturedAt": "2026-08-06"
+    },
+    {
+      "evidenceId": "ev-turismo-2026-08-06-mixiuhca-amenidades",
+      "utopiaId": "utopia-mixiuhca",
+      "utopiaName": "UTOPÍA Mixiuhca",
+      "sourceInstitution": "Mexico City / CDMX",
+      "title": "Ficha institucional de Utopía Mixiuhca",
+      "sourceUrl": "https://mexicocity.cdmx.gob.mx/venues/utopia-mixiuhca/?lang=en",
+      "publicationDate": null,
+      "effectiveDate": "2026-08-06",
+      "evidenceType": "ficha_turistica",
+      "statusSupported": {
+        "operationalStatus": "operando_confirmado"
+      },
+      "amenityClaims": [
+        {
+          "originalLabel": "semi-Olympic pool",
+          "normalizedAmenity": "alberca semiolímpica",
+          "category": "acuatica"
+        },
+        {
+          "originalLabel": "pump tracks for cyclists",
+          "normalizedAmenity": "pump track",
+          "category": "movilidad"
+        },
+        {
+          "originalLabel": "batting cages",
+          "normalizedAmenity": "jaulas de bateo",
+          "category": "otras"
+        },
+        {
+          "originalLabel": "padel",
+          "normalizedAmenity": "cancha de pádel",
+          "category": "raqueta"
+        },
+        {
+          "originalLabel": "tennis",
+          "normalizedAmenity": "cancha de tenis",
+          "category": "raqueta"
+        },
+        {
+          "originalLabel": "squash",
+          "normalizedAmenity": "squash",
+          "category": "raqueta"
+        },
+        {
+          "originalLabel": "beach volleyball",
+          "normalizedAmenity": "cancha de voleibol",
+          "category": "cancha"
+        }
+      ],
+      "activityClaims": [],
+      "coordinates": null,
+      "surfaceM2": 80000,
+      "notes": "La ficha pública documenta amenidades y la inauguración en marzo de 2026.",
+      "capturedAt": "2026-08-06"
+    },
+    {
+      "evidenceId": "ev-sobse-2026-04-30-azcapotzalco",
+      "utopiaId": "utopia-azcapotzalco",
+      "utopiaName": "UTOPÍA Azcapotzalco",
+      "sourceInstitution": "SOBSE CDMX",
+      "title": "Inaugura Clara Brugada la primera Utopía de Azcapotzalco",
+      "sourceUrl": "https://obras.cdmx.gob.mx/comunicacion/nota/inaugura-clara-brugada-la-primera-utopia-de-azcapotzalco",
+      "publicationDate": "2026-04-30",
+      "effectiveDate": "2026-04-30",
+      "evidenceType": "boletin_inauguracion",
+      "statusSupported": {
+        "projectStatus": "terminada",
+        "openingStatus": "inaugurada_confirmada",
+        "operationalStatus": "operando_confirmado"
+      },
+      "amenityClaims": [
+        {
+          "originalLabel": "alberca semiolímpica",
+          "normalizedAmenity": "alberca semiolímpica",
+          "category": "acuatica"
+        },
+        {
+          "originalLabel": "canchas de fútbol",
+          "normalizedAmenity": "cancha de fútbol",
+          "category": "cancha"
+        },
+        {
+          "originalLabel": "squash",
+          "normalizedAmenity": "squash",
+          "category": "raqueta"
+        },
+        {
+          "originalLabel": "gimnasio",
+          "normalizedAmenity": "gimnasio",
+          "category": "gimnasio"
+        },
+        {
+          "originalLabel": "pista de patinaje",
+          "normalizedAmenity": "pista de patinaje",
+          "category": "movilidad"
+        },
+        {
+          "originalLabel": "pista de tartán",
+          "normalizedAmenity": "pista de tartán",
+          "category": "movilidad"
+        }
+      ],
+      "activityClaims": [
+        {
+          "originalLabel": "box",
+          "normalizedDiscipline": "Box",
+          "context": "disciplina"
+        },
+        {
+          "originalLabel": "crossfit",
+          "normalizedDiscipline": "CrossFit",
+          "context": "disciplina"
+        }
+      ],
+      "coordinates": null,
+      "surfaceM2": null,
+      "notes": "Boletín oficial de inauguración con mención de 46 disciplinas y más de 50 espacios.",
+      "capturedAt": "2026-08-06"
+    },
+    {
+      "evidenceId": "ev-sobse-2026-05-24-la-heroica",
+      "utopiaId": "utopia-la-heroica",
+      "utopiaName": "UTOPÍA La Heroica",
+      "sourceInstitution": "SOBSE CDMX",
+      "title": "Clara Brugada inaugura Utopía La Heroica",
+      "sourceUrl": "https://obras.cdmx.gob.mx/index.php/comunicacion/nota/clara-brugada-inaugura-utopia-la-heroica-en-venustiano-carranza",
+      "publicationDate": "2026-05-24",
+      "effectiveDate": "2026-05-24",
+      "evidenceType": "boletin_inauguracion",
+      "statusSupported": {
+        "projectStatus": "terminada",
+        "openingStatus": "inaugurada_confirmada",
+        "operationalStatus": "operando_confirmado"
+      },
+      "amenityClaims": [
+        {
+          "originalLabel": "alberca olímpica",
+          "normalizedAmenity": "alberca olímpica",
+          "category": "acuatica"
+        },
+        {
+          "originalLabel": "gimnasio de box",
+          "normalizedAmenity": "box",
+          "category": "combate"
+        },
+        {
+          "originalLabel": "skatepark",
+          "normalizedAmenity": "skatepark",
+          "category": "movilidad"
+        },
+        {
+          "originalLabel": "canchas de fútbol",
+          "normalizedAmenity": "cancha de fútbol",
+          "category": "cancha"
+        },
+        {
+          "originalLabel": "voleibol",
+          "normalizedAmenity": "cancha de voleibol",
+          "category": "cancha"
+        },
+        {
+          "originalLabel": "squash",
+          "normalizedAmenity": "squash",
+          "category": "raqueta"
+        },
+        {
+          "originalLabel": "pádel",
+          "normalizedAmenity": "cancha de pádel",
+          "category": "raqueta"
+        },
+        {
+          "originalLabel": "básquetbol",
+          "normalizedAmenity": "cancha de básquetbol",
+          "category": "cancha"
+        },
+        {
+          "originalLabel": "petanca",
+          "normalizedAmenity": "petanca",
+          "category": "otras"
+        },
+        {
+          "originalLabel": "Casa de Vida",
+          "normalizedAmenity": "áreas de cuidados",
+          "category": "cuidados"
+        }
+      ],
+      "activityClaims": [],
+      "coordinates": null,
+      "surfaceM2": 100000,
+      "notes": "Boletín oficial con casi 100 mil metros cuadrados y amenidades deportivas verificadas.",
+      "capturedAt": "2026-08-06"
+    },
+    {
+      "evidenceId": "ev-capital21-2026-07-12-acatitla",
+      "utopiaId": "utopia-acatitla",
+      "utopiaName": "UTOPÍA Acatitla",
+      "sourceInstitution": "Capital 21 CDMX",
+      "title": "Brugada inaugura Utopía Acatitla",
+      "sourceUrl": "https://noticiasc21.cdmx.gob.mx/noticia/brugada-inaugura-utopia-acatitla",
+      "publicationDate": "2026-07-12",
+      "effectiveDate": "2026-07-12",
+      "evidenceType": "boletin_inauguracion",
+      "statusSupported": {
+        "projectStatus": "terminada",
+        "openingStatus": "inaugurada_confirmada",
+        "operationalStatus": "operando_confirmado"
+      },
+      "amenityClaims": [
+        {
+          "originalLabel": "alberca semiolímpica",
+          "normalizedAmenity": "alberca semiolímpica",
+          "category": "acuatica"
+        },
+        {
+          "originalLabel": "cancha multiusos",
+          "normalizedAmenity": "cancha multiusos",
+          "category": "cancha"
+        },
+        {
+          "originalLabel": "pump track",
+          "normalizedAmenity": "pump track",
+          "category": "movilidad"
+        },
+        {
+          "originalLabel": "muro de escalada",
+          "normalizedAmenity": "muro de escalada",
+          "category": "otras"
+        },
+        {
+          "originalLabel": "trotapista",
+          "normalizedAmenity": "pista de tartán",
+          "category": "movilidad"
+        }
+      ],
+      "activityClaims": [],
+      "coordinates": null,
+      "surfaceM2": 16000,
+      "notes": "Nota institucional con fecha de inauguración y amenidades verificadas.",
+      "capturedAt": "2026-08-06"
+    },
+    {
+      "evidenceId": "ev-sobse-2026-06-07-tlallipan",
+      "utopiaId": "utopia-tlallipan",
+      "utopiaName": "UTOPÍA Tlallipan",
+      "sourceInstitution": "SOBSE CDMX",
+      "title": "Inaugura Clara Brugada Jardín Flotante Tlallipan",
+      "sourceUrl": "https://obras.cdmx.gob.mx/comunicacion/nota/inaugura-clara-brugada-jardin-flotante-tlallipan",
+      "publicationDate": "2026-06-07",
+      "effectiveDate": "2026-06-07",
+      "evidenceType": "boletin_inauguracion",
+      "statusSupported": {
+        "projectStatus": "terminada",
+        "openingStatus": "inaugurada_confirmada",
+        "operationalStatus": "operando_confirmado"
+      },
+      "amenityClaims": [],
+      "activityClaims": [],
+      "coordinates": null,
+      "surfaceM2": 6200,
+      "notes": "Primera Utopía elevada de la ciudad; el boletín no documenta amenidades deportivas específicas.",
+      "capturedAt": "2026-08-06"
+    },
+    {
+      "evidenceId": "ev-cine-2026-08-06-tlallipan-operacion",
+      "utopiaId": "utopia-tlallipan",
+      "utopiaName": "UTOPÍA Tlallipan",
+      "sourceInstitution": "Cine en la Ciudad CDMX",
+      "title": "Directorio operativo de sedes: UTOPÍA Tlallipan",
+      "sourceUrl": "https://cineenlaciudad.cdmx.gob.mx/sedes/",
+      "publicationDate": null,
+      "effectiveDate": "2026-08-06",
+      "evidenceType": "directorio_operativo",
+      "statusSupported": {
+        "operationalStatus": "operando_confirmado"
+      },
+      "amenityClaims": [],
+      "activityClaims": [],
+      "coordinates": null,
+      "surfaceM2": null,
+      "notes": "Directorio institucional con sede activa en Cuauhtémoc.",
+      "capturedAt": "2026-08-06"
+    },
+    {
+      "evidenceId": "ev-jefatura-2024-12-18-parque-japon",
+      "utopiaId": "utopia-parque-japon",
+      "utopiaName": "UTOPÍA Parque Japón",
+      "sourceInstitution": "Jefatura de Gobierno CDMX",
+      "title": "Presentación de las Utopías 2025-2026",
+      "sourceUrl": "https://jefaturadegobierno.cdmx.gob.mx/comunicacion/nota/mensaje-de-la-jefa-de-gobierno-clara-brugada-molina-durante-la-presentacion-de-las-utopi",
+      "publicationDate": "2024-12-18",
+      "effectiveDate": "2024-12-18",
+      "evidenceType": "mensaje_institucional",
+      "statusSupported": {
+        "projectStatus": "anunciada",
+        "openingStatus": "no_inaugurada",
+        "operationalStatus": "desconocido"
+      },
+      "amenityClaims": [],
+      "activityClaims": [],
+      "coordinates": null,
+      "surfaceM2": null,
+      "notes": "La sede aparece en la lista oficial inicial por alcaldía.",
+      "capturedAt": "2026-08-06"
+    },
+    {
+      "evidenceId": "ev-jefatura-2024-12-18-centro-scop",
+      "utopiaId": "utopia-centro-scop",
+      "utopiaName": "UTOPÍA Centro SCOP",
+      "sourceInstitution": "Jefatura de Gobierno CDMX",
+      "title": "Presentación de las Utopías 2025-2026",
+      "sourceUrl": "https://jefaturadegobierno.cdmx.gob.mx/comunicacion/nota/mensaje-de-la-jefa-de-gobierno-clara-brugada-molina-durante-la-presentacion-de-las-utopi",
+      "publicationDate": "2024-12-18",
+      "effectiveDate": "2024-12-18",
+      "evidenceType": "mensaje_institucional",
+      "statusSupported": {
+        "projectStatus": "anunciada",
+        "openingStatus": "no_inaugurada",
+        "operationalStatus": "desconocido"
+      },
+      "amenityClaims": [],
+      "activityClaims": [],
+      "coordinates": null,
+      "surfaceM2": null,
+      "notes": "Se anuncia para el Centro SCOP en Narvarte.",
+      "capturedAt": "2026-08-06"
+    },
+    {
+      "evidenceId": "ev-jefatura-2025-06-24-centro-scop-planeacion",
+      "utopiaId": "utopia-centro-scop",
+      "utopiaName": "UTOPÍA Centro SCOP",
+      "sourceInstitution": "Jefatura de Gobierno CDMX",
+      "title": "Conferencia de prensa sobre Utopías",
+      "sourceUrl": "https://jefaturadegobierno.cdmx.gob.mx/comunicacion/nota/palabras-de-la-jefa-de-gobierno-clara-brugada-molina-y-del-secretario-de-obras-y-servicios-en-la-conferencia-de-prensa-sobre-utopias",
+      "publicationDate": "2025-06-24",
+      "effectiveDate": "2025-06-24",
+      "evidenceType": "mensaje_institucional",
+      "statusSupported": {
+        "projectStatus": "planeacion"
+      },
+      "amenityClaims": [],
+      "activityClaims": [],
+      "coordinates": null,
+      "surfaceM2": 25000,
+      "notes": "Se informa prolongación del proyecto por coordinación federal y restauración de murales.",
+      "capturedAt": "2026-08-06"
+    },
+    {
+      "evidenceId": "ev-jefatura-2024-12-18-parian",
+      "utopiaId": "utopia-el-parian",
+      "utopiaName": "UTOPÍA El Parián",
+      "sourceInstitution": "Jefatura de Gobierno CDMX",
+      "title": "Presentación de las Utopías 2025-2026",
+      "sourceUrl": "https://jefaturadegobierno.cdmx.gob.mx/comunicacion/nota/mensaje-de-la-jefa-de-gobierno-clara-brugada-molina-durante-la-presentacion-de-las-utopi",
+      "publicationDate": "2024-12-18",
+      "effectiveDate": "2024-12-18",
+      "evidenceType": "mensaje_institucional",
+      "statusSupported": {
+        "projectStatus": "anunciada",
+        "openingStatus": "no_inaugurada",
+        "operationalStatus": "desconocido"
+      },
+      "amenityClaims": [],
+      "activityClaims": [],
+      "coordinates": null,
+      "surfaceM2": null,
+      "notes": "Se anuncia El Parián para Coyoacán, barrio San Lucas.",
+      "capturedAt": "2026-08-06"
+    },
+    {
+      "evidenceId": "ev-jefatura-2025-06-24-parian-planeacion",
+      "utopiaId": "utopia-el-parian",
+      "utopiaName": "UTOPÍA El Parián",
+      "sourceInstitution": "Jefatura de Gobierno CDMX",
+      "title": "Conferencia de prensa sobre Utopías",
+      "sourceUrl": "https://jefaturadegobierno.cdmx.gob.mx/comunicacion/nota/palabras-de-la-jefa-de-gobierno-clara-brugada-molina-y-del-secretario-de-obras-y-servicios-en-la-conferencia-de-prensa-sobre-utopias",
+      "publicationDate": "2025-06-24",
+      "effectiveDate": "2025-06-24",
+      "evidenceType": "mensaje_institucional",
+      "statusSupported": {
+        "projectStatus": "planeacion"
+      },
+      "amenityClaims": [],
+      "activityClaims": [],
+      "coordinates": null,
+      "surfaceM2": 9156,
+      "notes": "Se describe como proyecto por iniciar en próximas semanas y con vocación turística.",
+      "capturedAt": "2026-08-06"
+    },
+    {
+      "evidenceId": "ev-jefatura-2024-12-18-cuajimalpa",
+      "utopiaId": "utopia-modulo-deportivo-cuajimalpa",
+      "utopiaName": "UTOPÍA Módulo Deportivo Cuajimalpa",
+      "sourceInstitution": "Jefatura de Gobierno CDMX",
+      "title": "Presentación de las Utopías 2025-2026",
+      "sourceUrl": "https://jefaturadegobierno.cdmx.gob.mx/comunicacion/nota/mensaje-de-la-jefa-de-gobierno-clara-brugada-molina-durante-la-presentacion-de-las-utopi",
+      "publicationDate": "2024-12-18",
+      "effectiveDate": "2024-12-18",
+      "evidenceType": "mensaje_institucional",
+      "statusSupported": {
+        "projectStatus": "anunciada",
+        "openingStatus": "no_inaugurada",
+        "operationalStatus": "desconocido"
+      },
+      "amenityClaims": [],
+      "activityClaims": [],
+      "coordinates": null,
+      "surfaceM2": 5000,
+      "notes": "Se describe como Utopía modular en dos inmuebles de Deportivo Morelos.",
+      "capturedAt": "2026-08-06"
+    },
+    {
+      "evidenceId": "ev-jefatura-2024-12-18-tepito",
+      "utopiaId": "utopia-tepito-cuauhtemoc",
+      "utopiaName": "UTOPÍA Tepito",
+      "sourceInstitution": "Jefatura de Gobierno CDMX",
+      "title": "Presentación de las Utopías 2025-2026",
+      "sourceUrl": "https://jefaturadegobierno.cdmx.gob.mx/comunicacion/nota/mensaje-de-la-jefa-de-gobierno-clara-brugada-molina-durante-la-presentacion-de-las-utopi",
+      "publicationDate": "2024-12-18",
+      "effectiveDate": "2024-12-18",
+      "evidenceType": "mensaje_institucional",
+      "statusSupported": {
+        "projectStatus": "planeacion",
+        "openingStatus": "no_inaugurada",
+        "operationalStatus": "desconocido"
+      },
+      "amenityClaims": [],
+      "activityClaims": [],
+      "coordinates": null,
+      "surfaceM2": null,
+      "notes": "La sede se plantea sobre tres espacios en Tepito.",
+      "capturedAt": "2026-08-06"
+    },
+    {
+      "evidenceId": "ev-sobse-2025-05-14-hermanos-galeana",
+      "utopiaId": "utopia-hermanos-galeana",
+      "utopiaName": "UTOPÍA Hermanos Galeana",
+      "sourceInstitution": "Jefatura de Gobierno CDMX",
+      "title": "Arranca SOBSE construcción de las primeras 6 UTOPÍAs en CDMX",
+      "sourceUrl": "https://www.jefaturadegobierno.cdmx.gob.mx/comunicacion/nota/arranca-sobse-construccion-de-las-primeras-6-utopias-en-cdmx",
+      "publicationDate": "2025-05-14",
+      "effectiveDate": "2025-05-14",
+      "evidenceType": "boletin_construccion",
+      "statusSupported": {
+        "projectStatus": "construccion",
+        "openingStatus": "no_inaugurada",
+        "operationalStatus": "desconocido"
+      },
+      "amenityClaims": [],
+      "activityClaims": [],
+      "coordinates": null,
+      "surfaceM2": 200000,
+      "notes": "El boletín ubica a Hermanos Galeana entre las primeras seis Utopías en construcción.",
+      "capturedAt": "2026-08-06"
+    },
+    {
+      "evidenceId": "ev-jefatura-2025-10-15-infancias",
+      "utopiaId": "utopia-infancias-mixiuhca",
+      "utopiaName": "UTOPÍA de las Niñas y los Niños",
+      "sourceInstitution": "Jefatura de Gobierno CDMX",
+      "title": "Supervisa avance de obra de Utopía de las Niñas y los Niños en Iztacalco",
+      "sourceUrl": "https://jefaturadegobierno.cdmx.gob.mx/comunicacion/nota/supervisa-clara-brugada-avance-de-obra-de-utopia-de-las-ninas-y-los-ninos-en-iztacalco-sera-la-segunda-mas-grande-de-la-ciudad",
+      "publicationDate": "2025-10-15",
+      "effectiveDate": "2025-10-15",
+      "evidenceType": "supervision_obra",
+      "statusSupported": {
+        "projectStatus": "construccion",
+        "openingStatus": "fecha_anunciada",
+        "operationalStatus": "desconocido"
+      },
+      "amenityClaims": [],
+      "activityClaims": [],
+      "coordinates": null,
+      "surfaceM2": 120000,
+      "notes": "La nota prevé inauguración en enero de 2026, pero sin confirmación posterior integrada en esta iteración.",
+      "capturedAt": "2026-08-06"
+    },
+    {
+      "evidenceId": "ev-jefatura-2026-03-26-oyamel",
+      "utopiaId": "utopia-oyamel",
+      "utopiaName": "UTOPÍA Oyamel",
+      "sourceInstitution": "Jefatura de Gobierno CDMX",
+      "title": "Supervisa avance de la primera Utopía en la Magdalena Contreras",
+      "sourceUrl": "https://www.jefaturadegobierno.cdmx.gob.mx/comunicacion/nota/supervisa-clara-brugada-avance-de-la-primera-utopia-en-la-magdalena-contreras-preve-su-inauguracion-en-menos-de-dos-meses",
+      "publicationDate": "2026-03-26",
+      "effectiveDate": "2026-03-26",
+      "evidenceType": "supervision_obra",
+      "statusSupported": {
+        "projectStatus": "terminacion",
+        "openingStatus": "sin_confirmacion",
+        "operationalStatus": "desconocido"
+      },
+      "amenityClaims": [],
+      "activityClaims": [],
+      "coordinates": null,
+      "surfaceM2": null,
+      "notes": "La nota reporta avance y prevé inauguración en menos de dos meses, sin confirmación posterior integrada.",
+      "capturedAt": "2026-08-06"
+    },
+    {
+      "evidenceId": "ev-jefatura-2024-12-18-un-hogar",
+      "utopiaId": "utopia-un-hogar-para-nosotros",
+      "utopiaName": "UTOPÍA Un Hogar para Nosotros",
+      "sourceInstitution": "Jefatura de Gobierno CDMX",
+      "title": "Presentación de las Utopías 2025-2026",
+      "sourceUrl": "https://jefaturadegobierno.cdmx.gob.mx/comunicacion/nota/mensaje-de-la-jefa-de-gobierno-clara-brugada-molina-durante-la-presentacion-de-las-utopi",
+      "publicationDate": "2024-12-18",
+      "effectiveDate": "2024-12-18",
+      "evidenceType": "mensaje_institucional",
+      "statusSupported": {
+        "projectStatus": "anunciada",
+        "openingStatus": "no_inaugurada",
+        "operationalStatus": "desconocido"
+      },
+      "amenityClaims": [],
+      "activityClaims": [],
+      "coordinates": null,
+      "surfaceM2": null,
+      "notes": "Se identifica cerca del Metro Colegio Militar en Miguel Hidalgo.",
+      "capturedAt": "2026-08-06"
+    },
+    {
+      "evidenceId": "ev-jefatura-2024-12-18-tecomitl",
+      "utopiaId": "utopia-tecomitl",
+      "utopiaName": "UTOPÍA Tecómitl",
+      "sourceInstitution": "Jefatura de Gobierno CDMX",
+      "title": "Presentación de las Utopías 2025-2026",
+      "sourceUrl": "https://jefaturadegobierno.cdmx.gob.mx/comunicacion/nota/mensaje-de-la-jefa-de-gobierno-clara-brugada-molina-durante-la-presentacion-de-las-utopi",
+      "publicationDate": "2024-12-18",
+      "effectiveDate": "2024-12-18",
+      "evidenceType": "mensaje_institucional",
+      "statusSupported": {
+        "projectStatus": "anunciada",
+        "openingStatus": "no_inaugurada",
+        "operationalStatus": "desconocido"
+      },
+      "amenityClaims": [],
+      "activityClaims": [],
+      "coordinates": null,
+      "surfaceM2": null,
+      "notes": "Se identifica en Deportivo Tecómitl de San Juan Ixtayopan.",
+      "capturedAt": "2026-08-06"
+    },
+    {
+      "evidenceId": "ev-jefatura-2025-06-24-el-triangulo",
+      "utopiaId": "utopia-el-triangulo",
+      "utopiaName": "UTOPÍA El Triángulo",
+      "sourceInstitution": "Jefatura de Gobierno CDMX",
+      "title": "Conferencia de prensa sobre Utopías",
+      "sourceUrl": "https://jefaturadegobierno.cdmx.gob.mx/comunicacion/nota/palabras-de-la-jefa-de-gobierno-clara-brugada-molina-y-del-secretario-de-obras-y-servicios-en-la-conferencia-de-prensa-sobre-utopias",
+      "publicationDate": "2025-06-24",
+      "effectiveDate": "2025-06-24",
+      "evidenceType": "mensaje_institucional",
+      "statusSupported": {
+        "projectStatus": "construccion",
+        "openingStatus": "no_inaugurada",
+        "operationalStatus": "desconocido"
+      },
+      "amenityClaims": [],
+      "activityClaims": [],
+      "coordinates": null,
+      "surfaceM2": 20350,
+      "notes": "La conferencia señala que la Utopía Tláhuac ya había arrancado formalmente en el predio El Triángulo.",
+      "capturedAt": "2026-08-06"
+    },
+    {
+      "evidenceId": "ev-sobse-2025-05-14-maiz",
+      "utopiaId": "utopia-madre-tierra-topilejo",
+      "utopiaName": "UTOPÍA del Maíz",
+      "sourceInstitution": "Jefatura de Gobierno CDMX",
+      "title": "Arranca SOBSE construcción de las primeras 6 UTOPÍAs en CDMX",
+      "sourceUrl": "https://www.jefaturadegobierno.cdmx.gob.mx/comunicacion/nota/arranca-sobse-construccion-de-las-primeras-6-utopias-en-cdmx",
+      "publicationDate": "2025-05-14",
+      "effectiveDate": "2025-05-14",
+      "evidenceType": "boletin_construccion",
+      "statusSupported": {
+        "projectStatus": "construccion",
+        "openingStatus": "no_inaugurada",
+        "operationalStatus": "desconocido"
+      },
+      "amenityClaims": [],
+      "activityClaims": [],
+      "coordinates": null,
+      "surfaceM2": null,
+      "notes": "El boletín ubica a Utopía del Maíz entre las primeras seis obras en construcción.",
+      "capturedAt": "2026-08-06"
+    },
+    {
+      "evidenceId": "ev-jefatura-2024-04-22-maiz-presentacion",
+      "utopiaId": "utopia-madre-tierra-topilejo",
+      "utopiaName": "UTOPÍA del Maíz",
+      "sourceInstitution": "Jefatura de Gobierno CDMX",
+      "title": "Presentación del proyecto UTOPÍA de la Madre Tierra",
+      "sourceUrl": "https://www.jefaturadegobierno.cdmx.gob.mx/comunicacion/nota/mensaje-de-la-jefa-de-gobierno-clara-brugada-molina-y-otros-funcionarios-durante-la-presentacion-del-proyecto-utopia-de-la-madre-tierra",
+      "publicationDate": "2025-04-22",
+      "effectiveDate": "2025-04-22",
+      "evidenceType": "mensaje_institucional",
+      "statusSupported": {
+        "projectStatus": "anunciada"
+      },
+      "amenityClaims": [],
+      "activityClaims": [],
+      "coordinates": null,
+      "surfaceM2": null,
+      "notes": "Presentación temática de la Utopía del Maíz en Topilejo.",
+      "capturedAt": "2026-08-06"
+    },
+    {
+      "evidenceId": "ev-jefatura-2024-12-18-xochimilco",
+      "utopiaId": "utopia-deportivo-xochimilco",
+      "utopiaName": "UTOPÍA Deportivo Xochimilco",
+      "sourceInstitution": "Jefatura de Gobierno CDMX",
+      "title": "Presentación de las Utopías 2025-2026",
+      "sourceUrl": "https://jefaturadegobierno.cdmx.gob.mx/comunicacion/nota/mensaje-de-la-jefa-de-gobierno-clara-brugada-molina-durante-la-presentacion-de-las-utopi",
+      "publicationDate": "2024-12-18",
+      "effectiveDate": "2024-12-18",
+      "evidenceType": "mensaje_institucional",
+      "statusSupported": {
+        "projectStatus": "anunciada",
+        "openingStatus": "no_inaugurada",
+        "operationalStatus": "desconocido"
+      },
+      "amenityClaims": [],
+      "activityClaims": [],
+      "coordinates": null,
+      "surfaceM2": null,
+      "notes": "La sede aparece en el listado por alcaldía para Xochimilco.",
+      "capturedAt": "2026-08-06"
+    },
+    {
+      "evidenceId": "ev-jefatura-xochinahuac-anuncio",
+      "utopiaId": "utopia-xochinahuac",
+      "utopiaName": "UTOPÍA Xochináhuac",
+      "sourceInstitution": "Jefatura de Gobierno CDMX",
+      "title": "Entrega de obras y acciones Gobierno Casa por Casa en Azcapotzalco",
+      "sourceUrl": "https://jefaturadegobierno.cdmx.gob.mx/comunicacion/nota/transcripcion-de-las-palabras-de-la-jefa-de-gobierno-clara-brugada-y-de-funcionarios-de-su-gabinete-en-la-entrega-de-obras-y-acciones-del-programa-gobierno-casa-por-casa-en-azcapotzalco",
+      "publicationDate": null,
+      "effectiveDate": null,
+      "evidenceType": "mensaje_institucional",
+      "statusSupported": {
+        "projectStatus": "anunciada",
+        "openingStatus": "no_inaugurada",
+        "operationalStatus": "desconocido"
+      },
+      "amenityClaims": [],
+      "activityClaims": [],
+      "coordinates": null,
+      "surfaceM2": null,
+      "notes": "La jefa de Gobierno anuncia que se iniciará la otra Utopía de Azcapotzalco en el Deportivo Xochináhuac.",
+      "capturedAt": "2026-08-06"
+    }
+  ]
+}

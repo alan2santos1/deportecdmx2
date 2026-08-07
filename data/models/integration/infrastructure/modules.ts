@@ -1,6 +1,7 @@
 import fs from "fs";
 import path from "path";
 import type { InfrastructureDetailRecord } from "../../../../lib/dashboard-types";
+import { buildUtopiasLayer } from "../build-utopias-layer";
 import { extractDenueScianCode, getDashboardCategoryFromScian, normalizeDenueRecord } from "../denue-normalizer";
 import { normalizeAlcaldia } from "../normalize-alcaldia";
 import type {
@@ -9,7 +10,6 @@ import type {
   InfrastructureLayerModule
 } from "./types";
 import { getInfrastructureLayerDescriptor } from "./layer-registry";
-import utopias from "../../../processed/infrastructure/utopias.json";
 
 type DenueGeojson = {
   features: Array<{
@@ -17,8 +17,6 @@ type DenueGeojson = {
     geometry?: { type: string; coordinates?: [number, number] };
   }>;
 };
-
-type UtopiaSeedRecord = (typeof utopias)[number];
 
 const readCsv = (filePath: string) => {
   if (!filePath) return [];
@@ -292,12 +290,15 @@ export const buildUtopiasModule = (): InfrastructureLayerModule => {
   return {
     descriptor,
     build: () => {
-      const details: InfrastructureDetailRecord[] = (utopias as UtopiaSeedRecord[]).map((row) => {
+      const utopiasLayer = buildUtopiasLayer();
+      const details: InfrastructureDetailRecord[] = utopiasLayer.utopias
+        .filter((row) => row.countAsRealInfrastructure)
+        .map((row) => {
         const normalized = row.alcaldia ? normalizeAlcaldia(row.alcaldia) : null;
         const hasTerritorialKey = Boolean(row.alcaldia && normalized?.matched);
         return {
-          id: row.id,
-          spaceName: row.nombre,
+          id: row.utopiaId,
+          spaceName: row.canonicalName,
           tipo_espacio: "utopia",
           infrastructureType: "UTOPÍAs",
           alcaldia: hasTerritorialKey && normalized ? normalized.alcaldia : "Sin alcaldía documentada",
@@ -305,8 +306,10 @@ export const buildUtopiasModule = (): InfrastructureLayerModule => {
           needsAlcaldiaNormalization: !hasTerritorialKey,
           geoKey: hasTerritorialKey && normalized ? normalized.geoKey : undefined,
           year: 2025,
-          sportsAvailable: [],
-          disciplineStatus: "no_documentado",
+          sportsAvailable: utopiasLayer.activities
+            .filter((item) => item.utopiaId === row.utopiaId)
+            .map((item) => item.normalizedDiscipline),
+          disciplineStatus: utopiasLayer.activities.some((item) => item.utopiaId === row.utopiaId) ? "disponible" : "no_documentado",
           administrativeCount: 1,
           administrativeLabel: "UTOPÍAs documentadas",
           operationalUnits: operationalUnitFactors.utopias,
@@ -314,17 +317,16 @@ export const buildUtopiasModule = (): InfrastructureLayerModule => {
           capacity: 160,
           capacityType: "estimada",
           units: 1,
-          latitude: row.lat,
-          longitude: row.lon,
-          status: row.status,
+          latitude: row.coordinates?.lat ?? null,
+          longitude: row.coordinates?.lon ?? null,
+          status: `${row.projectStatus} / ${row.openingStatus} / ${row.operationalStatus}`,
           sourceDataset: descriptor.label,
           dataType: descriptor.dataType,
-          source: row.fuente,
+          source: row.sourceInstitution,
           methodologicalNote:
-            row.nota ??
-            (row.alcaldia
-              ? "UTOPÍA integrada como capa institucional real desde la investigación actual. No se infieren amenidades ni disciplinas por sede."
-              : "UTOPÍA documentada en la investigación actual, pero aún sin alcaldía verificable dentro del proyecto. Se integra como capa real institucional sin territorializar.")
+            row.operationalStatus === "operando_confirmado"
+              ? "UTOPÍA integrada como capa institucional vigente con evidencia oficial por sede. Las amenidades y disciplinas solo se publican cuando existen fuentes explícitas."
+              : "UTOPÍA institucional con evidencia oficial, pero fuera del conteo territorial actual porque no existe operación confirmada."
         };
       });
 
